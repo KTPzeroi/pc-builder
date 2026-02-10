@@ -1,15 +1,137 @@
-//home//
-"use client"
+"use client";
 import Image from "next/image";
-import {Button} from "@heroui/react";
 
-export default function Home() {
+export default function Page() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-800">
-      <h1 className="text-blue-500 text-3xl font-bold">VALORNT</h1>
-      
-    </main>
+    <main>
+      <div className="banner">
+        <div className="slider" style={{ ["--quantity" as any]: 10 }}>
+          {[1,2,3,4,5,6,7,8,9,10].map((num) => (
+            <div
+              className="item"
+              key={num}
+              style={{ ["--position" as any]: num }}
+            >
+              <img src={`images/dragon_${num}.png`} alt="" />
+            </div>
+          ))}
+        </div>
 
-    
+        <div className="content">
+          <h1 data-content="CSS ONLY">CSS ONLY</h1>
+
+          <div className="author">
+            <h2>LUN DEV</h2>
+            <p><b>Web Design</b></p>
+            <p>asdlasldlasdlasdl</p>
+          </div>
+
+          <div className="model"></div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @import url('https://fonts.cdnfonts.com/css/ica-rubrik-black');
+        @import url('https://fonts.cdnfonts.com/css/poppins');
+
+        .banner {
+          width: 100%;
+          height: 100vh;
+          text-align: center;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .banner .slider {
+          position: absolute;
+          width: 200px;
+          height: 250px;
+          top: 10%;
+          left: calc(50% - 100px);
+          transform-style: preserve-3d;
+          transform: perspective(1000px);
+          animation: autoRun 20s linear infinite;
+          z-index: 2;
+        }
+
+        @keyframes autoRun {
+          from {
+            transform: perspective(1000px) rotateX(-16deg) rotateY(0deg);
+          }
+          to {
+            transform: perspective(1000px) rotateX(-16deg) rotateY(360deg);
+          }
+        }
+
+        .banner .slider .item {
+          position: absolute;
+          inset: 0;
+          transform: rotateY(
+              calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+            )
+            translateZ(550px);
+        }
+
+        .banner .slider .item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .banner .content {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(1400px, 100vw);
+          padding-bottom: 100px;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          align-items: center;
+          z-index: 1;
+        }
+
+        .banner .content h1 {
+          font-family: "ICA Rubrik";
+          font-size: 16em;
+          line-height: 1em;
+          color: #25283b;
+          position: relative;
+        }
+
+        .banner .content h1:after {
+          content: attr(data-content);
+          position: absolute;
+          inset: 0;
+          -webkit-text-stroke: 2px #d2d2d2;
+          color: transparent;
+          z-index: 2;
+        }
+
+        .banner .content .author {
+          font-family: Poppins;
+          text-align: right;
+          max-width: 200px;
+        }
+
+        .banner .content h2 {
+          font-size: 3em;
+        }
+
+        .banner .content .model {
+          background-image: url("images/model1.png");
+          width: 100%;
+          height: 75vh;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          background-size: auto 130%;
+          background-repeat: no-repeat;
+          background-position: top center;
+          z-index: 1;
+        }
+      `}</style>
+    </main>
   );
 }
