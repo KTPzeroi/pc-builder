@@ -140,14 +140,27 @@ export default function BuildPage() {
 
         {/* 3. Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
-          <Button variant="bordered" className="w-full sm:w-32 h-14 border-white/10 text-white font-bold text-lg uppercase" radius="xl"
-            onPress={() => setSelectedProducts({ Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null })}>
-            Clear
-          </Button>
-          <Button color="primary" className="flex-1 sm:flex-none sm:px-16 h-14 font-bold text-xl uppercase" variant="ghost" onPress={onSaveOpen}>
-            Save Build
-          </Button>
-        </div>
+        {/* ปุ่ม Clear: ใช้ w-full เป็นค่าเริ่มต้นสำหรับมือถือ และ sm:w-32 สำหรับจอใหญ่ */}
+        <Button 
+          variant="bordered" 
+          className="w-full sm:w-32 h-14 border-white/10 text-white font-bold text-lg uppercase" 
+          radius="lg"
+          onPress={() => setSelectedProducts({ Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null })}
+        >
+          Clear
+        </Button>
+
+        {/* ปุ่ม Save Build: เอา flex-1 ออก แล้วใช้ w-full เหมือนกันเพื่อให้ขนาดเท่ากันในมือถือ */}
+        <Button 
+          color="primary" 
+          variant="ghost"
+          className="w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase" 
+          radius="lg" 
+          onPress={onSaveOpen}
+        >
+          Save Build
+        </Button>
+      </div>
       </main>
 
       {/* 4. Modal: Save Build */}
