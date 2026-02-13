@@ -197,11 +197,11 @@ export default function Page() {
         </div>
 
         <div className="banner-content">
-          <h1 data-content="CSS ONLY">CSS ONLY</h1>
+          <h1 data-content="PC BUILDER">PC BUILDER</h1>
           <div className="author">
-            <h2>LUN DEV</h2>
-            <p><b>Web Design</b></p>
-            <p>Scroll down for more</p>
+            <h2>PC Idea</h2>
+            <p><b>Get compatible recommendations</b></p>
+            <p>Pick your ideal PC components</p>
           </div>
           <div className="model"></div>
         </div>
@@ -347,15 +347,15 @@ export default function Page() {
         }
         .banner .banner-content h2 { font-size: 3em; margin: 0; }
         .banner .banner-content .model {
-          background-image: url("/images/model1.png");
+          background-image: url("/images/model.png");
           width: 100%;
           height: 75vh;
           position: absolute;
           bottom: 0;
           left: 0;
-          background-size: auto 130%;
+          background-size: contain;
           background-repeat: no-repeat;
-          background-position: top center;
+          background-position: bottom center;
           z-index: 1;
         }
         .components-section {
