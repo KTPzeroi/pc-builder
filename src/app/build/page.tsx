@@ -1,5 +1,7 @@
 "use client";
 
+{/* import React, { useState, useRef, MouseEvent, TouchEvent } from "react";กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build */}
+{/* import Link from "next/link"; // <--- เพิ่มบรรทัดนี้  กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {

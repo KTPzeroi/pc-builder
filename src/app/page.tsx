@@ -198,6 +198,15 @@ export default function Page() {
 
         <div className="banner-content">
           <h1 data-content="PC BUILDER">PC BUILDER</h1>
+          {/* --- ส่วนที่เพิ่มใหม่: ปุ่ม PLAN YOUR BUILD --- */}
+          <div className="cta-container">
+           {/*Link กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
+              <button className="plan-build-btn">
+                PLAN YOUR BUILD
+              </button>
+           {/*Link กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
+          </div>
+          {/* -------------------------------------- */}
           <div className="author">
             <h2>PC Idea</h2>
             <p><b>Get compatible recommendations</b></p>
@@ -269,8 +278,8 @@ export default function Page() {
 
       {/* STYLES */}
       <style jsx>{`
-        @import url('https://fonts.cdnfonts.com/css/ica-rubrik-black');
-        @import url('https://fonts.cdnfonts.com/css/poppins');
+        /* 1. เปลี่ยน Import เป็น Kanit */
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;900&display=swap');
 
         .banner {
           width: 100%;
@@ -320,7 +329,9 @@ export default function Page() {
           z-index: 1;
         }
         .banner .banner-content h1 {
-          font-family: 'ICA Rubrik';
+          /* 2. แก้ฟอนต์หัวข้อใหญ่ */
+          font-family: 'Kanit', sans-serif;
+          font-weight: 900; /* หนาพิเศษเพื่อให้ดูแน่นเหมือนรูปต้นฉบับ */
           font-size: 16em;
           line-height: 1em;
           color: #25283b;
@@ -341,11 +352,13 @@ export default function Page() {
           color: transparent;
         }
         .banner .banner-content .author {
-          font-family: Poppins;
+          /* 3. แก้ฟอนต์คำอธิบาย */
+          font-family: 'Kanit', sans-serif;
+          font-weight: 400;
           text-align: right;
           max-width: 200px;
         }
-        .banner .banner-content h2 { font-size: 3em; margin: 0; }
+        .banner .banner-content h2 { font-size: 3em; margin: 0; font-weight: 600; }
         .banner .banner-content .model {
           background-image: url("/images/model.png");
           width: 100%;
@@ -370,17 +383,70 @@ export default function Page() {
             position: relative;
             z-index: 5;
         }
+            /* --- CSS สำหรับปุ่ม PLAN YOUR BUILD --- */
+        .banner .banner-content .cta-container {
+            position: absolute;
+            top: 94%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 100%;
+            text-align: center;
+        }
+
+        .plan-build-btn {
+            background-color: transparent; 
+            color: #00d2ff; 
+            border: 2px solid #00d2ff; 
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-weight: 600; /* ปรับความหนา */
+            
+            /* 4. แก้ฟอนต์ปุ่ม */
+            font-family: 'Kanit', sans-serif;
+            
+            border-radius: 50px; 
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2), inset 0 0 10px rgba(0, 210, 255, 0.1);
+            backdrop-filter: blur(4px); 
+        }
+
+        .plan-build-btn:hover {
+            background-color: #00d2ff;
+            color: #000; 
+            box-shadow: 0 0 20px #00d2ff, 0 0 40px #00d2ff; 
+            transform: scale(1.05); 
+        }
+
+        @media (max-width: 768px) {
+            .banner .banner-content .cta-container {
+                top: 65%;
+            }
+            .plan-build-btn {
+                padding: 12px 35px;
+                font-size: 1rem;
+            }
+        }
       `}</style>
 
       <style jsx global>{`
-        body { margin: 0; font-family: sans-serif; overflow-x: hidden; }
+        /* 5. บังคับใช้ Kanit ทั้งเว็บที่ body */
+        body { 
+            margin: 0; 
+            font-family: 'Kanit', sans-serif; /* เปลี่ยนจาก sans-serif ธรรมดา */
+            overflow-x: hidden; 
+        }
+        
         .slider {
             width: 70vw;
             overflow: hidden;
             padding: 100px 0;
             box-sizing: border-box;
             backdrop-filter: blur(10px);
-            background-color: #fff3;
+            background-color: #0B0F19;
             border-radius: 20px;
             position: relative;
             user-select: none; 
@@ -395,8 +461,9 @@ export default function Page() {
             text-align: center;
             color: #fff;
             text-shadow: 0 0 10px #0007;
-            font-weight: 500;
+            font-weight: 600; /* หนาขึ้นนิดหน่อย */
             font-size: 2rem;
+            font-family: 'Kanit', sans-serif;
         }
         .slider .form {
             width: max-content;
@@ -432,7 +499,11 @@ export default function Page() {
             backdrop-filter: blur(10px);
             background: rgba(0,0,0,0.3);
             color: #fff;
-            font-family: monospace;
+            
+            /* 6. แก้ฟอนต์ชื่ออุปกรณ์ใน Slider */
+            font-family: 'Kanit', sans-serif;
+            font-weight: 300;
+            
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -440,16 +511,17 @@ export default function Page() {
             box-sizing: border-box;
         }
         .slider .form .item .content .des button {
-            background-color: #eee;
-            border: none;
+            background-color: #102C57;
+            border: #3b82f6;
             border-radius: 10px;
             font-size: small;
             padding: 5px 10px;
             cursor: pointer;
-            color: #333;
-            /* สำคัญ: ให้แน่ใจว่าปุ่มกดได้ */
+            color: #60a5fa;
             pointer-events: auto; 
             z-index: 10;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 500;
         }
         .slider .form .item img {
             width: 100%;
@@ -465,9 +537,12 @@ export default function Page() {
         }
         .popup-box {
             width: 750px; max-width: 95%; max-height: 85vh; overflow-y: auto;
-            background: linear-gradient(145deg, #1e1e1e, #2a2a2a); color: #ffffff;
+            background: linear-gradient(145deg, #4B5563, #0B0F19); color: #ffffff;
             border-radius: 25px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 25px; animation: popupShow .3s ease; position: relative;
+            
+            /* 7. แก้ฟอนต์ใน Popup */
+            font-family: 'Kanit', sans-serif;
         }
         @media (max-width: 768px) {
             .popup-box { padding: 20px; gap: 15px; }
@@ -475,7 +550,7 @@ export default function Page() {
         }
         .popup-box img {
             width: 200px; height: 200px; object-fit: contain; border-radius: 20px;
-            background: #111; padding: 20px; align-self: center;
+            background: #0F1115; padding: 20px; align-self: center;
         }
         .popup-close {
             position: absolute; top: 20px; right: 25px; font-size: 26px; cursor: pointer; transition: .2s;
