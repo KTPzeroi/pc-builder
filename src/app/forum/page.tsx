@@ -209,7 +209,7 @@ export default function ForumPage() {
                     <div className="flex flex-col gap-6">
                       <Select label="Category" placeholder="Select a category" variant="bordered" labelPlacement="outside">
                         {categories.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                          <SelectItem key={cat.value}>{cat.label}</SelectItem>
                         ))}
                       </Select>
                       <Input label="Topic Title" placeholder="ระบุหัวข้อที่ต้องการพูดคุย..." variant="bordered" labelPlacement="outside" />

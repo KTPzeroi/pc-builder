@@ -1,0 +1,49 @@
+// 1. กำหนดตัวสร้าง Client เพื่อให้ Next.js เรียกใช้งานได้
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 2. เชื่อมต่อกับ PostgreSQL ใน Docker โดยใช้ DATABASE_URL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ตามด้วย Model ของคุณด้านล่าง ---
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  bio       String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  
+  posts     Post[]    
+  comments  Comment[] 
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  status    String   @default("Public") 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  comments  Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id])
+}

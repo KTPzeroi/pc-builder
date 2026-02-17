@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: pc-builder-db
+    restart: always
+    environment:
+      POSTGRES_USER: user_builder
+      POSTGRES_PASSWORD: password_builder
+      POSTGRES_DB: pc_builder_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: pc-builder-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://user_builder:password_builder@db:5432/pc_builder_db?schema=public"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

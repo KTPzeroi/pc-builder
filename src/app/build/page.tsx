@@ -224,7 +224,7 @@ export default function BuildPage() {
                       {categoryFilters[selectedCategory]?.map((f) => (
                         <Select key={f.key} label={f.label} labelPlacement="outside" placeholder="ทั้งหมด" size="sm" className="min-w-[140px] md:w-full"
                           classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10" }}>
-                          {f.options.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                          {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
                         </Select>
                       ))}
                     </div>
