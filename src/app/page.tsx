@@ -1,6 +1,16 @@
 "use client";
 
 import React, { useState, useRef, MouseEvent, TouchEvent } from "react";
+// import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@heroui/react"; // ถ้าไม่ได้ใช้ นำออกได้ครับเพื่อลดขนาดไฟล์
+import { PiGraphicsCardBold } from "react-icons/pi";
+import { BsCpu } from "react-icons/bs";
+import { BsMotherboard } from "react-icons/bs";
+import { BsDeviceSsd } from "react-icons/bs";
+import { FaRegHdd } from "react-icons/fa";
+import { BsMemory } from "react-icons/bs";
+import { LuPcCase } from "react-icons/lu";
+import { BiTachometer } from "react-icons/bi";
+import { PiFan } from "react-icons/pi";
 
 // ==========================================
 // DATA: ข้อมูลสำหรับส่วน PC Components
@@ -9,7 +19,7 @@ interface ComponentDetail {
   title: string;
   desc: string;
   details: string[];
-  image: string;
+  icon: React.ReactNode;
 }
 
 const componentData: ComponentDetail[] = [
@@ -22,7 +32,7 @@ const componentData: ComponentDetail[] = [
       "คำนวณทางคณิตศาสตร์และตรรกะ",
       "ตัวอย่างยอดนิยม: Intel Core i5 / i7, AMD Ryzen 5 / 7",
     ],
-    image: "/images/CPU.png",
+    icon: <BsCpu style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "Mainboard – Motherboard",
@@ -32,7 +42,7 @@ const componentData: ComponentDetail[] = [
       "ควบคุมการส่งข้อมูลภายในเครื่อง",
       "จ่ายไฟให้กับอุปกรณ์",
     ],
-    image: "/images/MAINBOARD.png",
+    icon: <BsMotherboard style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "GPU – Graphics Processing Unit",
@@ -43,7 +53,7 @@ const componentData: ComponentDetail[] = [
       "เรนเดอร์วิดีโอ",
       "ตัวอย่าง: RTX 4060 / RX 7600",
     ],
-    image: "/images/GPU.png",
+    icon: <PiGraphicsCardBold style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "RAM – Random Access Memory",
@@ -54,7 +64,7 @@ const componentData: ComponentDetail[] = [
       "เพิ่มประสิทธิภาพเกมและงานหนัก",
       "ขนาดยอดนิยม: 16GB / 32GB",
     ],
-    image: "/images/MEMORY.png",
+    icon: <BsMemory style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "SSD – Solid State Drive",
@@ -64,13 +74,13 @@ const componentData: ComponentDetail[] = [
       "ไม่มีเสียง",
       "ทนทานกว่า HDD",
     ],
-    image: "/images/SDD.png",
+    icon: <BsDeviceSsd style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "HDD – Hard Disk Drive",
     desc: "HDD คืออุปกรณ์เก็บข้อมูลแบบจานหมุน เหมาะสำหรับเก็บไฟล์ขนาดใหญ่",
     details: ["ข้อดี: ราคาถูก", "ความจุสูง"],
-    image: "/images/HDD.png",
+    icon: <FaRegHdd style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "Power Supply – PSU",
@@ -80,19 +90,19 @@ const componentData: ComponentDetail[] = [
       "ป้องกันไฟกระชาก",
       "ควบคุมแรงดันไฟให้เสถียร",
     ],
-    image: "/images/POWER.png",
+    icon: <BiTachometer style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "Case – Computer Chassis",
     desc: "เคสคือโครงสร้างที่ใช้ติดตั้งอุปกรณ์ทั้งหมด พร้อมช่วยระบายความร้อน",
     details: ["หน้าที่: ป้องกันอุปกรณ์", "ระบายความร้อน", "เพิ่มความสวยงาม"],
-    image: "/images/CASE.png",
+    icon: <LuPcCase style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
   {
     title: "CPU Cooler – Cooling System",
     desc: "ชุดระบายความร้อน CPU ทำหน้าที่ลดอุณหภูมิของหน่วยประมวลผล",
     details: ["ประเภท: Air Cooler", "Liquid Cooling"],
-    image: "/images/COOLER.png",
+    icon: <PiFan style={{ width: "60%", height: "60%", color: "#ffffff" }} />,
   },
 ];
 
@@ -106,21 +116,21 @@ export default function Page() {
   const mouseDownAt = useRef<number>(0);
   const left = useRef<number>(0);
   const [selectedItem, setSelectedItem] = useState<ComponentDetail | null>(null);
+  const [isDragging, setIsDragging] = useState(false); // เพิ่ม State เช็คการลากเพื่อจัดการ Transition ความลื่น
 
   // 1. Start Drag
   const startDrag = (clientX: number) => {
     mouseDownAt.current = clientX;
-    // ยังไม่เปลี่ยน cursor ทันที จนกว่าจะมีการขยับจริง (เพื่อแก้เรื่อง Click)
+    setIsDragging(true);
   };
 
   // 2. End Drag
   const endDrag = () => {
     mouseDownAt.current = 0;
+    setIsDragging(false);
     if (sliderRef.current && formRef.current) {
       sliderRef.current.style.userSelect = "unset";
-      sliderRef.current.style.cursor = "unset";
-      
-      // สำคัญ: คืนค่า pointerEvents ให้กดปุ่มได้
+      sliderRef.current.style.cursor = "grab";
       formRef.current.style.pointerEvents = "unset"; 
       
       formRef.current.classList.remove("left");
@@ -128,25 +138,20 @@ export default function Page() {
     }
   };
 
-  // 3. Move Drag (แก้ไขเพิ่ม Threshold)
+  // 3. Move Drag
   const moveDrag = (clientX: number) => {
     if (mouseDownAt.current === 0) return;
 
-    // คำนวณระยะที่ขยับ
     const mouseDelta = clientX - mouseDownAt.current;
 
-    // === FIX START ===
-    // ถ้าขยับน้อยกว่า 10px ให้ถือว่าเป็น "การกด" ไม่ใช่ "การลาก"
-    // (ช่วยแก้ปัญหาแตะปุ่มแล้วกลายเป็นการลาก)
+    // Threshold ป้องกันการกดผิดเป็นลาก
     if (Math.abs(mouseDelta) < 10) return; 
-    // === FIX END ===
 
     if (!sliderRef.current || !formRef.current) return;
 
-    // เริ่มโหมดการลากจริงๆ
     sliderRef.current.style.userSelect = "none";
-    sliderRef.current.style.cursor = "grab";
-    formRef.current.style.pointerEvents = "none"; // ปิดการกดปุ่มชั่วคราวขณะลาก
+    sliderRef.current.style.cursor = "grabbing"; // เปลี่ยนเป็น grabbing ตอนกำลังลาก
+    formRef.current.style.pointerEvents = "none"; 
 
     // Logic เอียงภาพ 3D
     if (clientX > mouseDownAt.current) {
@@ -157,21 +162,21 @@ export default function Page() {
       formRef.current.classList.remove("left");
     }
 
-    // Logic เลื่อน Slider
-    const speed = 3; 
+    // แก้ไข: ปรับ speed ให้ลื่นติดนิ้วมากขึ้น (จาก 3 เหลือ 1.2)
+    const speed = 1.2; 
     const leftTemporary = left.current + mouseDelta / speed;
     const containerWidth = sliderRef.current.offsetWidth;
     const contentWidth = formRef.current.scrollWidth;
     const leftLimit = contentWidth - containerWidth;
 
-    if (leftTemporary <= 0 && Math.abs(leftTemporary) < leftLimit + 100) {
+    // ขอบเขตการลาก (เพิ่มระยะหยืดหยุ่นตอนสุดขอบนิดหน่อย)
+    if (leftTemporary <= 50 && Math.abs(leftTemporary) < leftLimit + 50) {
       formRef.current.style.setProperty("--left", leftTemporary + "px");
       left.current = leftTemporary;
       mouseDownAt.current = clientX;
     }
   };
 
-  // Handlers Wrappers
   const handleMouseDown = (e: MouseEvent) => startDrag(e.clientX);
   const handleMouseUp = () => endDrag();
   const handleMouseMove = (e: MouseEvent) => moveDrag(e.clientX);
@@ -185,33 +190,41 @@ export default function Page() {
       {/* SECTION 1: HERO BANNER */}
       <section className="banner">
         <div className="banner-slider" style={{ ["--quantity" as any]: 9 }}>
-          <div className="banner-item" style={{ ["--position" as any]: 1 }}><img src="/images/CPU.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 2 }}><img src="/images/MAINBOARD.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 3 }}><img src="/images/GPU.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 4 }}><img src="/images/MEMORY.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 5 }}><img src="/images/SDD.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 6 }}><img src="/images/HDD.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 7 }}><img src="/images/POWER.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 8 }}><img src="/images/CASE.png" alt="" /></div>
-          <div className="banner-item" style={{ ["--position" as any]: 9 }}><img src="/images/COOLER.png" alt="" /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 1 }}>
+            <BsCpu style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 2 }}>
+            <PiGraphicsCardBold style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 3 }}>
+            <BsMotherboard style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 4 }}>
+            <BsDeviceSsd style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 5 }}>
+            <BsMemory style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 6 }}>
+            <FaRegHdd style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 7 }}>
+            <BiTachometer style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 8 }}>
+            <LuPcCase style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
+          <div className="banner-item" style={{ ["--position" as any]: 9 }}>
+            <PiFan style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
         </div>
 
         <div className="banner-content">
-          <h1 data-content="PC BUILDER">PC BUILDER</h1>
-          {/* --- ส่วนที่เพิ่มใหม่: ปุ่ม PLAN YOUR BUILD --- */}
+          <h1 data-content="PC BUILDER">PC <br></br>BUILDER</h1>
           <div className="cta-container">
-           {/*Link กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
+            {/* สามารถเปลี่ยนเป็น <a href="/plan"> ได้เลยครับ */}
+            <a href="#plan" style={{ textDecoration: 'none' }}>
               <button className="plan-build-btn">
                 PLAN YOUR BUILD
               </button>
-           {/*Link กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
+            </a>
           </div>
-          {/* -------------------------------------- */}
-          <div className="author">
+          {/*<div className="author">
             <h2>PC Idea</h2>
             <p><b>Get compatible recommendations</b></p>
             <p>Pick your ideal PC components</p>
-          </div>
+          </div>*/}
           <div className="model"></div>
         </div>
       </section>
@@ -231,23 +244,24 @@ export default function Page() {
         >
           <div className="title">PC Component Guide</div>
 
-          <div className="form" ref={formRef}>
+          {/* ผูก Class แบบไดนามิกเพื่อให้มัน Smooth ตอนปล่อยมือ */}
+          <div className={`form ${isDragging ? "dragging" : "sliding"}`} ref={formRef}>
             {componentData.map((item, index) => (
               <div className="item" key={index}>
                 <div className="content">
-                  <img src={item.image} alt={item.title} draggable="false" />
+                  {/* ห่อ Icon ด้วย div เพื่อจัดให้อยู่ตรงกลาง */}
+                  <div className="icon-wrapper">
+                    {item.icon}
+                  </div>
                   <div className="des">
-                    <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100px" }}>
+                    <div className="text-ellipsis">
                       {item.title.split("–")[0]}
                     </div>
-                    {/* ปุ่ม See more แก้ไขให้ใช้ onClick ปกติ เพราะเราแก้ Logic การลากแล้ว */}
                     <button
                       onClick={(e) => {
-                        e.stopPropagation(); // หยุดไม่ให้ event ทะลุไปที่ slider
+                        e.stopPropagation(); 
                         setSelectedItem(item);
                       }}
-                      // ลบ onTouchEnd ออก เพื่อให้ browser จัดการ click event ตามปกติ
-                      // การใช้ทั้งสองอย่างอาจทำให้เกิด double trigger หรือ bug
                     >
                       See more
                     </button>
@@ -264,7 +278,9 @@ export default function Page() {
         <div className="popup-modal" onClick={() => setSelectedItem(null)}>
           <div className="popup-box" onClick={(e) => e.stopPropagation()}>
             <span className="popup-close" onClick={() => setSelectedItem(null)}>&times;</span>
-            <img src={selectedItem.image} alt={selectedItem.title} />
+            <div className="popup-icon-wrapper">
+              {selectedItem.icon}
+            </div>
             <h2>{selectedItem.title}</h2>
             <p>{selectedItem.desc}</p>
             <div className="popup-details">
@@ -278,7 +294,6 @@ export default function Page() {
 
       {/* STYLES */}
       <style jsx>{`
-        /* 1. เปลี่ยน Import เป็น Kanit */
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;900&display=swap');
 
         .banner {
@@ -293,11 +308,11 @@ export default function Page() {
           position: absolute;
           width: 200px;
           height: 250px;
-          top: 10%;
+          top: 15%; /* ปรับตำแหน่งบน Desktop เล็กน้อย */
           left: calc(50% - 100px);
           transform-style: preserve-3d;
           transform: perspective(1000px);
-          animation: autoRun 20s linear infinite;
+          animation: autoRun 25s linear infinite; /* หมุนช้าลงนิดนึงให้ดูพรีเมียม */
           z-index: 2;
         }
         @keyframes autoRun {
@@ -308,41 +323,39 @@ export default function Page() {
           position: absolute;
           inset: 0;
           transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(550px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
-        .banner .banner-slider .banner-item img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+          
         .banner .banner-content {
           position: absolute;
           bottom: 0;
           left: 50%;
           transform: translateX(-50%);
           width: min(1400px, 100vw);
-          height: max-content;
-          padding-bottom: 100px;
+          height: 100vh; /* ให้กล่องคลุมเต็มจอเพื่อจัดเรียงง่ายขึ้น */
           display: flex;
-          flex-wrap: wrap;
-          justify-content: space-between;
+          flex-direction: column;
+          justify-content: center;
           align-items: center;
           z-index: 1;
+          pointer-events: none; /* กันบังปุ่มด้านล่าง */
         }
+        
         .banner .banner-content h1 {
-          /* 2. แก้ฟอนต์หัวข้อใหญ่ */
           font-family: 'Kanit', sans-serif;
-          font-weight: 900; /* หนาพิเศษเพื่อให้ดูแน่นเหมือนรูปต้นฉบับ */
-          font-size: 16em;
+          font-weight: 900;
+          /* RESPONSIVE FONT SIZE: ปรับให้ย่อขยายตามหน้าจออัตโนมัติ */
+          font-size: clamp(4rem, 12vw, 16rem);
           line-height: 1em;
           color: #25283b;
           position: relative;
           margin: 0;
+          text-align: center;
+          pointer-events: auto;
         }
-        @media (max-width: 768px) {
-            .banner .banner-content h1 { font-size: 8em; }
-            .banner .banner-content { justify-content: center; text-align: center; }
-            .banner .banner-content .author { text-align: center; margin-top: 20px; width: 100%; }
-        }
+        
         .banner .banner-content h1:after {
           position: absolute;
           inset: 0;
@@ -351,14 +364,18 @@ export default function Page() {
           -webkit-text-stroke: 2px #d2d2d2;
           color: transparent;
         }
+        
         .banner .banner-content .author {
-          /* 3. แก้ฟอนต์คำอธิบาย */
           font-family: 'Kanit', sans-serif;
           font-weight: 400;
-          text-align: right;
-          max-width: 200px;
+          text-align: center; /* จับให้อยู่ตรงกลางแทนขวาบนมือถือ */
+          margin-top: 20px;
+          color: #fff;
+          opacity: 0.8;
+          pointer-events: auto;
         }
-        .banner .banner-content h2 { font-size: 3em; margin: 0; font-weight: 600; }
+        .banner .banner-content h2 { font-size: clamp(2rem, 5vw, 3em); margin: 0; font-weight: 600; }
+        
         .banner .banner-content .model {
           background-image: url("/images/model.png");
           width: 100%;
@@ -371,40 +388,37 @@ export default function Page() {
           background-position: bottom center;
           z-index: 1;
         }
+
         .components-section {
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             background-color: #020617;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             position: relative;
             z-index: 5;
+            padding: 50px 0;
         }
-            /* --- CSS สำหรับปุ่ม PLAN YOUR BUILD --- */
-        .banner .banner-content .cta-container {
+
+        .cta-container {
             position: absolute;
-            top: 94%; 
+            bottom: 1%; /* เปลี่ยนจาก top: 94% เป็นอิงจากด้านล่าง */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             z-index: 10;
             width: 100%;
             text-align: center;
+            pointer-events: auto;
         }
 
         .plan-build-btn {
-            background-color: transparent; 
+            background-color: rgba(0, 210, 255, 0.1); 
             color: #00d2ff; 
             border: 2px solid #00d2ff; 
             padding: 15px 50px;
             font-size: 1.5rem;
-            font-weight: 600; /* ปรับความหนา */
-            
-            /* 4. แก้ฟอนต์ปุ่ม */
+            font-weight: 600; 
             font-family: 'Kanit', sans-serif;
-            
             border-radius: 50px; 
             cursor: pointer;
             letter-spacing: 1px;
@@ -416,149 +430,220 @@ export default function Page() {
 
         .plan-build-btn:hover {
             background-color: #00d2ff;
-            color: #000; 
+            color: #ffffff; 
             box-shadow: 0 0 20px #00d2ff, 0 0 40px #00d2ff; 
             transform: scale(1.05); 
         }
 
+        /* --- MEDIA QUERIES FOR RESPONSIVE DESIGN --- */
+        @media (max-width: 1024px) {
+          .banner .banner-slider {
+            transform: perspective(1000px) scale(0.8); /* ย่อวง 3D ลงในจอแท็บเล็ต */
+          }
+        }
+
         @media (max-width: 768px) {
-            .banner .banner-content .cta-container {
-                top: 65%;
+            .banner .banner-slider {
+                transform: perspective(1000px) scale(0.5); /* ย่อวง 3D ให้ไม่ล้นจอมือถือ */
+                top: 20%;
+            }
+            .banner .banner-content h1:after {
+                -webkit-text-stroke: 1px #d2d2d2; /* ลดความหนาเส้นขอบตัวอักษร */
+            }
+            .cta-container {
+                bottom: 1%;
             }
             .plan-build-btn {
                 padding: 12px 35px;
-                font-size: 1rem;
+                font-size: 1.2rem;
             }
+            .banner .banner-content .author { margin-top: 10px; }
         }
       `}</style>
 
       <style jsx global>{`
-        /* 5. บังคับใช้ Kanit ทั้งเว็บที่ body */
         body { 
             margin: 0; 
-            font-family: 'Kanit', sans-serif; /* เปลี่ยนจาก sans-serif ธรรมดา */
+            font-family: 'Kanit', sans-serif; 
             overflow-x: hidden; 
+            background-color: #020617; /* กันขอบขาวแว้บๆ */
         }
         
         .slider {
-            width: 70vw;
+            width: 85vw; /* ขยายความกว้าง Slider บนจอทั่วไปให้กว้างขึ้น */
+            max-width: 1200px;
             overflow: hidden;
-            padding: 100px 0;
+            padding: 50px 0;
             box-sizing: border-box;
-            backdrop-filter: blur(10px);
             background-color: #0B0F19;
             border-radius: 20px;
             position: relative;
             user-select: none; 
             -webkit-user-select: none;
-            touch-action: pan-y; 
+            touch-action: pan-y; /* ให้สามารถไถจอขึ้นลงได้ปกติเวลาลาก Slider */
+            cursor: grab;
         }
         @media (max-width: 768px) {
-            .slider { width: 90vw; padding: 50px 0; }
+            .slider { 
+              width: 95vw; 
+              padding: 40px 0; 
+              border-radius: 15px;
+            }
         }
         .title {
-            padding: 20px 0;
+            padding-bottom: 30px;
             text-align: center;
             color: #fff;
             text-shadow: 0 0 10px #0007;
-            font-weight: 600; /* หนาขึ้นนิดหน่อย */
-            font-size: 2rem;
+            font-weight: 600; 
+            font-size: clamp(1.5rem, 4vw, 2rem);
             font-family: 'Kanit', sans-serif;
         }
+        
         .slider .form {
             width: max-content;
             --left: 0;
             transform: translateX(var(--left));
-            margin: 0 10px;
+            margin: 0 15px;
             display: flex;
             gap: 20px;
             will-change: transform; 
         }
+        
+        /* เพิ่ม CSS ทำให้ตอนปล่อยนิ้ว/เมาส์ Slider จะมี Transition ไหลลื่นๆ (Momentum กึ่งๆ) */
+        .slider .form.sliding {
+            transition: transform 0.3s ease-out; 
+        }
+        .slider .form.dragging {
+            transition: none; /* ปิด Transition ตอนลากให้ติดนิ้วทันที */
+        }
+
         .form .item {
-            width: 200px;
-            height: 300px;
+            width: 220px; /* ปรับขนาดการ์ดนิดหน่อยให้สวยขึ้น */
+            height: 320px;
             display: inline-block;
             transform: perspective(1000px);
             transform-style: preserve-3d;
         }
+        
         .slider .form .item .content {
             width: 100%;
             height: 100%;
             position: relative;
-            border-radius: 10px;
+            border-radius: 15px;
             overflow: hidden;
             transition: transform .4s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            background: #0f172a; /* พื้นหลังของการ์ด */
         }
+        
+        /* จัด Layout ให้ Icon ใน Slider อยู่กึ่งกลาง */
+        .slider .form .item .icon-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            padding-bottom: 40px; /* ดันไอคอนขึ้นนิดหน่อยไม่ให้บังข้อความ */
+        }
+
         .slider .form .item .content .des {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 50px;
+            height: 60px;
             backdrop-filter: blur(10px);
-            background: rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.6);
             color: #fff;
-            
-            /* 6. แก้ฟอนต์ชื่ออุปกรณ์ใน Slider */
             font-family: 'Kanit', sans-serif;
             font-weight: 300;
-            
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 0 15px;
             box-sizing: border-box;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
+        
+        .text-ellipsis {
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          white-space: nowrap; 
+          max-width: 110px;
+          font-weight: 500;
+        }
+
         .slider .form .item .content .des button {
-            background-color: #102C57;
-            border: #3b82f6;
-            border-radius: 10px;
-            font-size: small;
-            padding: 5px 10px;
+            background-color: #00d2ff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            padding: 6px 12px;
             cursor: pointer;
-            color: #60a5fa;
+            color: #020617;
             pointer-events: auto; 
             z-index: 10;
             font-family: 'Kanit', sans-serif;
-            font-weight: 500;
+            font-weight: 600;
+            transition: 0.2s;
         }
-        .slider .form .item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            pointer-events: none;
+        .slider .form .item .content .des button:hover {
+            background-color: #fff;
+            transform: scale(1.05);
         }
-        .slider .form.left .item .content { transform: rotateY(-5deg) scale(0.95); }
-        .slider .form.right .item .content { transform: rotateY(5deg) scale(0.95); }
+
+        .slider .form.left .item .content { transform: rotateY(-8deg) scale(0.95); }
+        .slider .form.right .item .content { transform: rotateY(8deg) scale(0.95); }
+        
+        /* POPUP STYLES */
         .popup-modal {
             position: fixed; inset: 0; display: flex; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 999999; animation: fadeIn 0.3s;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.3s;
+            padding: 20px; /* กันชนขอบจอ */
         }
         .popup-box {
-            width: 750px; max-width: 95%; max-height: 85vh; overflow-y: auto;
-            background: linear-gradient(145deg, #4B5563, #0B0F19); color: #ffffff;
-            border-radius: 25px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            display: flex; flex-direction: column; gap: 25px; animation: popupShow .3s ease; position: relative;
-            
-            /* 7. แก้ฟอนต์ใน Popup */
+            width: 700px; max-width: 100%; max-height: 85vh; overflow-y: auto;
+            background: linear-gradient(145deg, #1e293b, #0B0F19); color: #ffffff;
+            border-radius: 20px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; gap: 20px; animation: popupShow .3s ease; position: relative;
             font-family: 'Kanit', sans-serif;
+            border: 1px solid rgba(255,255,255,0.1);
         }
+        
+        /* จัด Layout ให้ Icon ใน Popup */
+        .popup-icon-wrapper {
+            width: 180px; height: 180px; border-radius: 20px;
+            background: rgba(0,0,0,0.3); align-self: center;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 20px rgba(0,210,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
         @media (max-width: 768px) {
-            .popup-box { padding: 20px; gap: 15px; }
-            .popup-box img { width: 150px; height: 150px; }
+            .popup-box { padding: 25px 20px; gap: 15px; border-radius: 15px; }
+            .popup-icon-wrapper { width: 120px; height: 120px; }
+            .popup-box h2 { font-size: 1.5rem; text-align: center; }
+            .popup-box p { font-size: 0.95rem; }
         }
-        .popup-box img {
-            width: 200px; height: 200px; object-fit: contain; border-radius: 20px;
-            background: #0F1115; padding: 20px; align-self: center;
-        }
+        
         .popup-close {
-            position: absolute; top: 20px; right: 25px; font-size: 26px; cursor: pointer; transition: .2s;
+            position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; transition: .2s;
+            color: rgba(255,255,255,0.5);
         }
         .popup-close:hover { transform: scale(1.2); color: #ff4c4c; }
+        
+        /* SCROLLBAR สำหรับ Popup */
+        .popup-box::-webkit-scrollbar { width: 8px; }
+        .popup-box::-webkit-scrollbar-track { background: transparent; }
+        .popup-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .popup-box::-webkit-scrollbar-thumb:hover { background: #475569; }
+
         @keyframes popupShow { from { transform: translateY(40px) scale(.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
+      
     </main>
   );
 }
