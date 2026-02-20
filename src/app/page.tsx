@@ -138,7 +138,7 @@ const componentData: ComponentDetail[] = [
 export default function Page() {
   // ==========================================
   // LOGIC: ส่วน PC Components (Slider & Drag)
-  // (เก็บไว้เหมือนเดิม 100%)
+  // (เก็บไว้เหมือนเดิม 100% ตามที่ต้องการ)
   // ==========================================
   const sliderRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -225,7 +225,6 @@ export default function Page() {
           <h1 data-content="PC BUILDER" style={{ fontFamily: 'Kanit' }}>PC <br></br>BUILDER</h1>
           <div className="cta-container">
             <a href="#plan" style={{ textDecoration: 'none' }}>
-              {/* เปลี่ยนเป็น HeroUI Button ตำแหน่งเดิมเป๊ะ */}
               <Button 
                 color="primary" 
                 variant="shadow" 
@@ -315,13 +314,10 @@ export default function Page() {
           <div className={`form ${isDragging ? "dragging" : "sliding"}`} ref={formRef}>
             {componentData.map((item, index) => (
               <div className="item" key={index}>
-                {/* รักษาโครงสร้าง .content เดิมไว้ให้ทำงานร่วมกับ CSS ของคุณได้ 
-                  แต่ครอบด้วย <Card> ของ HeroUI เพื่อความสวยงามตอน hover และแสงเงา 
-                */}
                 <Card 
                   isHoverable
                   radius="lg"
-                  className="content !bg-[#0f172a] border-none shadow-[0_10px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.2)] transition-shadow duration-300"
+                  className="content !bg-[#0f172a] border-none shadow-[0_10px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.2)]"
                 >
                   <div className="icon-wrapper">
                     {item.icon}
@@ -331,7 +327,6 @@ export default function Page() {
                     <div className="text-ellipsis font-kanit">
                       {item.title.split("–")[0]}
                     </div>
-                    {/* ปุ่ม See more เป็น HeroUI */}
                     <Button
                       size="sm"
                       color="primary"
@@ -353,17 +348,18 @@ export default function Page() {
         </div>
       </section>
 
-      {/* HERO UI: POPUP MODAL (มาแทนที่ div โครงสร้างเก่า เพื่อความลื่นไหลและสวยล้ำ) */}
+      {/* HERO UI: POPUP MODAL */}
       <Modal 
         isOpen={!!selectedItem} 
         onOpenChange={(isOpen) => !isOpen && setSelectedItem(null)}
         backdrop="blur" 
         size="2xl"
         classNames={{
-          base: "bg-gradient-to-br from-[#1e293b] to-[#0B0F19] text-white border border-white/10 shadow-2xl font-kanit",
-          header: "border-b border-white/5",
-          footer: "border-t border-white/5",
-          closeButton: "hover:bg-white/10 active:bg-white/20 text-white/70 hover:text-white transition-colors",
+          base: "bg-gradient-to-br from-[#1e293b] to-[#0B0F19] text-white border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] font-kanit",
+          header: "border-b border-white/5 pb-3 pt-5 px-8", 
+          body: "py-6 px-8", 
+          footer: "border-t border-white/5 py-3 px-8", 
+          closeButton: "hover:bg-white/10 active:bg-white/20 text-white/70 hover:text-white transition-colors top-4 right-4",
         }}
         motionProps={{
           variants: {
@@ -375,43 +371,49 @@ export default function Page() {
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 text-[1.6rem] font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70">
+              <ModalHeader className="flex flex-col gap-1 text-[1.6rem] font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70">
                 {selectedItem?.title}
               </ModalHeader>
-              <ModalBody className="py-6">
+              <ModalBody>
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  {/* กรอบไอคอน */}
-                  <div className="flex-shrink-0 w-[150px] h-[150px] rounded-2xl bg-black/40 flex justify-center items-center shadow-[inset_0_0_20px_rgba(0,210,255,0.05)] border border-white/5 relative group overflow-hidden">
+                  
+                  <div className="flex-shrink-0 w-[140px] h-[140px] rounded-2xl bg-black/40 flex justify-center items-center shadow-[inset_0_0_20px_rgba(0,210,255,0.05)] border border-white/10 relative group overflow-hidden">
                     <div className="absolute inset-0 bg-[#00d2ff]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="scale-[1.5] drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] relative z-10">
-                      {selectedItem?.icon}
+                    <div className="w-20 h-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] relative z-10 transition-transform duration-300 group-hover:scale-110">
+                       {React.isValidElement(selectedItem?.icon) 
+                          ? React.cloneElement(selectedItem.icon as React.ReactElement<any>, { 
+                              style: { width: '100%', height: '100%' } 
+                            }) 
+                          : selectedItem?.icon}
                     </div>
                   </div>
-                  {/* รายละเอียด */}
-                  <div className="flex flex-col gap-4 w-full">
-                    <p className="text-white/80 text-[1.05rem] leading-relaxed font-light">
+                  
+                  <div className="flex flex-col gap-3 w-full pt-1">
+                    <p className="text-white/85 text-[1rem] leading-relaxed font-light line-clamp-3">
                       {selectedItem?.desc}
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-1">
                       {selectedItem?.details.map((line, idx) => (
                         <Chip 
                           key={idx} 
                           variant="flat" 
                           color="primary" 
-                          className="bg-[#00d2ff]/10 border-none text-white/90 font-kanit"
+                          size="sm"
+                          className="bg-[#00d2ff]/10 border border-[#00d2ff]/20 text-white/95 font-kanit py-1 px-2"
                         >
                           {line}
                         </Chip>
                       ))}
                     </div>
                   </div>
+
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose} className="font-kanit">
+                <Button color="danger" variant="light" onPress={onClose} className="font-kanit text-[1rem]">
                   Close
                 </Button>
-                <Button color="primary" variant="shadow" onPress={onClose} className="font-kanit font-semibold bg-[#00d2ff] text-black">
+                <Button color="primary" variant="shadow" onPress={onClose} className="font-kanit font-semibold bg-[#00d2ff] text-black text-[1rem] px-6">
                   Got it
                 </Button>
               </ModalFooter>
@@ -420,7 +422,7 @@ export default function Page() {
         </ModalContent>
       </Modal>
 
-      {/* STYLES (โครงสร้างเดิมของคุณทั้งหมด ไม่มีการลบออก!) */}
+      {/* STYLES */}
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;900&display=swap');
 
@@ -518,7 +520,7 @@ export default function Page() {
           z-index: 1;
         }
 
-        /* --- สไตล์ของ SECTION 1.5 (Responsive แบบ PC และ Mobile) --- */
+        /* --- สไตล์ของ SECTION 1.5 --- */
         .build-sequence-section {
           width: 100%;
           background-color: #020617; 
@@ -633,7 +635,7 @@ export default function Page() {
             
             /* --- Responsive Horizontal Scroll บนมือถือ --- */
             .build-sequence-section {
-                padding: 80px 0 20px; 
+                padding: 130px 0 40px; 
             }
             .sequence-container {
                 padding: 70px 0px 0px;
@@ -719,11 +721,18 @@ export default function Page() {
             will-change: transform; 
         }
         
+        /* -----------------------------------------------------------
+           เวทย์มนตร์เรื่องความ Smooth อยู่ตรง CSS บล็อคนี้ครับ!
+           ผมแค่เปลี่ยนค่า transition ให้ซับแรงกระแทกจาก JS
+        ------------------------------------------------------------- */
         .slider .form.sliding {
-            transition: transform 0.3s ease-out; 
+            /* จังหวะปล่อยมือ: เปลี่ยนให้เบรกแบบมีน้ำหนัก ไหลลื่นๆ (Glide) */
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.3, 1); 
         }
+        
         .slider .form.dragging {
-            transition: none; 
+            /* จังหวะกำลังลาก: เพิ่ม transition สั้นๆ เพื่อลบรอยกระตุก (Stutter) ที่เกิดจากเมาส์ */
+            transition: transform 0.15s ease-out; 
         }
 
         .form .item {
@@ -734,14 +743,14 @@ export default function Page() {
             transform-style: preserve-3d;
         }
         
-        /* สไตล์ .content ถูกคุมด้วย HeroUI Card แล้ว แต่ยังต้องมี transform */
         .slider .form .item .content {
             width: 100%;
             height: 100%;
             position: relative;
             border-radius: 15px;
             overflow: hidden;
-            transition: transform .4s ease;
+            /* การเอียง 3D: หน่วงเวลา 0.5s ให้มันค่อยๆ เอียง ไม่สะบัดแรงเวลาเมาส์ขยับนิดเดียว */
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
         }
         
         .slider .form .item .icon-wrapper {
@@ -778,7 +787,7 @@ export default function Page() {
           font-weight: 500;
         }
 
-        /* 3D Tilt Effect เดิม (ทำงานปกติ) */
+        /* 3D Tilt Effect เดิม (ทำงานปกติ แต่จะดูสมูทขึ้นเพราะ transition ด้านบน) */
         .slider .form.left .item .content { transform: rotateY(-8deg) scale(0.95); }
         .slider .form.right .item .content { transform: rotateY(8deg) scale(0.95); }
       `}</style>
