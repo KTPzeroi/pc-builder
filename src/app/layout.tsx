@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Providers } from "./providers";
-import AppNavbar from "@/components/Navbar"; // ตรวจสอบว่ามีบรรทัดนี้บรรทัดเดียว
+import AppNavbar from "@/components/Navbar";
 
 export default function RootLayout({
   children,
@@ -12,7 +12,8 @@ export default function RootLayout({
       <body className="antialiased bg-black text-white min-h-screen">
         <Providers>
           <AppNavbar /> 
-          <main>
+          {/* 🟢 เพิ่ม className="pt-20" เพื่อเว้นระยะจาก Navbar */}
+          <main className="pt-20"> 
             {children} 
           </main>
         </Providers>

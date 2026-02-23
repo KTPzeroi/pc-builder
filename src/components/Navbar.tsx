@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button,
   Modal, ModalContent, ModalHeader, ModalBody,
@@ -10,16 +10,30 @@ import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
+import { signIn, signOut, useSession } from "next-auth/react"; // 🟢 เพิ่ม Logic สำหรับ NextAuth
 
 export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession(); // 🟢 ดึงข้อมูล Session จาก Google
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
   
+  // สถานะผู้ใช้ที่รองรับทั้งการ Login ปกติ และ Google Login
   const [currentUser, setCurrentUser] = useState<{name: string, email: string, image?: string | null} | null>(null);
+
+  // 🟢 คอยติดตามผลเมื่อมีการ Login ผ่าน Google สำเร็จ
+  useEffect(() => {
+    if (session?.user) {
+      setCurrentUser({
+        name: session.user.name ?? "",
+        email: session.user.email ?? "",
+        image: session.user.image
+      });
+    }
+  }, [session]);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -36,7 +50,7 @@ export default function AppNavbar() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth", {
+      const res = await fetch("/api/auth/credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,8 +87,15 @@ export default function AppNavbar() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    alert("ระบบ Login ด้วย Google จะถูกเพิ่มในภายหลัง");
+  // 🟢 ฟังก์ชันสำหรับ Login ด้วย Google (Design เดิม)
+  const handleGoogleLogin = async () => {
+    await signIn("google", { callbackUrl: "/" });
+  };
+
+  // 🟢 ฟังก์ชันสำหรับ Logout (Design เดิม)
+  const handleLogout = async () => {
+    setCurrentUser(null);
+    await signOut({ callbackUrl: "/" });
   };
 
   const menuItems = [
@@ -124,7 +145,7 @@ export default function AppNavbar() {
                         src: currentUser.image || undefined,
                         showFallback: true,
                         name: currentUser.name.charAt(0).toUpperCase(),
-                        className: "border-blue-500 bg-slate-800 ml-3" // 🟢 เพิ่ม ml-3 เพื่อเว้นระยะห่างระหว่างชื่อและรูป
+                        className: "border-blue-500 bg-slate-800 ml-3"
                       }}
                       className="transition-transform"
                       name={currentUser.name}
@@ -135,7 +156,6 @@ export default function AppNavbar() {
                   </div>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="User Actions" variant="flat">
-                  {/* 🟢 นำปุ่ม User Profile กลับมา */}
                   <DropdownItem key="profile" onPress={() => router.push("/profile")}>
                     User Profile
                   </DropdownItem>
@@ -143,19 +163,7 @@ export default function AppNavbar() {
                     key="logout" 
                     color="danger" 
                     className="text-danger" 
-                    onPress={() => {
-                      // 1. เคลียร์สถานะ User ในเครื่อง
-                      setCurrentUser(null); 
-                      
-                      // 2. เปลี่ยนเส้นทางกลับไปที่หน้า Home
-                      router.push("/"); 
-                      
-                      // 3. ใช้ setTimeout เล็กน้อยเพื่อให้ router.push ทำงานก่อนแล้วค่อย Refresh
-                      // หรือจะใช้ window.location.href = "/" เพื่อทั้งเปลี่ยนหน้าและ Refresh ทีเดียวก็ได้ครับ
-                      setTimeout(() => {
-                        window.location.reload(); 
-                      }, 100);
-                    }}
+                    onPress={handleLogout} // 🟢 เรียกใช้ handleLogout ใหม่
                   >
                     Log Out
                   </DropdownItem>
@@ -249,7 +257,7 @@ export default function AppNavbar() {
                   variant="bordered" 
                   className="w-full border-white/10 text-white hover:bg-white/5 transition-colors font-medium" 
                   startContent={<FcGoogle className="text-xl mr-2" />}
-                  onPress={handleGoogleLogin}
+                  onPress={handleGoogleLogin} // 🟢 เรียกใช้ handleGoogleLogin ใหม่
                 >
                   Continue with Google
                 </Button>

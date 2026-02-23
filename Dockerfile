@@ -2,22 +2,25 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy ไฟล์ package เพื่อลง dependencies
+RUN apk add --no-cache openssl libc6-compat
+
 COPY package*.json ./
 COPY prisma ./prisma/
 
 RUN npm install
 
-# Copy source code ทั้งหมด
 COPY . .
 
-# Generate Prisma Client และ Build Next.js
-RUN ./node_modules/.bin/prisma generate
+RUN npx prisma generate
+
+
 RUN npm run build
 
-# Stage 2: Run phase
+
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 ENV NODE_ENV=production
 
