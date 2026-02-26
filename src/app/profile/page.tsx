@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Card, CardBody, Avatar, Button, Tabs, Tab, 
-  Chip, Divider, Modal, ModalContent, ModalHeader, 
+  Divider, Modal, ModalContent, ModalHeader, 
   ModalBody, ModalFooter, useDisclosure, Input, Textarea, Spinner
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
@@ -45,16 +45,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // 🟢 1. รอจนกว่าสถานะ Session จะนิ่ง (ไม่เป็น loading)
       if (status === "loading") return;
 
-      // 🟢 2. ถ้าตรวจสอบแล้วว่าไม่ได้ล็อกอินจริงๆ ให้เด้งกลับหน้า Home
       if (status === "unauthenticated") {
         router.push("/");
         return;
       }
 
-      // 🟢 3. ถ้าล็อกอินสำเร็จ ให้ดึงข้อมูลจาก DB โดยส่งทั้ง ID และ Email เพื่อความแม่นยำ
       if (status === "authenticated" && session?.user) {
         try {
           const userEmail = session.user.email || "";
@@ -68,17 +65,16 @@ export default function ProfilePage() {
               id: data.id,
               username: data.username || session.user.name || "User",
               bio: data.bio || "ยังไม่มีคำอธิบาย...",
-              avatar: data.image || session.user.image || "https://i.pravatar.cc/150"
+              avatar: data.image || session.user.image || ""
             };
             setUserData(newUserData);
             setTempData(newUserData);
           } else {
-            // กรณีหาใน DB ไม่เจอ ให้ใช้ข้อมูลเบื้องต้นจาก Session ไปก่อน
             const fallbackData = {
               id: userId,
               username: session.user.name || "User",
               bio: "ยังไม่มีคำอธิบาย...",
-              avatar: session.user.image || "https://i.pravatar.cc/150"
+              avatar: session.user.image || ""
             };
             setUserData(fallbackData);
             setTempData(fallbackData);
@@ -94,13 +90,11 @@ export default function ProfilePage() {
     fetchUserData();
   }, [session, status, router]);
 
-  // 🟢 ฟังก์ชันสำหรับเปิด Modal และรีเซ็ตค่าสำรองให้ตรงกับข้อมูลปัจจุบัน
   const handleOpenEdit = () => {
     setTempData({ ...userData });
     onOpen();
   };
 
-  // 🟢 ฟังก์ชันบันทึกข้อมูลลง Database
   const handleUpdateProfile = async (onClose: () => void) => {
     if (!userData.id) {
         alert("ไม่พบ ID ผู้ใช้ กรุณาลองใหม่");
@@ -159,14 +153,21 @@ export default function ProfilePage() {
         <section className="mb-10">
           <Card className="bg-black/40 border border-white/10 p-8 shadow-xl">
             <CardBody className="flex flex-col md:flex-row items-center gap-8 p-0 overflow-visible">
+              {/* 🟢 Avatar พร้อม Fallback เป็นตัวอักษร */}
               <Avatar 
                 src={userData.avatar}
+                name={userData.username.charAt(0).toUpperCase()}
+                showFallback
                 className="w-32 h-32 text-large border-4 border-blue-500/20 shadow-blue-500/10 shadow-2xl" 
+                classNames={{
+                  base: "bg-slate-800",
+                  name: "text-white font-bold text-3xl"
+                }}
               />
               <div className="flex flex-col gap-2 text-center md:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                   <h1 className="text-3xl font-bold text-white">{userData.username}</h1>
-                  <Chip color="primary" variant="flat" size="sm" className="font-bold uppercase tracking-widest text-[10px]">PC BUILDER ENTHUSIAST</Chip>
+                  {/* 🟢 Chip ถูกเอาออกแล้ว */}
                 </div>
                 <p className="text-gray-400 font-medium italic">"{userData.bio}"</p>
                 <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500 font-bold uppercase tracking-tighter">
@@ -231,7 +232,17 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
                     <div className="bg-black/20 p-8 flex flex-col items-center justify-center gap-6 border-r border-white/5">
                       <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest italic self-start">Profile Image</h4>
-                      <Avatar src={tempData.avatar} className="w-40 h-40 border-4 border-white/5 shadow-2xl" />
+                      {/* 🟢 Avatar ใน Modal พร้อม Fallback */}
+                      <Avatar 
+                        src={tempData.avatar} 
+                        name={tempData.username.charAt(0).toUpperCase()}
+                        showFallback
+                        className="w-40 h-40 border-4 border-white/5 shadow-2xl" 
+                        classNames={{
+                          base: "bg-slate-800",
+                          name: "text-white font-bold text-4xl"
+                        }}
+                      />
                       <p className="text-[10px] text-gray-500 text-center font-medium leading-relaxed">รูปภาพดึงมาจากบัญชีของคุณ</p>
                       <Button size="sm" variant="flat" color="primary" isDisabled className="w-full font-bold uppercase text-[10px]">Change Photo (Soon)</Button>
                     </div>

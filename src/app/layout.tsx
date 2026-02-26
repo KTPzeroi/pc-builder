@@ -13,7 +13,7 @@ export default function RootLayout({
         <Providers>
           <AppNavbar /> 
           {/* 🟢 เพิ่ม className="pt-20" เพื่อเว้นระยะจาก Navbar */}
-          <main className="pt-20"> 
+          <main> 
             {children} 
           </main>
         </Providers>

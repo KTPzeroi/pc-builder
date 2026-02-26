@@ -8,32 +8,36 @@ import {
 } from "@heroui/react";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // เก็บไว้ใช้กับ Navbar Active Tab เท่านั้น
 import { FcGoogle } from "react-icons/fc";
-import { signIn, signOut, useSession } from "next-auth/react"; // 🟢 เพิ่ม Logic สำหรับ NextAuth
+import { signIn, signOut, useSession } from "next-auth/react";
+import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 
 export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession(); // 🟢 ดึงข้อมูล Session จาก Google
+  const { data: session, status } = useSession();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // สถานะผู้ใช้ที่รองรับทั้งการ Login ปกติ และ Google Login
-  const [currentUser, setCurrentUser] = useState<{name: string, email: string, image?: string | null} | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // 🟢 คอยติดตามผลเมื่อมีการ Login ผ่าน Google สำเร็จ
   useEffect(() => {
-    if (session?.user) {
-      setCurrentUser({
-        name: session.user.name ?? "",
-        email: session.user.email ?? "",
-        image: session.user.image
-      });
+    setMounted(true);
+    if (!isOpen) {
+      setErrorMessage("");
+      setIsVisible(false);
     }
-  }, [session]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    setErrorMessage("");
+  }, [authMode]);
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -43,60 +47,64 @@ export default function AppNavbar() {
   });
 
   const handleAuth = async () => {
+    setErrorMessage("");
+
     if (authMode === "register" && formData.password !== formData.confirmPassword) {
-      alert("รหัสผ่านไม่ตรงกัน");
+      setErrorMessage("รหัสผ่านไม่ตรงกัน");
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: authMode,
-          identifier: authMode === "login" ? formData.email : undefined,
-          username: formData.username,
-          email: authMode === "register" ? formData.email : undefined,
-          password: formData.password
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        if (authMode === "register") {
+      if (authMode === "register") {
+        const res = await fetch("/api/auth/credentials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "register",
+            username: formData.username,
+            email: formData.email,
+            password: formData.password
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
           alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
           setAuthMode("login");
         } else {
-          setCurrentUser({
-            name: data.name,
-            email: data.email,
-            image: data.image
-          });
-          onOpenChange();
+          setErrorMessage(data.message || "เกิดข้อผิดพลาด");
         }
       } else {
-        alert(data.message || "เกิดข้อผิดพลาด");
+        const result = await signIn("credentials", {
+          identifier: formData.email,
+          password: formData.password,
+          redirect: false,
+          callbackUrl: pathname, 
+        });
+
+        if (result?.error) {
+          setErrorMessage("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+        } else {
+          onOpenChange();
+          router.refresh(); 
+        }
       }
     } catch (err) {
-      console.error(err);
-      alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+      setErrorMessage("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 🟢 ฟังก์ชันสำหรับ Login ด้วย Google (Design เดิม)
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl: "/" });
+    await signIn("google", { callbackUrl: pathname });
   };
 
-  // 🟢 ฟังก์ชันสำหรับ Logout (Design เดิม)
   const handleLogout = async () => {
-    setCurrentUser(null);
     await signOut({ callbackUrl: "/" });
   };
+
+  if (!mounted) return <div className="h-16 bg-black/40 border-b border-white/10" />;
 
   const menuItems = [
     { name: "HOME", href: "/" },
@@ -126,7 +134,9 @@ export default function AppNavbar() {
 
         <NavbarContent justify="end">
           <NavbarItem>
-            {!currentUser ? (
+            {status === "loading" ? (
+              <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse" />
+            ) : !session ? (
               <Button 
                 onPress={() => { setAuthMode("login"); onOpen(); }}
                 variant="flat" 
@@ -142,13 +152,13 @@ export default function AppNavbar() {
                       as="button"
                       avatarProps={{
                         isBordered: true,
-                        src: currentUser.image || undefined,
+                        src: session.user?.image || undefined,
                         showFallback: true,
-                        name: currentUser.name.charAt(0).toUpperCase(),
+                        name: (session.user?.name || "U").charAt(0).toUpperCase(),
                         className: "border-blue-500 bg-slate-800 ml-3"
                       }}
                       className="transition-transform"
-                      name={currentUser.name}
+                      name={session.user?.name || "User"}
                       classNames={{
                         name: "text-white font-bold text-sm",
                       }}
@@ -159,12 +169,7 @@ export default function AppNavbar() {
                   <DropdownItem key="profile" onPress={() => router.push("/profile")}>
                     User Profile
                   </DropdownItem>
-                  <DropdownItem 
-                    key="logout" 
-                    color="danger" 
-                    className="text-danger" 
-                    onPress={handleLogout} // 🟢 เรียกใช้ handleLogout ใหม่
-                  >
+                  <DropdownItem key="logout" color="danger" className="text-danger" onPress={handleLogout}>
                     Log Out
                   </DropdownItem>
                 </DropdownMenu>
@@ -199,6 +204,14 @@ export default function AppNavbar() {
               </ModalHeader>
               
               <ModalBody className="flex flex-col gap-4">
+                {/* 🟢 แก้ไข: ใช้การเช็คเงื่อนไขปกติ แทน Framer Motion เพื่อความลื่นไหล */}
+                {errorMessage && (
+                  <div className="bg-danger-500/10 border border-danger-500/50 p-3 rounded-xl flex items-center gap-3 text-danger-500 text-xs font-bold transition-opacity duration-200">
+                    <IoWarningOutline size={18} />
+                    {errorMessage}
+                  </div>
+                )}
+
                 {authMode === "register" && (
                   <Input 
                     label="Username" variant="bordered" labelPlacement="outside" placeholder="Enter your username" 
@@ -208,15 +221,24 @@ export default function AppNavbar() {
                 
                 <Input 
                   label={authMode === "login" ? "Username or Email" : "Email"} 
-                  variant="bordered" 
-                  labelPlacement="outside" 
-                  placeholder={authMode === "login" ? "Enter your username or email" : "Enter your email"} 
+                  variant="bordered" labelPlacement="outside" placeholder="Enter your email" 
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
                 
                 <Input 
-                  label="Password" type="password" variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
+                  label="Password" 
+                  type={isVisible ? "text" : "password"} 
+                  variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  endContent={
+                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                      {isVisible ? (
+                        <IoEyeOffOutline className="text-2xl text-default-400" />
+                      ) : (
+                        <IoEyeOutline className="text-2xl text-default-400" />
+                      )}
+                    </button>
+                  }
                 />
                 
                 {authMode === "register" && (
@@ -226,12 +248,7 @@ export default function AppNavbar() {
                   />
                 )}
 
-                <Button 
-                    color="primary" 
-                    className="w-full font-bold mt-2" 
-                    isLoading={isLoading}
-                    onPress={handleAuth}
-                >
+                <Button color="primary" className="w-full font-bold mt-2" isLoading={isLoading} onPress={handleAuth}>
                   {authMode === "login" ? "Log In" : "Sign Up"}
                 </Button>
                 
@@ -257,7 +274,7 @@ export default function AppNavbar() {
                   variant="bordered" 
                   className="w-full border-white/10 text-white hover:bg-white/5 transition-colors font-medium" 
                   startContent={<FcGoogle className="text-xl mr-2" />}
-                  onPress={handleGoogleLogin} // 🟢 เรียกใช้ handleGoogleLogin ใหม่
+                  onPress={handleGoogleLogin}
                 >
                   Continue with Google
                 </Button>
