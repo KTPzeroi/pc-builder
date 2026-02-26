@@ -29,13 +29,14 @@ model Account {
 }
 
 model User {
-  id            String    @id @default(cuid()) // เปลี่ยนเป็น String เพื่อรองรับ Google Login
+  id            String    @id @default(cuid())
   name          String?
   username      String?   @unique
   email         String?   @unique
   emailVerified DateTime?
   image         String?
   password      String?
+  bio           String?
   accounts      Account[]
   posts         Post[]
   comments      Comment[]

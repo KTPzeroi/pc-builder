@@ -1,126 +1,164 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card, CardBody, Avatar, Button, Tabs, Tab, 
   Chip, Divider, Modal, ModalContent, ModalHeader, 
-  ModalBody, ModalFooter, useDisclosure, Input, Textarea, ScrollShadow
+  ModalBody, ModalFooter, useDisclosure, Input, Textarea, Spinner
 } from "@heroui/react";
-import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-// --- 🟢 ส่วนประกอบภายในไฟล์ (Internal Components) ---
-
+// --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
 function MyBuilds() {
-  const mockBuilds = [
-    { id: 1, name: "สเปกเล่นเกมงบ 30k", cpu: "i5-13400F", gpu: "RTX 4060", total: 31500 },
-    { id: 2, name: "Workstation ขาวล้วน", cpu: "Ryzen 7 7700X", gpu: "RTX 4070 Ti", total: 65000 },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {mockBuilds.map((build) => (
-        <Card key={build.id} className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all">
-          <CardBody className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">{build.name}</h3>
-                <p className="text-xs text-gray-500">{build.cpu} + {build.gpu}</p>
-              </div>
-              <Chip color="success" variant="flat" size="sm">฿{build.total.toLocaleString()}</Chip>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" color="primary" variant="flat" className="flex-1 font-bold">Edit</Button>
-              <Button size="sm" color="danger" variant="light" className="font-bold text-danger">Delete</Button>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
-  );
+  return <div className="text-gray-500 py-10">ยังไม่มีข้อมูลสเปกที่บันทึกไว้</div>;
 }
 
 function MyForum() {
-  const mockMyPosts = [
-    { id: 1, title: "ช่วยดูสเปกหน่อยครับ งบ 30,000 บาท รวมจอ", date: "12 ก.พ. 2026", status: "Public", replies: 15 },
-    { id: 2, title: "รีวิวพัดลมเคสตัวใหม่ ลมแรงแต่เงียบมาก", date: "5 ก.พ. 2026", status: "Private", replies: 0 },
-  ];
-
-  return (
-    <div className="flex flex-col gap-4 text-left">
-      {mockMyPosts.map((post) => (
-        <Card key={post.id} className="bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all">
-          <CardBody className="p-5">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-3 mb-2">
-                  <Chip size="sm" variant="dot" color={post.status === "Public" ? "success" : "default"} className="border-none text-[10px] font-bold uppercase">
-                    {post.status}
-                  </Chip>
-                  <span className="text-[10px] text-gray-500">{post.date}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white truncate">{post.title}</h3>
-              </div>
-              <div className="flex gap-2 w-full md:w-auto">
-                <Button size="sm" variant="flat" color="primary" className="font-bold flex-1 md:flex-none">
-                  {post.status === "Public" ? "Make Private" : "Make Public"}
-                </Button>
-                <Button size="sm" variant="flat" color="danger" className="font-bold flex-1 md:flex-none">Delete</Button>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
-  );
+  return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณสร้าง</div>;
 }
 
 function MyActivity() {
-  const mockActivities = [
-    { id: 101, postTitle: "แนะนำคีย์บอร์ด Custom งบไม่เกิน 5,000", comment: "ลองดู MonsGeek M1W ครับ คุ้มค่ามาก", time: "2 ชั่วโมงที่แล้ว" },
-    { id: 102, postTitle: "จัดสเปกคอมทำงานตัดต่อวิดีโอ 4K", comment: "แนะนำให้ขยับไปใช้ RAM 32GB จะลื่นกว่ามาก", time: "1 วันที่แล้ว" },
-  ];
-
-  return (
-    <div className="flex flex-col gap-4 text-left">
-      {mockActivities.map((activity) => (
-        <Card key={activity.id} className="bg-black/40 border border-white/5 shadow-lg">
-          <CardBody className="p-5">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-bold uppercase tracking-widest">Commented on</span>
-                <p className="text-[11px] text-gray-400 font-bold truncate">"{activity.postTitle}"</p>
-              </div>
-              <p className="text-sm text-gray-200 italic leading-relaxed">"{activity.comment}"</p>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-[10px] text-gray-500">{activity.time}</span>
-                <button className="text-[11px] text-danger font-bold hover:underline">Remove Comment</button>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
-  );
+  return <div className="text-gray-500 py-10">ยังไม่มีกิจกรรมล่าสุด</div>;
 }
 
 // --- 🔵 หน้าหลัก (Main Page) ---
 
 export default function ProfilePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // 1. State สำหรับข้อมูลผู้ใช้จริง
   const [userData, setUserData] = useState({
-    username: "User01",
-    bio: "กำลังหาทางอัปเกรดคอมงบ 30k ครับ",
-    avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+    id: "",
+    username: "",
+    bio: "",
+    avatar: ""
   });
 
+  // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
+  const [tempData, setTempData] = useState({ ...userData });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      // 🟢 1. รอจนกว่าสถานะ Session จะนิ่ง (ไม่เป็น loading)
+      if (status === "loading") return;
+
+      // 🟢 2. ถ้าตรวจสอบแล้วว่าไม่ได้ล็อกอินจริงๆ ให้เด้งกลับหน้า Home
+      if (status === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      // 🟢 3. ถ้าล็อกอินสำเร็จ ให้ดึงข้อมูลจาก DB โดยส่งทั้ง ID และ Email เพื่อความแม่นยำ
+      if (status === "authenticated" && session?.user) {
+        try {
+          const userEmail = session.user.email || "";
+          const userId = (session.user as any).id || "";
+          
+          const res = await fetch(`/api/user/profile?id=${userId}&email=${userEmail}`);
+          
+          if (res.ok) {
+            const data = await res.json();
+            const newUserData = {
+              id: data.id,
+              username: data.username || session.user.name || "User",
+              bio: data.bio || "ยังไม่มีคำอธิบาย...",
+              avatar: data.image || session.user.image || "https://i.pravatar.cc/150"
+            };
+            setUserData(newUserData);
+            setTempData(newUserData);
+          } else {
+            // กรณีหาใน DB ไม่เจอ ให้ใช้ข้อมูลเบื้องต้นจาก Session ไปก่อน
+            const fallbackData = {
+              id: userId,
+              username: session.user.name || "User",
+              bio: "ยังไม่มีคำอธิบาย...",
+              avatar: session.user.image || "https://i.pravatar.cc/150"
+            };
+            setUserData(fallbackData);
+            setTempData(fallbackData);
+          }
+        } catch (err) {
+          console.error("Fetch profile error:", err);
+        } finally {
+          setIsLoadingData(false);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [session, status, router]);
+
+  // 🟢 ฟังก์ชันสำหรับเปิด Modal และรีเซ็ตค่าสำรองให้ตรงกับข้อมูลปัจจุบัน
+  const handleOpenEdit = () => {
+    setTempData({ ...userData });
+    onOpen();
+  };
+
+  // 🟢 ฟังก์ชันบันทึกข้อมูลลง Database
+  const handleUpdateProfile = async (onClose: () => void) => {
+    if (!userData.id) {
+        alert("ไม่พบ ID ผู้ใช้ กรุณาลองใหม่");
+        return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch("/api/auth/credentials", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: userData.id,
+          username: tempData.username,
+          bio: tempData.bio,
+        }),
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        const finalData = {
+          ...userData,
+          username: updatedUser.username,
+          bio: updatedUser.bio
+        };
+        setUserData(finalData);
+        setTempData(finalData);
+        alert("บันทึกข้อมูลสำเร็จ!");
+        onClose();
+      } else {
+        const error = await res.json();
+        alert(error.message || "เกิดข้อผิดพลาดในการบันทึก");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (status === "loading" || isLoadingData) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 text-white">
+        <Spinner size="lg" color="primary" />
+        <p className="font-bold animate-pulse uppercase tracking-widest text-sm">Loading Profile...</p>
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-slate-950 pt-24 pb-12 font-sans">
+    <main className="min-h-screen bg-slate-950 pt-24 pb-12 font-sans text-left">
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
         
         {/* 1. User Header Section */}
-        <section className="mb-10 text-left">
+        <section className="mb-10">
           <Card className="bg-black/40 border border-white/10 p-8 shadow-xl">
-            <CardBody className="flex flex-col md:flex-row items-center gap-8">
+            <CardBody className="flex flex-col md:flex-row items-center gap-8 p-0 overflow-visible">
               <Avatar 
                 src={userData.avatar}
                 className="w-32 h-32 text-large border-4 border-blue-500/20 shadow-blue-500/10 shadow-2xl" 
@@ -128,20 +166,20 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-2 text-center md:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                   <h1 className="text-3xl font-bold text-white">{userData.username}</h1>
-                  <Chip color="primary" variant="flat" size="sm" className="font-bold">PC Builder Enthusiast</Chip>
+                  <Chip color="primary" variant="flat" size="sm" className="font-bold uppercase tracking-widest text-[10px]">PC BUILDER ENTHUSIAST</Chip>
                 </div>
                 <p className="text-gray-400 font-medium italic">"{userData.bio}"</p>
-                <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500">
-                  <span><strong>12</strong> Builds</span>
-                  <span><strong>5</strong> Posts</span>
-                  <span><strong>42</strong> Comments</span>
+                <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500 font-bold uppercase tracking-tighter">
+                  <span><strong>0</strong> Builds</span>
+                  <span><strong>0</strong> Posts</span>
+                  <span><strong>0</strong> Comments</span>
                 </div>
               </div>
               <Button 
-                onPress={onOpen}
+                onPress={handleOpenEdit}
                 color="primary" 
                 variant="bordered" 
-                className="font-bold border-white/10 text-white hover:bg-white/5 transition-all"
+                className="font-bold border-white/10 text-white hover:bg-white/5 transition-all uppercase tracking-widest text-[10px] px-8"
               >
                 Edit Profile
               </Button>
@@ -149,7 +187,7 @@ export default function ProfilePage() {
           </Card>
         </section>
 
-        {/* 2. Content Tabs Selection */}
+        {/* 2. Content Tabs */}
         <section>
           <Tabs 
             aria-label="User Profile Sections" 
@@ -159,35 +197,24 @@ export default function ProfilePage() {
               tabList: "gap-8 border-b border-white/5 w-full",
               tab: "h-12 font-bold px-0",
               cursor: "bg-blue-500",
-              panel: "pt-8"
+              panel: "pt-8 text-center"
             }}
           >
-            <Tab key="builds" title="MY BUILDS">
-              <MyBuilds />
-            </Tab>
-            <Tab key="forum" title="MY FORUM">
-              <MyForum />
-            </Tab>
-            <Tab key="activity" title="MY ACTIVITY">
-              <MyActivity />
-            </Tab>
+            <Tab key="builds" title="MY BUILDS"><MyBuilds /></Tab>
+            <Tab key="forum" title="MY FORUM"><MyForum /></Tab>
+            <Tab key="activity" title="MY ACTIVITY"><MyActivity /></Tab>
           </Tabs>
         </section>
 
-        {/* 🟢 3. Edit Profile Modal (Framer Motion Integrated) */}
+        {/* 3. Edit Profile Modal */}
         <Modal 
           isOpen={isOpen} 
           onOpenChange={onOpenChange}
           backdrop="blur"
+          size="5xl" 
           placement="center"
-          motionProps={{
-            variants: {
-              enter: { y: 0, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
-              exit: { y: 20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
-            }
-          }}
           classNames={{
-            base: "bg-slate-900 border border-white/10 text-white rounded-[2rem]",
+            base: "bg-slate-950 border border-white/10 text-white max-h-[90vh]",
             header: "border-b border-white/5 p-8",
             footer: "border-t border-white/5 p-6"
           }}
@@ -195,43 +222,57 @@ export default function ProfilePage() {
           <ModalContent>
             {(onClose) => (
               <>
-                <ModalHeader className="flex flex-col gap-1 text-left">
-                  <h2 className="text-2xl font-bold">Edit Your Profile</h2>
+                <ModalHeader className="flex flex-col gap-1">
+                  <h2 className="text-2xl font-bold uppercase tracking-tight">Edit Your Profile</h2>
                   <p className="text-xs text-gray-500 font-normal">ปรับแต่งข้อมูลส่วนตัวของคุณให้โดดเด่นในชุมชน</p>
                 </ModalHeader>
-                <ModalBody className="py-6 space-y-6 text-left">
-                  <div className="flex items-center gap-6">
-                    <Avatar src={userData.avatar} className="w-20 h-20 border-2 border-white/10" />
-                    <Button size="sm" variant="flat" color="primary" className="font-bold uppercase text-[10px]">
-                      Change Avatar
-                    </Button>
+                
+                <ModalBody className="p-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
+                    <div className="bg-black/20 p-8 flex flex-col items-center justify-center gap-6 border-r border-white/5">
+                      <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest italic self-start">Profile Image</h4>
+                      <Avatar src={tempData.avatar} className="w-40 h-40 border-4 border-white/5 shadow-2xl" />
+                      <p className="text-[10px] text-gray-500 text-center font-medium leading-relaxed">รูปภาพดึงมาจากบัญชีของคุณ</p>
+                      <Button size="sm" variant="flat" color="primary" isDisabled className="w-full font-bold uppercase text-[10px]">Change Photo (Soon)</Button>
+                    </div>
+
+                    <div className="lg:col-span-2 p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">
+                      <Input 
+                        label="Username" 
+                        value={tempData.username}
+                        onValueChange={(val) => setTempData({...tempData, username: val})}
+                        variant="bordered"
+                        labelPlacement="outside"
+                        classNames={{
+                          label: "text-gray-300 font-bold uppercase tracking-wider text-[10px] mb-2",
+                          inputWrapper: "border-white/10 hover:border-blue-500/50 h-12"
+                        }}
+                      />
+                      <Textarea 
+                        label="Biography" 
+                        value={tempData.bio}
+                        onValueChange={(val) => setTempData({...tempData, bio: val})}
+                        variant="bordered"
+                        labelPlacement="outside"
+                        minRows={4}
+                        classNames={{
+                          label: "text-gray-300 font-bold uppercase tracking-wider text-[10px] mb-2",
+                          inputWrapper: "border-white/10 hover:border-blue-500/50"
+                        }}
+                      />
+                    </div>
                   </div>
-                  <Input 
-                    label="Username" 
-                    placeholder="Enter your username" 
-                    variant="bordered"
-                    labelPlacement="outside"
-                    defaultValue={userData.username}
-                    classNames={{ label: "text-gray-300 font-bold uppercase tracking-wider text-[10px]" }}
-                  />
-                  <Textarea 
-                    label="Bio" 
-                    placeholder="เล่าเรื่องราวของคุณสั้นๆ..." 
-                    variant="bordered"
-                    labelPlacement="outside"
-                    defaultValue={userData.bio}
-                    minRows={3}
-                    classNames={{ label: "text-gray-300 font-bold uppercase tracking-wider text-[10px]" }}
-                  />
                 </ModalBody>
+
                 <ModalFooter>
-                  <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase">Cancel</Button>
+                  <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">Discard</Button>
                   <Button 
                     color="primary" 
-                    className="font-bold px-10 bg-blue-600 shadow-xl shadow-blue-500/20 uppercase"
-                    onPress={onClose}
+                    isLoading={isUpdating}
+                    onPress={() => handleUpdateProfile(onClose)}
+                    className="font-bold px-10 bg-blue-600 shadow-xl shadow-blue-500/20 uppercase text-[10px] tracking-widest"
                   >
-                    Save Changes
+                    Save Profile
                   </Button>
                 </ModalFooter>
               </>
