@@ -12,7 +12,7 @@ export async function GET() {
     const posts = await prisma.post.findMany({
       include: {
         author: {
-          select: { name: true, image: true }
+          select: { name: true, image: true, username: true }
         },
         _count: {
           select: { comments: true }
@@ -32,25 +32,27 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || !(session.user as any)?.id) { 
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (!session || !(session.user as any)?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, content, category } = body;
+    const { title, content, category, images } = body;
 
     if (!title || !content || !category) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
     const newPost = await prisma.post.create({
-    data: {
+      data: {
         title,
         content,
-        category, 
+        category,
+        // @ts-ignore
+        images: images || [],
         authorId: (session.user as any).id, // ใส่ (session.user as any) ตรงนี้ด้วย
-    },
+      },
     });
 
     return NextResponse.json(newPost, { status: 201 });

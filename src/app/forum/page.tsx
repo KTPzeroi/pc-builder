@@ -20,6 +20,7 @@ interface Post {
   author: {
     name: string | null;
     image: string | null;
+    username?: string | null;
   };
   _count: {
     comments: number;
@@ -40,7 +41,7 @@ const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (seconds < 60) return "เมื่อสักครู่";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
@@ -84,7 +85,7 @@ export default function ForumPage() {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       setSelectedFiles((prev) => [...prev, ...filesArray]);
-      
+
       const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
       setPreviews((prev) => [...prev, ...newPreviews]);
     }
@@ -124,11 +125,35 @@ export default function ForumPage() {
 
     try {
       setIsSubmitting(true);
-      
+
+      let imageUrls: string[] = [];
+
+      if (selectedFiles.length > 0) {
+        const uploadFormData = new FormData();
+        selectedFiles.forEach((file) => uploadFormData.append('files', file));
+
+        try {
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            imageUrls = uploadData.urls;
+          } else {
+            console.error('Failed to upload images');
+          }
+        } catch (error) {
+          console.error('Error uploading images:', error);
+        }
+      }
+
       const payload = {
         title: formData.title,
         content: formData.content,
         category: formData.category,
+        images: imageUrls,
       };
 
       const res = await fetch('/api/forum/posts', {
@@ -142,7 +167,7 @@ export default function ForumPage() {
         setPreviews([]); // ล้างรูปภาพหลังโพสต์
         setSelectedFiles([]);
         onClose();
-        fetchPosts(); 
+        fetchPosts();
       } else {
         const errorData = await res.json();
         alert(`Error: ${errorData.error || "เกิดข้อผิดพลาดในการสร้างโพสต์"}`);
@@ -167,7 +192,7 @@ export default function ForumPage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-20 md:pt-28 pb-12">
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
-        
+
         {/* Header */}
         <div className="mb-10 text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 uppercase tracking-tight">COMMUNITY FORUM</h1>
@@ -175,18 +200,18 @@ export default function ForumPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Sidebar Section */}
           <aside className="lg:col-span-3 flex flex-col gap-6 order-2 lg:order-1 w-full">
             <Card className="bg-black/40 border border-white/5 p-5 shadow-xl sticky top-28 w-full">
               <div className="flex flex-col gap-8">
                 <div className="space-y-3">
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-1">ค้นหากระทู้</p>
-                  <Input 
-                    placeholder="ค้นหา..." 
-                    variant="bordered" 
-                    className="text-white" 
-                    fullWidth 
+                  <Input
+                    placeholder="ค้นหา..."
+                    variant="bordered"
+                    className="text-white"
+                    fullWidth
                     value={searchQuery}
                     onValueChange={setSearchQuery}
                     startContent={<span className="text-gray-500">🔍</span>}
@@ -197,11 +222,11 @@ export default function ForumPage() {
 
                 <div className="space-y-3">
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-1">หมวดหมู่</p>
-                  <Tabs 
-                    aria-label="Categories" 
-                    color="primary" 
-                    variant="underlined" 
-                    isVertical 
+                  <Tabs
+                    aria-label="Categories"
+                    color="primary"
+                    variant="underlined"
+                    isVertical
                     className="w-full"
                     selectedKey={selectedTab}
                     onSelectionChange={(key) => setSelectedTab(key as string)}
@@ -213,7 +238,7 @@ export default function ForumPage() {
                   >
                     <Tab key="all" title="All Posts" />
                     {categories.map(cat => (
-                         <Tab key={cat.value} title={cat.label} />
+                      <Tab key={cat.value} title={cat.label} />
                     ))}
                   </Tabs>
                 </div>
@@ -221,30 +246,30 @@ export default function ForumPage() {
             </Card>
 
             <Card className="bg-blue-600/5 border border-blue-500/10 p-5 hidden lg:block">
-                <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 italic">Guidelines</h4>
-                <p className="text-[11px] text-gray-500 leading-relaxed font-medium">โปรดรักษามารยาทในการพูดคุยเพื่อให้สังคมน่าอยู่ครับ</p>
+              <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 italic">Guidelines</h4>
+              <p className="text-[11px] text-gray-500 leading-relaxed font-medium">โปรดรักษามารยาทในการพูดคุยเพื่อให้สังคมน่าอยู่ครับ</p>
             </Card>
           </aside>
 
           {/* Main Content Section */}
           <div className="lg:col-span-9 space-y-4 order-1 lg:order-2 flex flex-col w-full">
             <div className="flex flex-col gap-3 w-full">
-              
+
               {isLoading ? (
-                 <div className="flex justify-center items-center py-20">
-                    <Spinner size="lg" color="primary" />
-                 </div>
+                <div className="flex justify-center items-center py-20">
+                  <Spinner size="lg" color="primary" />
+                </div>
               ) : filteredPosts.length > 0 ? (
                 filteredPosts.map((post) => (
                   <Link href={`/forum/${post.id}`} key={post.id} className="w-full block group">
-                    <Card 
-                      isPressable 
+                    <Card
+                      isPressable
                       className="bg-black/40 border border-white/5 hover:border-blue-500/40 transition-all shadow-lg w-full"
                     >
                       <CardBody className="p-5 md:p-6 text-left w-full">
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="flex items-center gap-4 overflow-hidden flex-1">
-                            <Avatar src={post.author.image || ""} name={post.author.name || "User"} className="hidden sm:flex shrink-0 border border-white/10" size="sm" />
+                            <Avatar src={post.author.image || ""} name={post.author.name || post.author.username || "User"} className="hidden sm:flex shrink-0 border border-white/10" size="sm" />
                             <div className="flex flex-col gap-1.5 overflow-hidden flex-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <Chip size="sm" color={getCategoryColor(post.category) as any} variant="flat" className="h-5 text-[10px] font-bold uppercase p-0 px-2">
@@ -255,13 +280,13 @@ export default function ForumPage() {
                                 </h3>
                               </div>
                               <p className="text-xs text-gray-500 font-medium">
-                                โดย <span className="text-gray-300 font-semibold">{post.author.name || "Unknown"}</span> • {formatTimeAgo(post.createdAt)}
+                                โดย <span className="text-gray-300 font-semibold">{post.author.name || post.author.username || "Unknown"}</span> • {formatTimeAgo(post.createdAt)}
                               </p>
                             </div>
                           </div>
                           <div className="flex flex-col items-end shrink-0 min-w-[60px]">
                             <span className="text-blue-500 font-bold text-sm md:text-base leading-none">
-                                {post._count.comments}
+                              {post._count.comments}
                             </span>
                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Replies</span>
                           </div>
@@ -272,10 +297,10 @@ export default function ForumPage() {
                 ))
               ) : (
                 <Card className="bg-black/20 border border-dashed border-white/10 p-12">
-                   <CardBody className="flex flex-col items-center gap-2 text-gray-500">
-                      <span className="text-4xl">📄</span>
-                      <p className="font-bold">ไม่พบกระทู้ที่ค้นหา</p>
-                   </CardBody>
+                  <CardBody className="flex flex-col items-center gap-2 text-gray-500">
+                    <span className="text-4xl">📄</span>
+                    <p className="font-bold">ไม่พบกระทู้ที่ค้นหา</p>
+                  </CardBody>
                 </Card>
               )}
             </div>
@@ -284,7 +309,7 @@ export default function ForumPage() {
 
         {/* Floating Button */}
         <div className="fixed bottom-8 right-8 z-50">
-          <Button 
+          <Button
             onPress={session ? onOpen : () => alert("กรุณาเข้าสู่ระบบก่อนครับ")}
             color={session ? "primary" : "default"}
             size="lg"
@@ -297,11 +322,11 @@ export default function ForumPage() {
       </div>
 
       {/* New Post Modal */}
-      <Modal 
-        isOpen={isOpen} 
-        onOpenChange={onOpenChange} 
-        backdrop="blur" 
-        size="5xl" 
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        backdrop="blur"
+        size="5xl"
         scrollBehavior="inside"
         classNames={{
           base: "bg-slate-950 border border-white/10 text-white max-h-[90vh]",
@@ -320,16 +345,16 @@ export default function ForumPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
                   <div className="lg:col-span-2 p-6 border-r border-white/5 flex flex-col gap-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
                     <div className="flex flex-col gap-6">
-                      
-                      <Select 
-                        label="Category" 
-                        placeholder="Select a category" 
-                        variant="bordered" 
+
+                      <Select
+                        label="Category"
+                        placeholder="Select a category"
+                        variant="bordered"
                         labelPlacement="outside"
                         selectedKeys={formData.category ? [formData.category] : []}
                         onSelectionChange={(keys) => {
                           const selectedValue = Array.from(keys)[0] as string;
-                          setFormData({...formData, category: selectedValue});
+                          setFormData({ ...formData, category: selectedValue });
                         }}
                       >
                         {categories.map((cat) => (
@@ -339,34 +364,34 @@ export default function ForumPage() {
                         ))}
                       </Select>
 
-                      <Input 
-                        label="Topic Title" 
-                        placeholder="ระบุหัวข้อที่ต้องการพูดคุย..." 
-                        variant="bordered" 
-                        labelPlacement="outside" 
+                      <Input
+                        label="Topic Title"
+                        placeholder="ระบุหัวข้อที่ต้องการพูดคุย..."
+                        variant="bordered"
+                        labelPlacement="outside"
                         value={formData.title}
-                        onValueChange={(val) => setFormData({...formData, title: val})}
+                        onValueChange={(val) => setFormData({ ...formData, title: val })}
                       />
 
-                      <Textarea 
-                        label="Content Description" 
-                        placeholder="รายละเอียดเนื้อหา..." 
-                        variant="bordered" 
-                        labelPlacement="outside" 
-                        minRows={6} 
+                      <Textarea
+                        label="Content Description"
+                        placeholder="รายละเอียดเนื้อหา..."
+                        variant="bordered"
+                        labelPlacement="outside"
+                        minRows={6}
                         value={formData.content}
-                        onValueChange={(val) => setFormData({...formData, content: val})}
+                        onValueChange={(val) => setFormData({ ...formData, content: val })}
                       />
 
                       <div className="flex flex-col gap-3">
                         <label className="text-sm font-bold text-white/70">Upload Images</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          
+
                           {/* 🟢 ส่วนแสดงรูปภาพ Preview ที่เพิ่มเข้าไป */}
                           {previews.map((url, index) => (
                             <div key={url} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
                               <img src={url} alt="preview" className="w-full h-full object-cover" />
-                              <button 
+                              <button
                                 onClick={() => removeImage(index)}
                                 className="absolute top-1 right-1 bg-danger/80 hover:bg-danger text-white rounded-full w-5 h-5 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                               >
@@ -378,19 +403,19 @@ export default function ForumPage() {
                           <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:bg-white/5 hover:border-blue-500/50 transition-all group">
                             <span className="text-2xl group-hover:scale-110 transition-transform">📸</span>
                             <span className="text-[10px] text-gray-500 mt-1 font-bold">Add Photo</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*" 
-                              multiple 
-                              onChange={handleFileChange} 
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              multiple
+                              onChange={handleFileChange}
                             />
                           </label>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="bg-black/20 p-6 flex flex-col gap-4">
                     <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider italic">Attach Your Build</h4>
                     <p className="text-xs text-gray-500 mb-2 font-medium text-left">เลือกสเปกที่คุณจัดไว้เพื่อแนบไปกับโพสต์</p>
@@ -407,13 +432,13 @@ export default function ForumPage() {
               </ModalBody>
               <ModalFooter>
                 <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase">Discard</Button>
-                <Button 
-                    color="primary" 
-                    onPress={handleCreatePost} 
-                    isLoading={isSubmitting}
-                    className="px-10 font-bold bg-blue-600 shadow-lg shadow-blue-500/20 uppercase"
+                <Button
+                  color="primary"
+                  onPress={handleCreatePost}
+                  isLoading={isSubmitting}
+                  className="px-10 font-bold bg-blue-600 shadow-lg shadow-blue-500/20 uppercase"
                 >
-                    Publish Post
+                  Publish Post
                 </Button>
               </ModalFooter>
             </>

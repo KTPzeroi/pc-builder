@@ -48,6 +48,7 @@ model Post {
   content   String
   category  String
   status    String   @default("Public") 
+  images    String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   

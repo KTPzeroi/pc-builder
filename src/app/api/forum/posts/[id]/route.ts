@@ -20,10 +20,10 @@ export async function GET(
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
-        author: { select: { name: true, image: true } },
+        author: { select: { name: true, image: true, username: true } },
         comments: {
           include: {
-            author: { select: { name: true, image: true } }
+            author: { select: { name: true, image: true, username: true } }
           },
           orderBy: { createdAt: 'desc' }
         },
@@ -60,31 +60,32 @@ export async function POST(
     }
 
     const comment = await prisma.comment.create({
-  data: {
-    content: content,
-    // แทนที่จะใช้ postId: parseInt(id) ตรงๆ 
-    // ให้ใช้การ connect ไปที่ post object แทน
-    post: {
-      connect: {
-        id: parseInt(id)
+      data: {
+        content: content,
+        // แทนที่จะใช้ postId: parseInt(id) ตรงๆ 
+        // ให้ใช้การ connect ไปที่ post object แทน
+        post: {
+          connect: {
+            id: parseInt(id)
+          }
+        },
+        // การเชื่อมต่อ author ก็ใช้ email ตามเดิม (ตรวจสอบให้แน่ใจว่า email "test" มีอยู่ใน DB)
+        author: {
+          connect: {
+            email: session.user.email
+          }
+        },
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            image: true,
+            username: true
+          }
+        }
       }
-    },
-    // การเชื่อมต่อ author ก็ใช้ email ตามเดิม (ตรวจสอบให้แน่ใจว่า email "test" มีอยู่ใน DB)
-    author: {
-      connect: {
-        email: session.user.email 
-      }
-    },
-  },
-  include: {
-    author: {
-      select: {
-        name: true,
-        image: true
-      }
-    }
-  }
-});
+    });
 
     return NextResponse.json(comment);
   } catch (error) {
