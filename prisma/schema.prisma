@@ -40,6 +40,7 @@ model User {
   accounts      Account[]
   posts         Post[]
   comments      Comment[]
+  pcBuilds      PCBuild[] 
 }
 
 model Post {
@@ -67,4 +68,63 @@ model Comment {
   author    User     @relation(fields: [authorId], references: [id])
   postId    Int
   post      Post     @relation(fields: [postId], references: [id])
+}
+
+
+// ส่วนสำหรับระบบจัดสเปคคอมพิวเตอร์ (PC Builder)
+
+model Component {
+  id             String   @id @default(cuid())
+  name           String
+  type           String   // "CPU", "GPU", "RAM", "MB", "STORAGE", "PSU", "CASE"
+  brand          String
+  price          Float
+  image          String?
+
+  // -- Compatibility --
+  socket         String?  // LGA1700, AM5
+  ramType        String?  // DDR4, DDR5
+  formFactor     String?  // ATX, ITX
+  capacity       Int?     // GB สำหรับ RAM/Storage, Watt สำหรับ PSU
+
+  // -- Performance Scores (PassMark Based) --
+  cpuSingleScore Int?     // Single Thread Rating
+  cpuMultiScore  Int?     // Multi Thread Mark
+  gpuScore       Int?     // G3D Mark
+  
+  // -- Additional Metrics for Weighting --
+  vramGb         Int?     // สำหรับ GPU (3D Score)
+  ramSpeed       Int?     // MHz (Gaming Score)
+  readWriteSpeed Int?     // MB/s สำหรับ Storage (Work Score)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PCBuild {
+  id            String   @id @default(cuid())
+  name          String   // ชื่อเซ็ตคอม เช่น "เซ็ตเล่นเกมคุ้มๆ 2026"
+  
+  // ผูกกับ User ที่เป็นคนจัดสเปคนี้ (ลบ Cascade คือถ้า User ลบบัญชี สเปคนี้จะหายไปด้วย)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // -- เก็บ ID ของอุปกรณ์แต่ละชิ้นที่ผู้ใช้เลือก --
+  cpuId         String?
+  gpuId         String?
+  ramId         String?
+  motherboardId String?
+  storageId     String?
+  psuId         String?
+  caseId        String?
+
+  // สามารถใช้คำนวณราคารวม หรือเก็บคะแนนรวม (%) ไว้เลยเพื่อความเร็วในการโหลด
+  totalPrice    Float    @default(0)
+  
+  gamingScore   Float?   // % Gaming
+  workingScore  Float?   // % Working
+  renderScore   Float?   // % 3D/Render
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

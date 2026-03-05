@@ -1,27 +1,18 @@
 "use client";
 
-{/* import React, { useState, useRef, MouseEvent, TouchEvent } from "react";กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build */}
-{/* import Link from "next/link"; // <--- เพิ่มบรรทัดนี้  กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/}
-import React, { useState, useMemo } from "react";
+{/* import React, { useState, useRef, MouseEvent, TouchEvent } from "react";กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build */ }
+{/* import Link from "next/link"; // <--- เพิ่มบรรทัดนี้  กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/ }
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Card, CardBody, CardHeader, Button, Progress,
   Select, SelectItem, Badge, Divider, ScrollShadow,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  useDisclosure, Input, addToast
+  useDisclosure, Input, addToast, Spinner
 } from "@heroui/react";
+import type { Component } from "@prisma/client";
 
 // --- Types & Interfaces ---
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  brand: string;
-  price: number;
-  image: string;
-  performance: { office: number; creative: number; gaming: number; };
-}
-
 interface FilterOption {
   label: string;
   key: string;
@@ -31,12 +22,23 @@ interface FilterOption {
 const categoryFilters: Record<string, FilterOption[]> = {
   Processor: [{ label: "Brand", key: "brand", options: ["All", "Intel", "AMD"] }],
   Motherboard: [{ label: "Brand", key: "brand", options: ["All", "ASUS", "MSI"] }],
-  "Graphics Card": [{ label: "Brand", key: "brand", options: ["All", "GIGABYTE", "ASUS"] }],
+  "Graphics Card": [{ label: "Brand", key: "brand", options: ["All", "Nvidia", "AMD"] }],
   Memory: [{ label: "Type", key: "type", options: ["DDR4", "DDR5"] }],
   Storage: [{ label: "Type", key: "type", options: ["NVMe", "SATA"] }],
   "Power Supply": [{ label: "Wattage", key: "wattage", options: ["650W", "750W", "850W"] }],
   Case: [{ label: "Form", key: "form", options: ["Mid Tower", "ITX"] }],
   Cooling: [{ label: "Type", key: "type", options: ["Air", "Liquid"] }]
+};
+
+const categoryToTypeMap: Record<string, string> = {
+  Processor: "CPU",
+  Motherboard: "MB",
+  "Graphics Card": "GPU",
+  Memory: "RAM",
+  Storage: "STORAGE",
+  "Power Supply": "PSU",
+  Case: "CASE",
+  Cooling: "COOLING"
 };
 
 // --- Helper Components ---
@@ -57,22 +59,107 @@ export default function BuildPage() {
   const { isOpen: isSaveOpen, onOpen: onSaveOpen, onOpenChange: onSaveChange } = useDisclosure();
   const [buildName, setBuildName] = useState("");
 
-  const [selectedProducts, setSelectedProducts] = useState<Record<string, Product | null>>({
-    Processor: { id: "cpu-1", name: "Intel Core i5-13400F", category: "Processor", brand: "Intel", price: 6890, image: "https://via.placeholder.com/150", performance: { office: 90, creative: 40, gaming: 30 } },
-    Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null,
+  // เก็บข้อมูลสินค้าทั้งหมดจาก Database
+  const [components, setComponents] = useState<Component[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/components")
+      .then(res => res.json())
+      .then(data => {
+        setComponents(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch components", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const [selectedProducts, setSelectedProducts] = useState<Record<string, Component | null>>({
+    Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null,
   });
 
-  const totals = useMemo(() => {
-    const values = Object.values(selectedProducts).filter(p => p !== null) as Product[];
+  // 🛡 เช็คความเข้ากันได้
+  const checkCompatibility = useMemo(() => {
+    const issues: string[] = [];
+    const cpu = selectedProducts["Processor"];
+    const mb = selectedProducts["Motherboard"];
+    const ram = selectedProducts["Memory"];
+
+    if (cpu && mb && cpu.socket && mb.socket && cpu.socket !== mb.socket) {
+      issues.push(`Socket ${cpu.socket} (CPU) ไม่เข้ากับ ${mb.socket} (Motherboard)`);
+    }
+
+    if (mb && ram) {
+      const mbDdr = mb.ramType || "";
+      const ramDdr = ram.ramType || "";
+      if (mbDdr && ramDdr && !mbDdr.includes(ramDdr) && !ramDdr.includes(mbDdr)) {
+        issues.push(`Motherboard รองรับ ${mbDdr} แต่ RAM เป็น ${ramDdr}`);
+      }
+    } else if (cpu && ram && !mb) {
+      const cpuDdr = cpu.ramType || "";
+      const ramDdr = ram.ramType || "";
+      if (cpuDdr && ramDdr && !cpuDdr.includes(ramDdr) && !ramDdr.includes(cpuDdr)) {
+        issues.push(`CPU รองรับ ${cpuDdr} แต่ระบบ RAM เป็น ${ramDdr}`);
+      }
+    }
+
     return {
-      price: values.reduce((sum, p) => sum + p.price, 0),
-      office: values.length > 0 ? (values.reduce((sum, p) => sum + p.performance.office, 0) / values.length) : 0,
-      creative: values.length > 0 ? (values.reduce((sum, p) => sum + p.performance.creative, 0) / values.length) : 0,
-      gaming: values.length > 0 ? (values.reduce((sum, p) => sum + p.performance.gaming, 0) / values.length) : 0,
+      isOk: issues.length === 0,
+      issues
     };
   }, [selectedProducts]);
 
-  const handleSelectProduct = (category: string, product: Product) => {
+  // 🧮 คำนวณ % จาก Database
+  const totals = useMemo(() => {
+    const values = Object.values(selectedProducts).filter(p => p !== null) as Component[];
+    const cpu = selectedProducts["Processor"];
+    const gpu = selectedProducts["Graphics Card"];
+    const ram = selectedProducts["Memory"];
+
+    const cpuSingle = cpu?.cpuSingleScore || 0;
+    const cpuMulti = cpu?.cpuMultiScore || 0;
+    // ถ้าไม่มี GPU แยก ให้ใช้คะแนน GPU ในตารางที่อาจเป็น 0 ไปก่อน (เดี๋ยวค่อยลดลั่นไว้ทีหลัง)
+    const gpuScore = gpu?.gpuScore || 0;
+    const ramCapacity = ram?.capacity || 0;
+
+    // 🎮 Gaming (100% = GPU 25k)
+    let gaming = 0;
+    if (gpu || cpu) {
+      gaming += Math.min((gpuScore / 25000) * 100, 100) * 0.6;
+      gaming += Math.min((cpuSingle / 4500) * 100, 100) * 0.3;
+      const ramScoreG = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 50 : 20);
+      gaming += ramScoreG * 0.1;
+    }
+
+    // 🎨 Creative/3D (100% = CPU Multi 40k, GPU 35k)
+    let creative = 0;
+    if (gpu || cpu) {
+      creative += Math.min((cpuMulti / 40000) * 100, 100) * 0.45;
+      creative += Math.min((gpuScore / 35000) * 100, 100) * 0.4;
+      const ramScore3D = ramCapacity >= 64 ? 100 : (ramCapacity >= 32 ? 80 : (ramCapacity >= 16 ? 50 : 20));
+      creative += ramScore3D * 0.15;
+    }
+
+    // 💼 Work/Office (100% = CPU Single 4.5k)
+    let office = 0;
+    if (cpu) {
+      office += Math.min((cpuSingle / 4500) * 100, 100) * 0.5;
+      const ramScoreW = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 80 : 50);
+      office += ramScoreW * 0.4;
+      office += Math.min((gpuScore / 15000) * 100, 100) * 0.1;
+    }
+
+    return {
+      price: values.reduce((sum, p) => sum + p.price, 0),
+      office: Math.min(office, 100),
+      creative: Math.min(creative, 100),
+      gaming: Math.min(gaming, 100),
+    };
+  }, [selectedProducts]);
+
+  const handleSelectProduct = (category: string, product: Component) => {
     setSelectedProducts((prev) => ({ ...prev, [category]: product }));
     setSelectedCategory(null);
   };
@@ -82,6 +169,7 @@ export default function BuildPage() {
       addToast({ title: "Please Enter Build Name", color: "danger" });
       return;
     }
+    // TODO: Send specific data to API
     addToast({ title: "Build Saved!", color: "success" });
     onClose();
     setBuildName("");
@@ -125,12 +213,28 @@ export default function BuildPage() {
                 <p className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Estimated Total Price</p>
                 <h2 className="text-4xl md:text-5xl font-bold text-white">฿{totals.price.toLocaleString()}</h2>
               </div>
-              <Badge variant="flat" color="success">
-                <div className="flex items-center gap-2 px-1 py-1 text-success">
-                  <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_10px_rgba(24,201,100,0.5)]"></div>
-                  <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest">Compatibility: OK</span>
+
+              {/* ตราประทับ Compatibility */}
+              {Object.values(selectedProducts).some(p => p !== null) && (
+                <div className="space-y-2">
+                  <Badge variant="flat" color={checkCompatibility.isOk ? "success" : "danger"} className="mb-2">
+                    <div className={`flex items-center gap-2 px-1 py-1 text-${checkCompatibility.isOk ? "success" : "danger"}`}>
+                      <div className={`h-2 w-2 rounded-full bg-${checkCompatibility.isOk ? "success" : "danger"} shadow-[0_0_10px_currentColor]`}></div>
+                      <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest">
+                        {checkCompatibility.isOk ? "Compatibility: OK" : "Compatibility: Issues Found"}
+                      </span>
+                    </div>
+                  </Badge>
+
+                  {!checkCompatibility.isOk && (
+                    <div className="bg-danger/10 border border-danger/20 rounded-md p-3 text-xs text-danger font-medium space-y-1">
+                      {checkCompatibility.issues.map((issue, idx) => (
+                        <p key={idx}>⚠️ {issue}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </Badge>
+              )}
             </div>
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
               <HeroBenchmark label="Work & Office" value={totals.office} color="success" />
@@ -142,27 +246,25 @@ export default function BuildPage() {
 
         {/* 3. Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
-        {/* ปุ่ม Clear: ใช้ w-full เป็นค่าเริ่มต้นสำหรับมือถือ และ sm:w-32 สำหรับจอใหญ่ */}
-        <Button 
-          variant="bordered" 
-          className="w-full sm:w-32 h-14 border-white/10 text-white font-bold text-lg uppercase" 
-          radius="lg"
-          onPress={() => setSelectedProducts({ Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null })}
-        >
-          Clear
-        </Button>
+          <Button
+            variant="bordered"
+            className="w-full sm:w-32 h-14 border-white/10 text-white font-bold text-lg uppercase"
+            radius="lg"
+            onPress={() => setSelectedProducts({ Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null })}
+          >
+            Clear
+          </Button>
 
-        {/* ปุ่ม Save Build: เอา flex-1 ออก แล้วใช้ w-full เหมือนกันเพื่อให้ขนาดเท่ากันในมือถือ */}
-        <Button 
-          color="primary" 
-          variant="ghost"
-          className="w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase" 
-          radius="lg" 
-          onPress={onSaveOpen}
-        >
-          Save Build
-        </Button>
-      </div>
+          <Button
+            color="primary"
+            variant="ghost"
+            className="w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase"
+            radius="lg"
+            onPress={onSaveOpen}
+          >
+            Save Build
+          </Button>
+        </div>
       </main>
 
       {/* 4. Modal: Save Build */}
@@ -208,7 +310,7 @@ export default function BuildPage() {
           <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="absolute inset-0 bg-background/60 backdrop-blur-md" onClick={() => setSelectedCategory(null)} />
             <motion.div className="relative flex h-[95vh] md:h-[85vh] w-full max-w-6xl flex-col bg-slate-900 border border-white/10 shadow-2xl overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem]" initial={{ y: 50, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 50, opacity: 0, scale: 0.95 }}>
-              
+
               <Card className="flex-1 bg-transparent border-none shadow-none">
                 <CardHeader className="flex justify-between p-6 md:p-8 border-b border-white/10 bg-slate-800/50">
                   <div>
@@ -231,7 +333,13 @@ export default function BuildPage() {
                   </aside>
                   <CardBody className="p-0 bg-slate-950">
                     <ScrollShadow className="flex-1 p-4 md:p-8">
-                      <SelectionGrid category={selectedCategory} onSelectProduct={handleSelectProduct} />
+                      {loading ? (
+                        <div className="flex justify-center items-center h-full">
+                          <Spinner color="primary" size="lg" />
+                        </div>
+                      ) : (
+                        <SelectionGrid category={selectedCategory} allComponents={components} onSelectProduct={handleSelectProduct} categoryToType={categoryToTypeMap} />
+                      )}
                     </ScrollShadow>
                   </CardBody>
                 </div>
@@ -244,12 +352,13 @@ export default function BuildPage() {
   );
 }
 
-function SelectionGrid({ category, onSelectProduct }: { category: string, onSelectProduct: (cat: string, p: Product) => void }) {
-  const products: Product[] = [
-    { id: "p1", name: `${category} X-Pro`, category, brand: "BrandA", price: 12500, image: "https://via.placeholder.com/200?text=Product+1", performance: { office: 70, creative: 60, gaming: 80 } },
-    { id: "p2", name: `${category} Lite-Z`, category, brand: "BrandB", price: 8900, image: "https://via.placeholder.com/200?text=Product+2", performance: { office: 60, creative: 50, gaming: 70 } },
-    { id: "p3", name: `${category} Master`, category, brand: "BrandC", price: 18000, image: "https://via.placeholder.com/200?text=Product+3", performance: { office: 85, creative: 75, gaming: 95 } },
-  ];
+function SelectionGrid({ category, allComponents, onSelectProduct, categoryToType }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, categoryToType: Record<string, string> }) {
+  const targetType = categoryToType[category];
+  const products = allComponents.filter(c => c.type === targetType);
+
+  if (products.length === 0) {
+    return <div className="text-gray-400 text-center py-10">ยังไม่มีสินค้าในหมวดหมู่นี้</div>;
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-8">
@@ -257,11 +366,15 @@ function SelectionGrid({ category, onSelectProduct }: { category: string, onSele
         <Card key={product.id} isPressable onPress={() => onSelectProduct(category, product)} className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1">
           <CardBody className="p-0">
             <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden">
-               <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain"/>
+              {product.image ? (
+                <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain" />
+              ) : (
+                <span className="text-gray-400 text-xs">No Image</span>
+              )}
             </div>
             <div className="p-4 space-y-3 text-left">
               <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{product.brand}</p>
-              <h4 className="text-sm font-bold text-white leading-tight truncate">{product.name}</h4>
+              <h4 className="text-sm font-bold text-white leading-tight truncate" title={product.name}>{product.name}</h4>
               <div className="flex justify-between items-center">
                 <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
                 <div className="inline-flex items-center justify-center h-7 px-3 text-[9px] font-bold text-blue-500 uppercase rounded-lg bg-blue-500/10">เลือก</div>
