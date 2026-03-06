@@ -8,18 +8,67 @@ import {
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
 function MyBuilds() {
   return <div className="text-gray-500 py-10">ยังไม่มีข้อมูลสเปกที่บันทึกไว้</div>;
 }
 
-function MyForum() {
-  return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณสร้าง</div>;
+function MyForum({ posts }: { posts: any[] }) {
+  if (!posts || posts.length === 0) {
+    return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณสร้าง</div>;
+  }
+  return (
+    <div className="flex flex-col gap-4 text-left mt-4">
+      {posts.map((post) => (
+        <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
+          <CardBody>
+            <Link href={`/forum/${post.id}`}>
+              <h3 className="text-lg font-bold text-white hover:text-blue-400">{post.title}</h3>
+            </Link>
+            <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
+            <div className="flex gap-4 text-xs text-gray-500">
+              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric'})}</span>
+              <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
+            </div>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
-function MyActivity() {
-  return <div className="text-gray-500 py-10">ยังไม่มีกิจกรรมล่าสุด</div>;
+function MyActivity({ comments }: { comments: any[] }) {
+  if (!comments || comments.length === 0) {
+    return <div className="text-gray-500 py-10">ยังไม่มีกิจกรรมล่าสุด</div>;
+  }
+  return (
+    <div className="flex flex-col gap-4 text-left mt-4">
+      {comments.map((comment) => (
+        <Card key={comment.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
+          <CardBody>
+            <p className="text-sm text-gray-400 mb-2">
+              คุณได้แสดงความคิดเห็นในกระทู้{" "}
+              {comment.post ? (
+                <Link href={`/forum/${comment.post.id}`} className="text-blue-400 font-bold hover:underline">
+                  {comment.post.title}
+                </Link>
+              ) : (
+                <span className="text-gray-500 italic">กระทู้ที่ถูกลบไปแล้ว</span>
+              )}
+            </p>
+            <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+              <p className="text-white text-sm">"{comment.content}"</p>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              {new Date(comment.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
+            </div>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
 // --- 🔵 หน้าหลัก (Main Page) ---
@@ -37,7 +86,9 @@ export default function ProfilePage() {
     id: "",
     username: "",
     bio: "",
-    avatar: ""
+    avatar: "",
+    posts: [] as any[],
+    comments: [] as any[]
   });
 
   // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
@@ -65,7 +116,9 @@ export default function ProfilePage() {
               id: data.id,
               username: data.username || session.user.name || "User",
               bio: data.bio || "ยังไม่มีคำอธิบาย...",
-              avatar: data.image || session.user.image || ""
+              avatar: data.image || session.user.image || "",
+              posts: data.posts || [],
+              comments: data.comments || []
             };
             setUserData(newUserData);
             setTempData(newUserData);
@@ -74,7 +127,9 @@ export default function ProfilePage() {
               id: userId,
               username: session.user.name || "User",
               bio: "ยังไม่มีคำอธิบาย...",
-              avatar: session.user.image || ""
+              avatar: session.user.image || "",
+              posts: [],
+              comments: []
             };
             setUserData(fallbackData);
             setTempData(fallbackData);
@@ -172,8 +227,8 @@ export default function ProfilePage() {
                 <p className="text-gray-400 font-medium italic">"{userData.bio}"</p>
                 <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500 font-bold uppercase tracking-tighter">
                   <span><strong>0</strong> Builds</span>
-                  <span><strong>0</strong> Posts</span>
-                  <span><strong>0</strong> Comments</span>
+                  <span><strong>{userData.posts.length}</strong> Posts</span>
+                  <span><strong>{userData.comments.length}</strong> Comments</span>
                 </div>
               </div>
               <Button 
@@ -202,8 +257,8 @@ export default function ProfilePage() {
             }}
           >
             <Tab key="builds" title="MY BUILDS"><MyBuilds /></Tab>
-            <Tab key="forum" title="MY FORUM"><MyForum /></Tab>
-            <Tab key="activity" title="MY ACTIVITY"><MyActivity /></Tab>
+            <Tab key="forum" title="MY FORUM"><MyForum posts={userData.posts} /></Tab>
+            <Tab key="activity" title="MY ACTIVITY"><MyActivity comments={userData.comments} /></Tab>
           </Tabs>
         </section>
 

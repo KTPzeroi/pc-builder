@@ -19,6 +19,17 @@ export async function GET(req: Request) {
           { email: email || undefined }
         ]
       },
+      include: {
+        posts: {
+          orderBy: { createdAt: 'desc' }
+        },
+        comments: {
+          include: {
+            post: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
     });
 
     if (!user) {
