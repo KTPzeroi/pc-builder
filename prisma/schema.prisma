@@ -57,6 +57,9 @@ model Post {
   author    User     @relation(fields: [authorId], references: [id])
   
   comments  Comment[]
+  
+  pcBuildId String?
+  pcBuild   PCBuild? @relation(fields: [pcBuildId], references: [id])
 }
 
 model Comment {
@@ -127,4 +130,6 @@ model PCBuild {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  posts         Post[]
 }

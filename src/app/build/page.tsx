@@ -11,6 +11,8 @@ import {
   useDisclosure, Input, addToast, Spinner
 } from "@heroui/react";
 import type { Component } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // --- Types & Interfaces ---
 interface FilterOption {
@@ -55,9 +57,15 @@ function HeroBenchmark({ label, value, color }: { label: string, value: number, 
 }
 
 export default function BuildPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { isOpen: isSaveOpen, onOpen: onSaveOpen, onOpenChange: onSaveChange } = useDisclosure();
+  const { isOpen: isSaveOpen, onOpen: onSaveOpen, onOpenChange: onSaveChange, onClose: onSaveClose } = useDisclosure();
+  const { isOpen: isLoginAlertOpen, onOpen: onLoginAlertOpen, onOpenChange: onLoginAlertChange } = useDisclosure();
+
   const [buildName, setBuildName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // เก็บข้อมูลสินค้าทั้งหมดจาก Database
   const [components, setComponents] = useState<Component[]>([]);
@@ -79,6 +87,23 @@ export default function BuildPage() {
   const [selectedProducts, setSelectedProducts] = useState<Record<string, Component | null>>({
     Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null,
   });
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('pc_builder_selection');
+    if (saved) {
+      try {
+        setSelectedProducts(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved build");
+      }
+    }
+  }, []);
+
+  // Save to localStorage when selection changes
+  useEffect(() => {
+    localStorage.setItem('pc_builder_selection', JSON.stringify(selectedProducts));
+  }, [selectedProducts]);
 
   // 🛡 เช็คความเข้ากันได้
   const checkCompatibility = useMemo(() => {
@@ -164,15 +189,58 @@ export default function BuildPage() {
     setSelectedCategory(null);
   };
 
-  const handleSaveBuild = (onClose: () => void) => {
+  const handleSaveBuildClick = () => {
+    if (status === "unauthenticated") {
+      onLoginAlertOpen();
+    } else {
+      onSaveOpen();
+    }
+  };
+
+  const handleSaveBuildSubmit = async () => {
     if (!buildName) {
       addToast({ title: "Please Enter Build Name", color: "danger" });
       return;
     }
-    // TODO: Send specific data to API
-    addToast({ title: "Build Saved!", color: "success" });
-    onClose();
-    setBuildName("");
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        name: buildName,
+        cpuId: selectedProducts["Processor"]?.id,
+        gpuId: selectedProducts["Graphics Card"]?.id,
+        ramId: selectedProducts["Memory"]?.id,
+        motherboardId: selectedProducts["Motherboard"]?.id,
+        storageId: selectedProducts["Storage"]?.id,
+        psuId: selectedProducts["Power Supply"]?.id,
+        caseId: selectedProducts["Case"]?.id,
+        totalPrice: totals.price,
+        gamingScore: totals.gaming,
+        workingScore: totals.office,
+        renderScore: totals.creative
+      };
+
+      const res = await fetch('/api/builds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        addToast({ title: "Build Saved successfully!", color: "success" });
+        onSaveClose();
+        setBuildName("");
+        // Optionally clear localStorage or leave it as is
+      } else {
+        const err = await res.json();
+        addToast({ title: `Error: ${err.error || 'Failed to save build'}`, color: "danger" });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ title: "Internal server error", color: "danger" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -260,7 +328,7 @@ export default function BuildPage() {
             variant="ghost"
             className="w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase"
             radius="lg"
-            onPress={onSaveOpen}
+            onPress={handleSaveBuildClick}
           >
             Save Build
           </Button>
@@ -297,7 +365,32 @@ export default function BuildPage() {
               </ModalBody>
               <ModalFooter className="p-8 border-t border-white/5">
                 <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase">Cancel</Button>
-                <Button color="primary" className="font-bold px-10 bg-blue-600 uppercase shadow-xl shadow-blue-500/20" onPress={() => handleSaveBuild(onClose)}>Save Build</Button>
+                <Button color="primary" className="font-bold px-10 bg-blue-600 uppercase shadow-xl shadow-blue-500/20" onPress={handleSaveBuildSubmit} isLoading={isSaving}>Save Build</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Login Alert Modal */}
+      <Modal isOpen={isLoginAlertOpen} onOpenChange={onLoginAlertChange} backdrop="blur" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-[1.5rem]" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 p-6 border-b border-white/5">
+                <h3 className="text-xl font-bold uppercase text-danger">Authentication Required</h3>
+              </ModalHeader>
+              <ModalBody className="p-6">
+                <p className="text-gray-300">
+                  คุณจะต้องเข้าสู่ระบบก่อนเพื่อทำการบันทึกสเปกคอมพิวเตอร์ของคุณ
+                  สเปกปัจจุบันของคุณจะถูกบันทึกไว้ชั่วคราวและจะไม่หายไปเมื่อคุณกลับมาหลังจากเข้าสู่ระบบ
+                </p>
+              </ModalBody>
+              <ModalFooter className="p-6 border-t border-white/5">
+                <Button variant="light" onPress={onClose} className="font-bold uppercase">Cancel</Button>
+                <Button color="primary" className="font-bold px-8 uppercase" onPress={() => router.push("/api/auth/signin")}>
+                  Login Now
+                </Button>
               </ModalFooter>
             </>
           )}

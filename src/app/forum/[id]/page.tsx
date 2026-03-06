@@ -184,12 +184,7 @@ export default function PostDetailPage() {
                 <CardBody className="p-6">
                   <h3 className="text-blue-400 font-bold mb-4 uppercase tracking-wider text-sm text-center md:text-left">Attached PC Build</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 mb-6 text-sm">
-                    {[
-                      { label: "CPU", val: "Intel Core i5-13400F" },
-                      { label: "GPU", val: "NVIDIA RTX 4060 Ti" },
-                      { label: "MB", val: "B760M DDR5" },
-                      { label: "RAM", val: "16GB 5200MHz" }
-                    ].map((item, idx) => (
+                    {post.specs.map((item, idx) => (
                       <div key={idx} className="flex justify-between border-b border-white/5 pb-2">
                         <span className="text-gray-500 uppercase text-[10px]">{item.label}</span>
                         <span className="text-white font-medium">{item.val}</span>
@@ -197,7 +192,7 @@ export default function PostDetailPage() {
                     ))}
                   </div>
                   <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-lg text-white">ราคารวมโดยประมาณ: <span className="text-blue-500 font-bold">฿31,500</span></p>
+                    <p className="text-lg text-white">ราคารวมโดยประมาณ: <span className="text-blue-500 font-bold">฿{post.price || "0"}</span></p>
                     <Button color="primary" size="sm" className="font-bold px-8 shadow-lg shadow-blue-500/20" onPress={handleShare}>
                       Copy this Build
                     </Button>

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Card, CardBody, Avatar, Button, Tabs, Tab, 
-  Divider, Modal, ModalContent, ModalHeader, 
+  Card, CardBody, Avatar, Button, Tabs, Tab,
+  Divider, Modal, ModalContent, ModalHeader,
   ModalBody, ModalFooter, useDisclosure, Input, Textarea, Spinner
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
@@ -11,8 +11,99 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 // --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
-function MyBuilds() {
-  return <div className="text-gray-500 py-10">ยังไม่มีข้อมูลสเปกที่บันทึกไว้</div>;
+function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
+  const [builds, setBuilds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [selectedBuild, setSelectedBuild] = useState<any | null>(null);
+
+  const handleViewBuild = (build: any) => {
+    setSelectedBuild(build);
+    onOpen();
+  };
+
+  useEffect(() => {
+    fetch("/api/builds")
+      .then(res => res.json())
+      .then(data => {
+        setBuilds(data);
+        setLoading(false);
+        onLoadedCount(data?.length || 0);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className="text-gray-500 py-10 flex justify-center"><Spinner size="sm" color="primary" /></div>;
+  }
+
+  if (!builds || builds.length === 0) {
+    return <div className="text-gray-500 py-10">ยังไม่มีข้อมูลสเปกที่บันทึกไว้</div>;
+  }
+
+  return (
+    <>
+      <div className="flex flex-col gap-4 mt-4">
+        {builds.map((build) => (
+          <Card key={build.id} isPressable onPress={() => handleViewBuild(build)} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors w-full">
+            <CardBody className="flex flex-row gap-6 p-6 items-center">
+              <div className="flex flex-col flex-1 text-left">
+                <h3 className="text-xl font-bold text-white mb-2">{build.name}</h3>
+                <div className="flex flex-wrap gap-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  <span>price: <strong className="text-blue-500">฿{build.totalPrice?.toLocaleString() || 0}</strong></span>
+                  <span>gaming: <strong className="text-secondary">{Math.round(build.gamingScore || 0)}%</strong></span>
+                  <span>work: <strong className="text-success">{Math.round(build.workingScore || 0)}%</strong></span>
+                  <span>3D: <strong className="text-primary">{Math.round(build.renderScore || 0)}%</strong></span>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 font-bold uppercase text-right shrink-0">
+                <p>{new Date(build.createdAt).toLocaleDateString("th-TH")}</p>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-2xl" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="border-b border-white/5 pb-4">
+                รายละเอียดสเปกคอม
+              </ModalHeader>
+              <ModalBody className="py-6">
+                {selectedBuild && (
+                  <div className="space-y-4 text-left">
+                    <h3 className="text-xl font-bold text-blue-400">{selectedBuild.name}</h3>
+                    <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-3 text-sm">
+                      {Object.entries(selectedBuild.specs || {}).map(([key, val]) => (
+                        <div key={key} className="flex justify-between border-b border-white/5 pb-2">
+                          <span className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">{key}</span>
+                          <span className="text-white font-medium text-right max-w-[200px] truncate" title={String(val)}>{String(val)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-end mt-4">
+                      <span className="text-gray-400 font-bold uppercase text-xs tracking-widest">Total Price</span>
+                      <span className="text-blue-500 text-2xl font-bold">฿{selectedBuild.totalPrice?.toLocaleString() || 0}</span>
+                    </div>
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter className="border-t border-white/5">
+                <Button color="primary" onPress={onClose} className="font-bold px-8 uppercase tracking-widest text-[10px]">
+                  ปิดหน้าต่าง
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
+  );
 }
 
 function MyForum({ posts }: { posts: any[] }) {
@@ -29,7 +120,7 @@ function MyForum({ posts }: { posts: any[] }) {
             </Link>
             <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
             <div className="flex gap-4 text-xs text-gray-500">
-              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric'})}</span>
+              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
             </div>
           </CardBody>
@@ -62,7 +153,7 @@ function MyActivity({ comments }: { comments: any[] }) {
               <p className="text-white text-sm">"{comment.content}"</p>
             </div>
             <div className="mt-2 text-xs text-gray-500">
-              {new Date(comment.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
+              {new Date(comment.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </div>
           </CardBody>
         </Card>
@@ -77,7 +168,7 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -94,6 +185,8 @@ export default function ProfilePage() {
   // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
   const [tempData, setTempData] = useState({ ...userData });
 
+  const [buildsCount, setBuildsCount] = useState(0);
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (status === "loading") return;
@@ -107,9 +200,9 @@ export default function ProfilePage() {
         try {
           const userEmail = session.user.email || "";
           const userId = (session.user as any).id || "";
-          
+
           const res = await fetch(`/api/user/profile?id=${userId}&email=${userEmail}`);
-          
+
           if (res.ok) {
             const data = await res.json();
             const newUserData = {
@@ -152,8 +245,8 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (onClose: () => void) => {
     if (!userData.id) {
-        alert("ไม่พบ ID ผู้ใช้ กรุณาลองใหม่");
-        return;
+      alert("ไม่พบ ID ผู้ใช้ กรุณาลองใหม่");
+      return;
     }
 
     setIsUpdating(true);
@@ -203,17 +296,17 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-24 pb-12 font-sans text-left">
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
-        
+
         {/* 1. User Header Section */}
         <section className="mb-10">
           <Card className="bg-black/40 border border-white/10 p-8 shadow-xl">
             <CardBody className="flex flex-col md:flex-row items-center gap-8 p-0 overflow-visible">
               {/* 🟢 Avatar พร้อม Fallback เป็นตัวอักษร */}
-              <Avatar 
+              <Avatar
                 src={userData.avatar}
                 name={userData.username.charAt(0).toUpperCase()}
                 showFallback
-                className="w-32 h-32 text-large border-4 border-blue-500/20 shadow-blue-500/10 shadow-2xl" 
+                className="w-32 h-32 text-large border-4 border-blue-500/20 shadow-blue-500/10 shadow-2xl"
                 classNames={{
                   base: "bg-slate-800",
                   name: "text-white font-bold text-3xl"
@@ -226,15 +319,15 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-gray-400 font-medium italic">"{userData.bio}"</p>
                 <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500 font-bold uppercase tracking-tighter">
-                  <span><strong>0</strong> Builds</span>
+                  <span><strong>{buildsCount}</strong> Builds</span>
                   <span><strong>{userData.posts.length}</strong> Posts</span>
                   <span><strong>{userData.comments.length}</strong> Comments</span>
                 </div>
               </div>
-              <Button 
+              <Button
                 onPress={handleOpenEdit}
-                color="primary" 
-                variant="bordered" 
+                color="primary"
+                variant="bordered"
                 className="font-bold border-white/10 text-white hover:bg-white/5 transition-all uppercase tracking-widest text-[10px] px-8"
               >
                 Edit Profile
@@ -245,9 +338,9 @@ export default function ProfilePage() {
 
         {/* 2. Content Tabs */}
         <section>
-          <Tabs 
-            aria-label="User Profile Sections" 
-            color="primary" 
+          <Tabs
+            aria-label="User Profile Sections"
+            color="primary"
             variant="underlined"
             classNames={{
               tabList: "gap-8 border-b border-white/5 w-full",
@@ -256,18 +349,18 @@ export default function ProfilePage() {
               panel: "pt-8 text-center"
             }}
           >
-            <Tab key="builds" title="MY BUILDS"><MyBuilds /></Tab>
+            <Tab key="builds" title="MY BUILDS"><MyBuilds onLoadedCount={setBuildsCount} /></Tab>
             <Tab key="forum" title="MY FORUM"><MyForum posts={userData.posts} /></Tab>
             <Tab key="activity" title="MY ACTIVITY"><MyActivity comments={userData.comments} /></Tab>
           </Tabs>
         </section>
 
         {/* 3. Edit Profile Modal */}
-        <Modal 
-          isOpen={isOpen} 
+        <Modal
+          isOpen={isOpen}
           onOpenChange={onOpenChange}
           backdrop="blur"
-          size="5xl" 
+          size="5xl"
           placement="center"
           classNames={{
             base: "bg-slate-950 border border-white/10 text-white max-h-[90vh]",
@@ -282,17 +375,17 @@ export default function ProfilePage() {
                   <h2 className="text-2xl font-bold uppercase tracking-tight">Edit Your Profile</h2>
                   <p className="text-xs text-gray-500 font-normal">ปรับแต่งข้อมูลส่วนตัวของคุณให้โดดเด่นในชุมชน</p>
                 </ModalHeader>
-                
+
                 <ModalBody className="p-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
                     <div className="bg-black/20 p-8 flex flex-col items-center justify-center gap-6 border-r border-white/5">
                       <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest italic self-start">Profile Image</h4>
                       {/* 🟢 Avatar ใน Modal พร้อม Fallback */}
-                      <Avatar 
-                        src={tempData.avatar} 
+                      <Avatar
+                        src={tempData.avatar}
                         name={tempData.username.charAt(0).toUpperCase()}
                         showFallback
-                        className="w-40 h-40 border-4 border-white/5 shadow-2xl" 
+                        className="w-40 h-40 border-4 border-white/5 shadow-2xl"
                         classNames={{
                           base: "bg-slate-800",
                           name: "text-white font-bold text-4xl"
@@ -303,10 +396,10 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="lg:col-span-2 p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">
-                      <Input 
-                        label="Username" 
+                      <Input
+                        label="Username"
                         value={tempData.username}
-                        onValueChange={(val) => setTempData({...tempData, username: val})}
+                        onValueChange={(val) => setTempData({ ...tempData, username: val })}
                         variant="bordered"
                         labelPlacement="outside"
                         classNames={{
@@ -314,10 +407,10 @@ export default function ProfilePage() {
                           inputWrapper: "border-white/10 hover:border-blue-500/50 h-12"
                         }}
                       />
-                      <Textarea 
-                        label="Biography" 
+                      <Textarea
+                        label="Biography"
                         value={tempData.bio}
-                        onValueChange={(val) => setTempData({...tempData, bio: val})}
+                        onValueChange={(val) => setTempData({ ...tempData, bio: val })}
                         variant="bordered"
                         labelPlacement="outside"
                         minRows={4}
@@ -332,8 +425,8 @@ export default function ProfilePage() {
 
                 <ModalFooter>
                   <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">Discard</Button>
-                  <Button 
-                    color="primary" 
+                  <Button
+                    color="primary"
                     isLoading={isUpdating}
                     onPress={() => handleUpdateProfile(onClose)}
                     className="font-bold px-10 bg-blue-600 shadow-xl shadow-blue-500/20 uppercase text-[10px] tracking-widest"

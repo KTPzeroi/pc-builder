@@ -80,6 +80,22 @@ export default function ForumPage() {
     category: "",
   });
 
+  // 🟢 State สำหรับ PC Builds ของ User
+  const [userBuilds, setUserBuilds] = useState<any[]>([]);
+  const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
+
+  // ดึงข้อมูล PC Builds เมื่อ User Login
+  useEffect(() => {
+    if (session) {
+      fetch("/api/builds")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setUserBuilds(data);
+        })
+        .catch(err => console.error("Failed to fetch builds:", err));
+    }
+  }, [session]);
+
   // 🟢 เพิ่มฟังก์ชันจัดการรูปภาพ (ส่วนที่แก้ไขเพิ่ม)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -154,6 +170,7 @@ export default function ForumPage() {
         content: formData.content,
         category: formData.category,
         images: imageUrls,
+        pcBuildId: selectedBuildId,
       };
 
       const res = await fetch('/api/forum/posts', {
@@ -166,6 +183,7 @@ export default function ForumPage() {
         setFormData({ title: "", content: "", category: "" });
         setPreviews([]); // ล้างรูปภาพหลังโพสต์
         setSelectedFiles([]);
+        setSelectedBuildId(null);
         onClose();
         fetchPosts();
       } else {
@@ -420,12 +438,23 @@ export default function ForumPage() {
                     <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider italic">Attach Your Build</h4>
                     <p className="text-xs text-gray-500 mb-2 font-medium text-left">เลือกสเปกที่คุณจัดไว้เพื่อแนบไปกับโพสต์</p>
                     <div className="flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-                      {[1, 2, 3].map((item) => (
-                        <Card key={item} isPressable className="bg-white/5 border border-white/10 hover:border-blue-500/50 p-3">
-                          <p className="text-xs font-bold text-white mb-1">สเปกเล่นเกมงบ {item}0k</p>
-                          <p className="text-[10px] text-gray-500 font-semibold italic">i5-13400F + RTX 4060</p>
-                        </Card>
-                      ))}
+                      {userBuilds.length > 0 ? (
+                        userBuilds.map((build) => (
+                          <Card
+                            key={build.id}
+                            isPressable
+                            onPress={() => setSelectedBuildId(selectedBuildId === build.id ? null : build.id)}
+                            className={`bg-white/5 border p-3 text-left transition-all ${selectedBuildId === build.id ? 'border-primary shadow-[0_0_15px_currentColor] shadow-primary/30' : 'border-white/10 hover:border-blue-500/50'}`}
+                          >
+                            <p className="text-xs font-bold text-white mb-1">{build.name}</p>
+                            <p className="text-[10px] text-gray-500 font-semibold italic">฿{build.totalPrice?.toLocaleString() || 0}</p>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-xs text-center text-gray-600 py-4">
+                          ยังไม่มีสเปกที่บันทึกไว้
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

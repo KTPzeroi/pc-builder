@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, content, category, images } = body;
+    const { title, content, category, images, pcBuildId } = body;
 
     if (!title || !content || !category) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -51,7 +51,8 @@ export async function POST(request: Request) {
         category,
         // @ts-ignore
         images: images || [],
-        authorId: (session.user as any).id, // ใส่ (session.user as any) ตรงนี้ด้วย
+        authorId: (session.user as any).id,
+        pcBuildId: pcBuildId || null,
       },
     });
 
