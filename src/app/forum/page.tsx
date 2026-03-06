@@ -18,6 +18,7 @@ interface Post {
   category: string;
   createdAt: string;
   author: {
+    id: string;
     name: string | null;
     image: string | null;
     username?: string | null;
@@ -287,7 +288,14 @@ export default function ForumPage() {
                       <CardBody className="p-5 md:p-6 text-left w-full">
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="flex items-center gap-4 overflow-hidden flex-1">
-                            <Avatar src={post.author.image || ""} name={post.author.name || post.author.username || "User"} className="hidden sm:flex shrink-0 border border-white/10" size="sm" />
+                            <Link 
+                               href={`/profile/${post.author.id}`}
+                               onClick={(e) => e.stopPropagation()}
+                               className="shrink-0 relative group/avatar z-10"
+                            >
+                               <Avatar src={post.author.image || ""} name={post.author.name || post.author.username || "User"} className="hidden sm:flex border border-white/10 group-hover/avatar:border-blue-500 transition-colors" size="sm" />
+                            </Link>
+
                             <div className="flex flex-col gap-1.5 overflow-hidden flex-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <Chip size="sm" color={getCategoryColor(post.category) as any} variant="flat" className="h-5 text-[10px] font-bold uppercase p-0 px-2">
@@ -298,7 +306,7 @@ export default function ForumPage() {
                                 </h3>
                               </div>
                               <p className="text-xs text-gray-500 font-medium">
-                                โดย <span className="text-gray-300 font-semibold">{post.author.name || post.author.username || "Unknown"}</span> • {formatTimeAgo(post.createdAt)}
+                                โดย <Link href={`/profile/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="text-gray-300 font-semibold hover:text-blue-400 hover:underline z-10 relative">{post.author.name || post.author.username || "Unknown"}</Link> • {formatTimeAgo(post.createdAt)}
                               </p>
                             </div>
                           </div>

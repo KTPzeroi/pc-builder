@@ -44,3 +44,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "Server Error" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, image } = body;
+
+    if (!id) {
+      return NextResponse.json({ message: "User ID is required" }, { status: 400 });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { image },
+    });
+
+    return NextResponse.json({
+      id: updatedUser.id,
+      image: updatedUser.image,
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Profile Image Update Error:", error);
+    return NextResponse.json({ message: "Server Error" }, { status: 500 });
+  }
+}

@@ -7,6 +7,7 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   useDisclosure, RadioGroup, Radio, Spinner
 } from "@heroui/react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast, Toaster } from "react-hot-toast";
@@ -17,6 +18,7 @@ interface Comment {
   createdAt: string;
   images?: string[];
   author: {
+    id: string;
     name: string | null;
     image: string | null;
     username?: string | null;
@@ -31,6 +33,7 @@ interface PostDetail {
   category: string;
   createdAt: string;
   author: {
+    id: string;
     name: string | null;
     image: string | null;
     username?: string | null;
@@ -149,9 +152,11 @@ export default function PostDetailPage() {
                 {post.title}
               </h1>
               <div className="flex items-center gap-3">
-                <Avatar size="sm" src={post.author.image || ""} name={post.author.name || post.author.username || "User"} className="border border-white/10" />
-                <p className="text-xs md:text-sm text-gray-400">
-                  โพสต์โดย <span className="text-white font-medium">{post.author.name || post.author.username || "Unknown"}</span> • {new Date(post.createdAt).toLocaleDateString('th-TH')}
+                <Link href={`/profile/${post.author.id}`} className="shrink-0 relative group/avatar z-10 hover:opacity-80 transition-opacity">
+                  <Avatar size="sm" src={post.author.image || ""} name={post.author.name || post.author.username || "User"} className="border border-white/10 group-hover/avatar:border-blue-500 transition-colors" />
+                </Link>
+                <p className="text-xs md:text-sm text-gray-400 font-medium">
+                  โพสต์โดย <Link href={`/profile/${post.author.id}`} className="text-white font-bold hover:text-blue-400 hover:underline transition-colors z-10 relative">{post.author.name || post.author.username || "Unknown"}</Link> • {new Date(post.createdAt).toLocaleDateString('th-TH')}
                 </p>
               </div>
             </div>
@@ -254,11 +259,15 @@ export default function PostDetailPage() {
             <Card key={comment.id} className="bg-black/20 border border-white/5 hover:border-white/10 transition-colors shadow-sm">
               <CardBody className="p-6">
                 <div className="flex gap-4">
-                  <Avatar src={comment.author.image || ""} name={comment.author.name || comment.author.username || "User"} size="sm" className="shrink-0 border border-white/10" />
+                  <Link href={`/profile/${comment.author.id}`} className="shrink-0 relative group/avatar z-10 hover:opacity-80 transition-opacity">
+                    <Avatar src={comment.author.image || ""} name={comment.author.name || comment.author.username || "User"} size="sm" className="border border-white/10 group-hover/avatar:border-blue-500 transition-colors" />
+                  </Link>
                   <div className="flex flex-col gap-2 w-full">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-sm">{comment.author.name || comment.author.username || "Unknown"}</span>
+                        <Link href={`/profile/${comment.author.id}`} className="font-bold text-white text-sm hover:text-blue-400 hover:underline transition-colors z-10 relative">
+                          {comment.author.name || comment.author.username || "Unknown"}
+                        </Link>
                         {(comment.author.name === "HardwareExpert" || comment.author.username === "HardwareExpert") && (
                           <Chip size="sm" color="warning" variant="flat" className="h-4 text-[9px]">Expert</Chip>
                         )}

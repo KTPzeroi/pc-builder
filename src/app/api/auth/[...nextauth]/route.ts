@@ -49,17 +49,39 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
       }
+      // ให้ token อัปเดตเมื่อมีการส่ง `update()` จาก client
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.image !== undefined) token.picture = session.image;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        // @ts-ignore
-        session.user.id = token.id as string;
+      if (token?.id) {
+        try {
+          // ดึงข้อมูลล่าสุดจากฐานข้อมูลเสมอ ป้องกันรูปหรือชื่อไม่ตรง
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string }
+          });
+          
+          if (dbUser) {
+            if (!session.user) {
+              session.user = {};
+            }
+            // @ts-ignore
+            session.user.id = dbUser.id;
+            session.user.name = dbUser.username || dbUser.name || "";
+            session.user.image = dbUser.image || "";
+            session.user.email = dbUser.email || "";
+          }
+        } catch (error) {
+          console.error("Session fetch error:", error);
+        }
       }
       return session;
     },

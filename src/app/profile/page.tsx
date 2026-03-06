@@ -165,7 +165,7 @@ function MyActivity({ comments }: { comments: any[] }) {
 // --- 🔵 หน้าหลัก (Main Page) ---
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -184,6 +184,10 @@ export default function ProfilePage() {
 
   // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
   const [tempData, setTempData] = useState({ ...userData });
+  
+  // State สำหรับเก็บไฟล์รูปภาพที่ผู้ใช้เลือกใหม่
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [buildsCount, setBuildsCount] = useState(0);
 
@@ -240,6 +244,8 @@ export default function ProfilePage() {
 
   const handleOpenEdit = () => {
     setTempData({ ...userData });
+    setSelectedFile(null);
+    setPreviewUrl(null);
     onOpen();
   };
 
@@ -251,6 +257,7 @@ export default function ProfilePage() {
 
     setIsUpdating(true);
     try {
+      // 1. Update Username & Bio
       const res = await fetch("/api/auth/credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -261,21 +268,73 @@ export default function ProfilePage() {
         }),
       });
 
-      if (res.ok) {
-        const updatedUser = await res.json();
-        const finalData = {
-          ...userData,
-          username: updatedUser.username,
-          bio: updatedUser.bio
-        };
-        setUserData(finalData);
-        setTempData(finalData);
-        alert("บันทึกข้อมูลสำเร็จ!");
-        onClose();
-      } else {
+      if (!res.ok) {
         const error = await res.json();
-        alert(error.message || "เกิดข้อผิดพลาดในการบันทึก");
+        alert(error.message || "เกิดข้อผิดพลาดในการบันทึกชื่อผู้ใช้/ประวัติ");
+        setIsUpdating(false);
+        return;
       }
+      const updatedUser = await res.json();
+
+      let avatarUrl = userData.avatar;
+      
+      // 2. Upload Avatar to Cloudinary first if there's a file
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("files", selectedFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพใหม่");
+          setIsUpdating(false);
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+        if (uploadData.urls && uploadData.urls.length > 0) {
+          avatarUrl = uploadData.urls[0];
+          
+          // 3. Save the new Cloudinary URL to the user profile
+          const resAvatar = await fetch("/api/user/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userData.id,
+              image: avatarUrl,
+            }),
+          });
+          
+          if (!resAvatar.ok) {
+            alert("เกิดข้อผิดพลาดในการบันทึก URL รูปภาพไปยังโปรไฟล์");
+            setIsUpdating(false);
+            return;
+          }
+        }
+      }
+
+      const finalData = {
+        ...userData,
+        username: updatedUser.username,
+        bio: updatedUser.bio,
+        avatar: avatarUrl || ""
+      };
+      
+      setUserData(finalData);
+      setTempData(finalData);
+
+      // 🟢 อัปเดต Session ของ NextAuth เพื่อให้ Navbar เปลี่ยนรูปตามทันที
+      await update({
+        name: finalData.username,
+        image: finalData.avatar
+      });
+
+      alert("บันทึกข้อมูลสำเร็จ!");
+      onClose();
+
     } catch (err) {
       console.error(err);
       alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
@@ -382,17 +441,35 @@ export default function ProfilePage() {
                       <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest italic self-start">Profile Image</h4>
                       {/* 🟢 Avatar ใน Modal พร้อม Fallback */}
                       <Avatar
-                        src={tempData.avatar}
+                        src={previewUrl || tempData.avatar}
                         name={tempData.username.charAt(0).toUpperCase()}
                         showFallback
-                        className="w-40 h-40 border-4 border-white/5 shadow-2xl"
+                        className="w-40 h-40 border-4 border-white/5 shadow-2xl object-cover"
                         classNames={{
                           base: "bg-slate-800",
                           name: "text-white font-bold text-4xl"
                         }}
                       />
-                      <p className="text-[10px] text-gray-500 text-center font-medium leading-relaxed">รูปภาพดึงมาจากบัญชีของคุณ</p>
-                      <Button size="sm" variant="flat" color="primary" isDisabled className="w-full font-bold uppercase text-[10px]">Change Photo (Soon)</Button>
+                      <p className="text-[10px] text-gray-500 text-center font-medium leading-relaxed">เลือกรูปภาพจากเครื่องของคุณ</p>
+                      
+                      {/* 🟢 เปลี่ยนเป็นปุ่มเลือกไฟล์ */}
+                      <div className="relative w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedFile(file);
+                              setPreviewUrl(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <Button size="sm" variant="flat" color="primary" className="w-full font-bold uppercase text-[10px] pointer-events-none">
+                          {selectedFile ? "Selected: " + selectedFile.name.substring(0, 10) + "..." : "Upload New Photo"}
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="lg:col-span-2 p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">

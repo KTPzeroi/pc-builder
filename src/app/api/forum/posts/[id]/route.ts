@@ -20,11 +20,11 @@ export async function GET(
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
-        author: { select: { name: true, image: true, username: true } },
+        author: { select: { id: true, name: true, image: true, username: true } },
         pcBuild: true,
         comments: {
           include: {
-            author: { select: { name: true, image: true, username: true } }
+            author: { select: { id: true, name: true, image: true, username: true } }
           },
           orderBy: { createdAt: 'desc' }
         },
@@ -77,6 +77,7 @@ export async function GET(
 
     return NextResponse.json(finalPost);
   } catch (error) {
+    console.error("GET Post Error:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
