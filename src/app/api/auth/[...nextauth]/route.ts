@@ -1,9 +1,9 @@
-import NextAuth from "next-auth"; 
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials"; 
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
 import { NextAuthOptions } from "next-auth"; // เพิ่ม import ประเภท
 
 // 1. แยกการตั้งค่าออกมาเป็นตัวแปร และใส่ export หน้า const
@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
           name: user.username,
           email: user.email,
           image: user.image,
+          role: user.role,
         };
       }
     }),
@@ -53,11 +54,13 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.role = (user as any).role || "USER";
       }
       // ให้ token อัปเดตเมื่อมีการส่ง `update()` จาก client
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
         if (session.image !== undefined) token.picture = session.image;
+        if (session.user?.role) token.role = session.user.role;
       }
       return token;
     },
@@ -68,7 +71,7 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string }
           });
-          
+
           if (dbUser) {
             if (!session.user) {
               session.user = {};
@@ -78,6 +81,8 @@ export const authOptions: NextAuthOptions = {
             session.user.name = dbUser.username || dbUser.name || "";
             session.user.image = dbUser.image || "";
             session.user.email = dbUser.email || "";
+            // @ts-ignore
+            session.user.role = dbUser.role || token.role || "USER";
           }
         } catch (error) {
           console.error("Session fetch error:", error);
