@@ -1,0 +1,62 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> } // In Next 15 App router, params is awaitable but we'll adapt to how Next 14 does it. Wait, the project uses Next 16.1.6. params is a Promise. Let's await it.
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        // @ts-ignore
+        if (!session || session.user?.role !== "ADMIN") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const body = await req.json();
+
+        const validFields: any = {};
+        if (body.role && ["USER", "ADMIN"].includes(body.role)) validFields.role = body.role;
+        if (body.status && ["ACTIVE", "SUSPENDED", "BANNED"].includes(body.status)) validFields.status = body.status;
+
+        if (Object.keys(validFields).length === 0) {
+            return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: validFields
+        });
+
+        return NextResponse.json(updatedUser);
+    } catch (error) {
+        console.error("Update User API Error:", error);
+        return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        // @ts-ignore
+        if (!session || session.user?.role !== "ADMIN") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
+
+        await prisma.user.delete({
+            where: { id }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Delete User API Error:", error);
+        return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    }
+}

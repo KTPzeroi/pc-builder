@@ -42,6 +42,8 @@ model User {
   comments      Comment[]
   pcBuilds      PCBuild[] 
   role          String    @default("USER")
+  status        String    @default("ACTIVE") // "ACTIVE", "SUSPENDED", "BANNED"
+  reportCount   Int       @default(0)
 }
 
 model Post {
@@ -129,8 +131,20 @@ model PCBuild {
   workingScore  Float?   // % Working
   renderScore   Float?   // % 3D/Render
 
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
   posts         Post[]
+}
+
+// ----------------------------------------------------
+// ส่วนสำหรับตัังค่าระบบโดยผู้ดูแล (System Configuration)
+// ----------------------------------------------------
+
+model SystemSetting {
+  key         String   @id
+  value       String   @db.Text // เก็บข้อมูลเป็น JSON string หรือ Plain text
+  description String?
+  updatedAt   DateTime @updatedAt
 }

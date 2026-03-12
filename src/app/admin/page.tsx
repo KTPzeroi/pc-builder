@@ -7,7 +7,8 @@ import {
     IoDesktopOutline,
     IoWarningOutline,
     IoServerOutline,
-    IoCloudDoneOutline
+    IoCloudDoneOutline,
+    IoGridOutline
 } from "react-icons/io5";
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -86,7 +87,10 @@ export default function AdminDashboardPage() {
             {/* 1. Header Section */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Admin Overview</h1>
+                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                        <IoGridOutline className="text-blue-500" />
+                        Admin Overview
+                    </h1>
                     <p className="text-gray-500 text-sm mt-1">ยินดีต้อนรับกลับมา! นี่คือสรุปกิจกรรมล่าสุดในระบบของคุณ</p>
                 </div>
                 <Button color="primary" variant="flat" className="font-bold uppercase tracking-widest text-[10px]">

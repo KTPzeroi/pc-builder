@@ -1,8 +1,12 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
-import { IoGridOutline, IoCubeOutline, IoPeopleOutline, IoSettingsOutline, IoLogOutOutline } from 'react-icons/io5';
+import { usePathname } from 'next/navigation';
+import { IoGridOutline, IoCubeOutline, IoShieldHalfOutline, IoSettingsOutline, IoLogOutOutline } from 'react-icons/io5';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row text-white pt-24 pb-12 px-4 md:px-0">
             {/* Sidebar */}
@@ -14,27 +18,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <nav className="flex flex-col gap-2 flex-1">
                     <Link href="/admin">
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer opacity-100 bg-blue-500/10 text-blue-400">
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${pathname === '/admin' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
                             <IoGridOutline className="text-lg" />
                             <span className="text-sm font-bold tracking-wider uppercase">Dashboard</span>
                         </div>
                     </Link>
                     <Link href="/admin/inventory">
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer opacity-70 hover:opacity-100">
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${pathname === '/admin/inventory' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
                             <IoCubeOutline className="text-lg" />
-                            <span className="text-sm font-bold tracking-wider uppercase">Inventory CRUD</span>
+                            <span className="text-sm font-bold tracking-wider uppercase">Hardware Library</span>
                         </div>
                     </Link>
                     <Link href="/admin/users">
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer opacity-70 hover:opacity-100">
-                            <IoPeopleOutline className="text-lg" />
-                            <span className="text-sm font-bold tracking-wider uppercase">User Management</span>
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${pathname === '/admin/users' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
+                            <IoShieldHalfOutline className="text-lg" />
+                            <span className="text-sm font-bold tracking-wider uppercase">Member & Moderation</span>
                         </div>
                     </Link>
                     <Link href="/admin/settings">
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer opacity-70 hover:opacity-100">
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${pathname === '/admin/settings' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
                             <IoSettingsOutline className="text-lg" />
-                            <span className="text-sm font-bold tracking-wider uppercase">Settings</span>
+                            <span className="text-sm font-bold tracking-wider uppercase">System Config</span>
                         </div>
                     </Link>
                 </nav>
