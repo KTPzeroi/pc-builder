@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`antialiased bg-black text-white min-h-screen ${kanit.className}`}>
+    <html lang="en" className={`dark ${kanit.variable}`}>
+      <body className={`antialiased bg-black text-white min-h-screen font-sans`}>
         <Providers>
           <AppNavbar /> 
           {/* 🟢 เพิ่ม className="pt-20" เพื่อเว้นระยะจาก Navbar */}

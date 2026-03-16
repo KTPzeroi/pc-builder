@@ -229,7 +229,7 @@ export default function AppNavbar() {
                   label={authMode === "login" ? "Username or Email" : "Email"} 
                   variant="bordered" labelPlacement="outside" placeholder="Enter your email" 
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  classNames={{ label: "w-full max-w-full truncate-none text-[15px] whitespace-nowrap" }}
+                  classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
                 />
                 
                 <Input 

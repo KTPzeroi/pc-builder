@@ -2,9 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
-    // `withAuth` augments your `Request` with the user's token.
     function middleware(req) {
-        // 🟢 ถ้า User อยู่หน้า /admin แต่ Role ใน Token ไม่ใช่ ADMIN ให้เตะกลับหน้าแรก
         if (
             req.nextUrl.pathname.startsWith("/admin") &&
             req.nextauth.token?.role !== "ADMIN"
