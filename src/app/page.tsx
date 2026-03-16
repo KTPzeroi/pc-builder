@@ -206,7 +206,7 @@ export default function Page() {
   const handleTouchMove = (e: TouchEvent) => moveDrag(e.touches[0].clientX);
 
   return (
-    <main className="font-kanit">
+    <main>
       {/* SECTION 1: HERO BANNER */}
       <section className="banner">
         <div className="banner-slider" style={{ ["--quantity" as any]: 9 }}>
@@ -222,7 +222,7 @@ export default function Page() {
         </div>
 
         <div className="banner-content">
-          <h1 data-content="PC BUILDER" style={{ fontFamily: 'Kanit' }}>PC <br></br>BUILDER</h1>
+          <h1 data-content="PC BUILDER">PC <br></br>BUILDER</h1>
           <div className="cta-container">
             <a href="#plan" style={{ textDecoration: 'none' }}>
               <Button 
@@ -230,7 +230,7 @@ export default function Page() {
                 variant="shadow" 
                 radius="full"
                 size="lg"
-                className="px-10 py-6 text-[1.3rem] font-semibold tracking-wider font-kanit shadow-[0_0_20px_rgba(0,210,255,0.4)] bg-[#00d2ff] text-[#fffff]"
+                className="px-10 py-6 text-[1.3rem] font-semibold tracking-wider shadow-[0_0_20px_rgba(0,210,255,0.4)] bg-[#00d2ff] text-[#fffff]"
               >
                 PLAN YOUR BUILD
               </Button>
@@ -309,7 +309,7 @@ export default function Page() {
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
         >
-          <div className="title" style={{ fontFamily: 'Kanit' }}>PC Component Guide</div>
+          <div className="title">PC Component Guide</div>
 
           <div className={`form ${isDragging ? "dragging" : "sliding"}`} ref={formRef}>
             {componentData.map((item, index) => (
@@ -324,7 +324,7 @@ export default function Page() {
                   </div>
                   
                   <div className="des bg-black/60 backdrop-blur-sm border-t border-white/10">
-                    <div className="text-ellipsis font-kanit">
+                    <div className="text-ellipsis">
                       {item.title.split("–")[0]}
                     </div>
                     <Button
@@ -332,7 +332,7 @@ export default function Page() {
                       color="primary"
                       variant="solid"
                       radius="sm"
-                      className="font-semibold font-kanit bg-[#00d2ff] text-black"
+                      className="font-semibold bg-[#00d2ff] text-black"
                       onClick={(e) => {
                         e.stopPropagation(); 
                         setSelectedItem(item);
@@ -355,7 +355,7 @@ export default function Page() {
         backdrop="blur" 
         size="2xl"
         classNames={{
-          base: "bg-gradient-to-br from-[#1e293b] to-[#0B0F19] text-white border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] font-kanit",
+          base: "bg-gradient-to-br from-[#1e293b] to-[#0B0F19] text-white border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)]",
           header: "border-b border-white/5 pb-3 pt-5 px-8", 
           body: "py-6 px-8", 
           footer: "border-t border-white/5 py-3 px-8", 
@@ -399,7 +399,7 @@ export default function Page() {
                           variant="flat" 
                           color="primary" 
                           size="sm"
-                          className="bg-[#00d2ff]/10 border border-[#00d2ff]/20 text-white/95 font-kanit py-1 px-2"
+                          className="bg-[#00d2ff]/10 border border-[#00d2ff]/20 text-white/95 py-1 px-2"
                         >
                           {line}
                         </Chip>
@@ -410,10 +410,10 @@ export default function Page() {
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose} className="font-kanit text-[1rem]">
+                <Button color="danger" variant="light" onPress={onClose} className="text-[1rem]">
                   Close
                 </Button>
-                <Button color="primary" variant="shadow" onPress={onClose} className="font-kanit font-semibold bg-[#00d2ff] text-black text-[1rem] px-6">
+                <Button color="primary" variant="shadow" onPress={onClose} className="font-semibold bg-[#00d2ff] text-black text-[1rem] px-6">
                   Got it
                 </Button>
               </ModalFooter>
@@ -424,11 +424,6 @@ export default function Page() {
 
       {/* STYLES */}
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;900&display=swap');
-
-        .font-kanit {
-          font-family: 'Kanit', sans-serif !important;
-        }
 
         .banner {
           width: 100%;
@@ -530,7 +525,6 @@ export default function Page() {
           align-items: center;
           position: relative;
           z-index: 5;
-          font-family: 'Kanit', sans-serif;
         }
 
         .sequence-container {
@@ -675,7 +669,6 @@ export default function Page() {
       <style jsx global>{`
         body { 
             margin: 0; 
-            font-family: 'Kanit', sans-serif; 
             overflow-x: hidden; 
             background-color: #020617; 
         }
@@ -708,7 +701,6 @@ export default function Page() {
             text-shadow: 0 0 10px #0007;
             font-weight: 600; 
             font-size: clamp(1.5rem, 4vw, 2rem);
-            font-family: 'Kanit', sans-serif;
         }
         
         .slider .form {
@@ -770,7 +762,6 @@ export default function Page() {
             width: 100%;
             height: 60px;
             color: #fff;
-            font-family: 'Kanit', sans-serif;
             font-weight: 300;
             display: flex;
             justify-content: space-between;

@@ -41,7 +41,7 @@ export default function PublicProfilePage() {
 
   // Redirect to own profile page if visiting own public profile
   useEffect(() => {
-    if (session?.user?.id && session.user.id === id) {
+    if ((session?.user as any)?.id && (session?.user as any).id === id) {
        router.replace("/profile");
     }
   }, [session, id, router]);
@@ -50,7 +50,7 @@ export default function PublicProfilePage() {
     if (!id) return;
     
     // หากเป็นการดูโปรไฟล์ตัวเอง รอให้ useEffect ด้านบนทำงานก่อนเพื่อจะได้ไม่ซ่อนโหลด
-    if (session?.user?.id === id) return;
+    if ((session?.user as any)?.id === id) return;
 
     fetch(`/api/user/public/${id}`)
       .then((res) => res.json())

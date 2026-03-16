@@ -6,3 +6,10 @@
 html {
   scrollbar-gutter: stable;
 }
+
+/* Force HeroUI Input labels to not truncate and show full text */
+.truncate {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}

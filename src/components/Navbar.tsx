@@ -10,7 +10,7 @@ import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion"; // เก็บไว้ใช้กับ Navbar Active Tab เท่านั้น
 import { FcGoogle } from "react-icons/fc";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession, getSession } from "next-auth/react";
 import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 
 export default function AppNavbar() {
@@ -86,7 +86,13 @@ export default function AppNavbar() {
           setErrorMessage("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
         } else {
           onOpenChange();
-          router.refresh(); 
+          // ตรวจสอบ Role ของผู้ใช้ที่เพิ่งเข้าสู่ระบบ
+          const updatedSession = await getSession();
+          if ((updatedSession?.user as any)?.role === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.refresh(); 
+          }
         }
       }
     } catch (err) {
@@ -223,6 +229,7 @@ export default function AppNavbar() {
                   label={authMode === "login" ? "Username or Email" : "Email"} 
                   variant="bordered" labelPlacement="outside" placeholder="Enter your email" 
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  classNames={{ label: "w-full max-w-full truncate-none text-[15px] whitespace-nowrap" }}
                 />
                 
                 <Input 
