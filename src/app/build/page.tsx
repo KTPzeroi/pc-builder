@@ -3,7 +3,6 @@
 {/* import React, { useState, useRef, MouseEvent, TouchEvent } from "react";กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build */ }
 {/* import Link from "next/link"; // <--- เพิ่มบรรทัดนี้  กุลิ้งไม่ได้ลองทำลิ้งให้หน่อยของปุ่ม plan your build*/ }
 import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Card, CardBody, CardHeader, Button, Progress,
   Select, SelectItem, Badge, Divider, ScrollShadow,
@@ -61,6 +60,7 @@ export default function BuildPage() {
   const router = useRouter();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [viewDetailsComp, setViewDetailsComp] = useState<Component | null>(null);
   const { isOpen: isSaveOpen, onOpen: onSaveOpen, onOpenChange: onSaveChange, onClose: onSaveClose } = useDisclosure();
   const { isOpen: isLoginAlertOpen, onOpen: onLoginAlertOpen, onOpenChange: onLoginAlertChange } = useDisclosure();
 
@@ -398,54 +398,123 @@ export default function BuildPage() {
       </Modal>
 
       {/* 5. Selection Modal */}
-      <AnimatePresence>
-        {selectedCategory && (
-          <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="absolute inset-0 bg-background/60 backdrop-blur-md" onClick={() => setSelectedCategory(null)} />
-            <motion.div className="relative flex h-[95vh] md:h-[85vh] w-full max-w-6xl flex-col bg-slate-900 border border-white/10 shadow-2xl overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem]" initial={{ y: 50, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 50, opacity: 0, scale: 0.95 }}>
-
-              <Card className="flex-1 bg-transparent border-none shadow-none">
-                <CardHeader className="flex justify-between p-6 md:p-8 border-b border-white/10 bg-slate-800/50">
+      <Modal 
+        isOpen={!!selectedCategory} 
+        onOpenChange={(isOpen) => !isOpen && setSelectedCategory(null)} 
+        size="5xl" 
+        scrollBehavior="inside"
+        classNames={{ 
+          base: "bg-slate-900 border border-white/10 text-white md:rounded-[2.5rem]", 
+          header: "border-b border-white/10 p-6 md:p-8 bg-slate-800/50",
+          body: "p-0"
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex justify-between items-center">
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold uppercase text-white">{selectedCategory}</h3>
                     <p className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-widest">เลือกอุปกรณ์ที่ต้องการ</p>
                   </div>
-                  <Button isIconOnly variant="light" className="text-white text-xl" onPress={() => setSelectedCategory(null)}>&times;</Button>
-                </CardHeader>
-
-                <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+              </ModalHeader>
+              <ModalBody>
+                <div className="flex flex-col md:flex-row flex-1 h-full min-h-[60vh] md:h-[70vh]">
                   <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 space-y-4 bg-black/20 overflow-x-auto md:overflow-y-auto">
                     <div className="flex md:flex-col gap-4">
-                      {categoryFilters[selectedCategory]?.map((f) => (
+                      {categoryFilters[selectedCategory || ""]?.map((f) => (
                         <Select key={f.key} label={f.label} labelPlacement="outside" placeholder="ทั้งหมด" size="sm" className="min-w-[140px] md:w-full"
-                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10" }}>
+                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10", popoverContent: "text-white" }}>
                           {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
                         </Select>
                       ))}
                     </div>
                   </aside>
-                  <CardBody className="p-0 bg-slate-950">
-                    <ScrollShadow className="flex-1 p-4 md:p-8">
-                      {loading ? (
-                        <div className="flex justify-center items-center h-full">
-                          <Spinner color="primary" size="lg" />
-                        </div>
-                      ) : (
-                        <SelectionGrid category={selectedCategory} allComponents={components} onSelectProduct={handleSelectProduct} categoryToType={categoryToTypeMap} />
-                      )}
-                    </ScrollShadow>
-                  </CardBody>
+                  <ScrollShadow className="flex-1 p-4 md:p-8 bg-slate-950">
+                    {loading ? (
+                      <div className="flex justify-center items-center h-full min-h-[300px]">
+                        <Spinner color="primary" size="lg" />
+                      </div>
+                    ) : (
+                      <SelectionGrid 
+                        category={selectedCategory || ""} 
+                        allComponents={components} 
+                        onSelectProduct={handleSelectProduct} 
+                        onViewDetails={setViewDetailsComp}
+                        categoryToType={categoryToTypeMap} 
+                      />
+                    )}
+                  </ScrollShadow>
                 </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </ModalBody>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* 6. Product Details Modal */}
+      <Modal isOpen={!!viewDetailsComp} onOpenChange={(isOpen) => !isOpen && setViewDetailsComp(null)} size="2xl" classNames={{ base: "bg-slate-900 border border-white/10 text-white" }} scrollBehavior="inside">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="border-b border-white/10 p-6">
+                <h3 className="text-xl font-bold">รายละเอียดอุปกรณ์</h3>
+              </ModalHeader>
+              <ModalBody className="p-6 space-y-6">
+                {viewDetailsComp && (
+                  <>
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="w-full md:w-1/3 aspect-square bg-white rounded-xl flex justify-center items-center p-4">
+                        {viewDetailsComp.image ? (
+                          <img src={viewDetailsComp.image} alt={viewDetailsComp.name} className="max-w-full max-h-full object-contain" />
+                        ) : (
+                          <span className="text-gray-400 text-sm">No Image</span>
+                        )}
+                      </div>
+                      <div className="w-full md:w-2/3 space-y-2">
+                        <p className="text-sm font-bold text-gray-500 uppercase">{viewDetailsComp.brand}</p>
+                        <h4 className="text-2xl font-bold">{viewDetailsComp.name}</h4>
+                        <p className="text-xl font-bold text-success mt-2">฿{viewDetailsComp.price.toLocaleString()}</p>
+                        
+                        <div className="pt-4 grid grid-cols-2 gap-4 text-sm mt-4">
+                            {viewDetailsComp.socket && <div><span className="text-gray-500 block text-xs">Socket</span><span className="font-semibold">{viewDetailsComp.socket}</span></div>}
+                            {viewDetailsComp.ramType && <div><span className="text-gray-500 block text-xs">RAM Type</span><span className="font-semibold">{viewDetailsComp.ramType}</span></div>}
+                            {viewDetailsComp.formFactor && <div><span className="text-gray-500 block text-xs">Form Factor</span><span className="font-semibold">{viewDetailsComp.formFactor}</span></div>}
+                            {viewDetailsComp.capacity !== null && viewDetailsComp.capacity !== undefined && <div><span className="text-gray-500 block text-xs">Capacity</span><span className="font-semibold">{viewDetailsComp.capacity} {viewDetailsComp.type === 'PSU' ? 'W' : 'GB'}</span></div>}
+                            {viewDetailsComp.cpuSingleScore !== null && viewDetailsComp.cpuSingleScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Single Score</span><span className="font-semibold">{viewDetailsComp.cpuSingleScore}</span></div>}
+                            {viewDetailsComp.cpuMultiScore !== null && viewDetailsComp.cpuMultiScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Multi Score</span><span className="font-semibold">{viewDetailsComp.cpuMultiScore}</span></div>}
+                            {viewDetailsComp.gpuScore !== null && viewDetailsComp.gpuScore !== undefined && <div><span className="text-gray-500 block text-xs">GPU Score</span><span className="font-semibold">{viewDetailsComp.gpuScore}</span></div>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <h5 className="font-bold border-b border-white/10 pb-2 text-blue-400">คุณสมบัติ / รายละเอียด (Description)</h5>
+                        <div className="text-gray-300 text-sm whitespace-pre-line leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">
+                            {(viewDetailsComp as any).description || "ไม่มีรายละเอียดเพิ่มเติมระบุไว้"}
+                        </div>
+                    </div>
+                  </>
+                )}
+              </ModalBody>
+              <ModalFooter className="p-6 border-t border-white/10">
+                <Button variant="light" onPress={onClose} className="font-bold">ปิด</Button>
+                <Button color="primary" onPress={() => {
+                  if (selectedCategory && viewDetailsComp) {
+                    handleSelectProduct(selectedCategory, viewDetailsComp);
+                    setViewDetailsComp(null);
+                  }
+                }} className="font-bold px-8 shadow-lg shadow-blue-500/30">เลือกชิ้นส่วนนี้</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
 
-function SelectionGrid({ category, allComponents, onSelectProduct, categoryToType }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, categoryToType: Record<string, string> }) {
+function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string> }) {
   const targetType = categoryToType[category];
   const products = allComponents.filter(c => c.type === targetType);
 
@@ -456,21 +525,28 @@ function SelectionGrid({ category, allComponents, onSelectProduct, categoryToTyp
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-8">
       {products.map((product) => (
-        <Card key={product.id} isPressable onPress={() => onSelectProduct(category, product)} className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1">
-          <CardBody className="p-0">
-            <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden">
+        <Card key={product.id} className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1">
+          <CardBody className="p-0 flex flex-col h-full">
+            <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => onSelectProduct(category, product)}>
               {product.image ? (
                 <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain" />
               ) : (
                 <span className="text-gray-400 text-xs">No Image</span>
               )}
             </div>
-            <div className="p-4 space-y-3 text-left">
-              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{product.brand}</p>
-              <h4 className="text-sm font-bold text-white leading-tight truncate" title={product.name}>{product.name}</h4>
-              <div className="flex justify-between items-center">
-                <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
-                <div className="inline-flex items-center justify-center h-7 px-3 text-[9px] font-bold text-blue-500 uppercase rounded-lg bg-blue-500/10">เลือก</div>
+            <div className="p-4 flex flex-col flex-1 text-left space-y-3">
+              <div>
+                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{product.brand}</p>
+                <h4 className="text-sm font-bold text-white leading-tight line-clamp-2" title={product.name}>{product.name}</h4>
+              </div>
+              <div className="mt-auto">
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="flat" color="default" className="text-xs font-bold text-gray-300" onPress={() => onViewDetails(product)}>รายละเอียด</Button>
+                    <Button size="sm" color="primary" className="text-xs font-bold shadow-lg shadow-blue-500/20" onPress={() => onSelectProduct(category, product)}>เลือก</Button>
+                  </div>
+                </div>
               </div>
             </div>
           </CardBody>

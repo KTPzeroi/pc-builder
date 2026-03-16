@@ -86,6 +86,7 @@ model Component {
   brand          String
   price          Float
   image          String?
+  description    String?  @db.Text
 
   // -- Compatibility --
   socket         String?  // LGA1700, AM5
