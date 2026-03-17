@@ -9,7 +9,10 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function PUT(req: Request, context: any) {
     try {
-        const { id } = await context.params;
+        // Handle both Next.js 14 and 15 parameter resolution
+        const params = await Promise.resolve(context.params);
+        const { id } = params;
+        
         if (!id) return NextResponse.json({ error: "No component ID provided" }, { status: 400 });
 
         const body = await req.json();
@@ -38,13 +41,13 @@ export async function PUT(req: Request, context: any) {
                 socket: socket !== undefined ? socket : existingComponent.socket,
                 ramType: ramType !== undefined ? ramType : existingComponent.ramType,
                 formFactor: formFactor !== undefined ? formFactor : existingComponent.formFactor,
-                capacity: capacity !== undefined ? parseInt(capacity.toString()) : existingComponent.capacity,
-                cpuSingleScore: cpuSingleScore !== undefined ? parseInt(cpuSingleScore.toString()) : existingComponent.cpuSingleScore,
-                cpuMultiScore: cpuMultiScore !== undefined ? parseInt(cpuMultiScore.toString()) : existingComponent.cpuMultiScore,
-                gpuScore: gpuScore !== undefined ? parseInt(gpuScore.toString()) : existingComponent.gpuScore,
-                vramGb: vramGb !== undefined ? parseInt(vramGb.toString()) : existingComponent.vramGb,
-                ramSpeed: ramSpeed !== undefined ? parseInt(ramSpeed.toString()) : existingComponent.ramSpeed,
-                readWriteSpeed: readWriteSpeed !== undefined ? parseInt(readWriteSpeed.toString()) : existingComponent.readWriteSpeed,
+                capacity: capacity === undefined ? existingComponent.capacity : (capacity ? parseInt(capacity.toString()) : null),
+                cpuSingleScore: cpuSingleScore === undefined ? existingComponent.cpuSingleScore : (cpuSingleScore ? parseInt(cpuSingleScore.toString()) : null),
+                cpuMultiScore: cpuMultiScore === undefined ? existingComponent.cpuMultiScore : (cpuMultiScore ? parseInt(cpuMultiScore.toString()) : null),
+                gpuScore: gpuScore === undefined ? existingComponent.gpuScore : (gpuScore ? parseInt(gpuScore.toString()) : null),
+                vramGb: vramGb === undefined ? existingComponent.vramGb : (vramGb ? parseInt(vramGb.toString()) : null),
+                ramSpeed: ramSpeed === undefined ? existingComponent.ramSpeed : (ramSpeed ? parseInt(ramSpeed.toString()) : null),
+                readWriteSpeed: readWriteSpeed === undefined ? existingComponent.readWriteSpeed : (readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null),
             }
         });
 
@@ -57,7 +60,10 @@ export async function PUT(req: Request, context: any) {
 
 export async function DELETE(req: Request, context: any) {
     try {
-        const { id } = await context.params;
+        // Handle both Next.js 14 and 15 parameter resolution
+        const params = await Promise.resolve(context.params);
+        const { id } = params;
+        
         if (!id) return NextResponse.json({ error: "No component ID provided" }, { status: 400 });
 
         const existingComponent = await prisma.component.findUnique({ where: { id } });
