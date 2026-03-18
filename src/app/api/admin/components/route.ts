@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { syncSeedFile } from "@/utils/syncSeed";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
@@ -45,6 +46,9 @@ export async function POST(req: Request) {
                 readWriteSpeed: readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null,
             }
         });
+
+        // Sync to seed.ts asynchronously so it does not block the response
+        syncSeedFile().catch(console.error);
 
         return NextResponse.json(component, { status: 201 });
     } catch (error) {

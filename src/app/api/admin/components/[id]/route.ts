@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { syncSeedFile } from "@/utils/syncSeed";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
@@ -51,6 +52,8 @@ export async function PUT(req: Request, context: any) {
             }
         });
 
+        syncSeedFile().catch(console.error);
+
         return NextResponse.json(updatedComponent, { status: 200 });
     } catch (error) {
         console.error("Error updating component:", error);
@@ -70,6 +73,8 @@ export async function DELETE(req: Request, context: any) {
         if (!existingComponent) return NextResponse.json({ error: "Component not found" }, { status: 404 });
 
         await prisma.component.delete({ where: { id } });
+
+        syncSeedFile().catch(console.error);
 
         return NextResponse.json({ message: "Component deleted successfully" }, { status: 200 });
     } catch (error) {
