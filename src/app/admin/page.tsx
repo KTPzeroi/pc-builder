@@ -8,7 +8,8 @@ import {
     IoWarningOutline,
     IoServerOutline,
     IoCloudDoneOutline,
-    IoGridOutline
+    IoGridOutline,
+    IoShieldCheckmarkOutline
 } from "react-icons/io5";
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -93,7 +94,7 @@ export default function AdminDashboardPage() {
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">ยินดีต้อนรับกลับมา! นี่คือสรุปกิจกรรมล่าสุดในระบบของคุณ</p>
                 </div>
-                <Button color="primary" variant="flat" className="font-bold uppercase tracking-widest text-[10px]">
+                <Button onPress={() => alert('ฟีเจอร์ดาวน์โหลดรายงาน กำลังอยู่ระหว่างการพัฒนา')} color="primary" variant="flat" className="font-bold uppercase tracking-widest text-[10px]">
                     Download Report
                 </Button>
             </header>
@@ -113,12 +114,14 @@ export default function AdminDashboardPage() {
                     color="bg-purple-500"
                 />
 
-                <StatCard
-                    title="Active Reports"
-                    value={stats?.activeReports || 0}
-                    icon={<IoWarningOutline className="text-danger" />}
-                    color="bg-danger"
-                />
+                <div onClick={() => window.location.href = '/admin/reports'} className="cursor-pointer transition-transform hover:scale-105 active:scale-95">
+                    <StatCard
+                        title="Active Reports"
+                        value={stats?.activeReports || 0}
+                        icon={<IoWarningOutline className="text-danger" />}
+                        color="bg-danger"
+                    />
+                </div>
             </section>
 
             {/* 3. Charts Section */}
@@ -214,19 +217,38 @@ export default function AdminDashboardPage() {
                     </CardBody>
                 </Card>
 
-                {/* Recent Reports Table Placeholder */}
+                {/* Recent Reports Table / Urgent Reports */}
                 <Card className="bg-black/40 border border-white/10 shadow-xl">
                     <CardHeader className="p-6 border-b border-white/5">
                         <div className="flex justify-between items-center w-full">
                             <h4 className="text-lg font-bold text-white uppercase tracking-widest text-sm italic">Urgent Reports</h4>
-                            <Button size="sm" variant="light" color="danger" className="font-bold text-[10px]">View All</Button>
+                            <Button size="sm" variant="light" color="danger" className="font-bold text-[10px]" onPress={() => window.location.href = '/admin/reports'}>View All</Button>
                         </div>
                     </CardHeader>
                     <CardBody className="p-0">
-                        <div className="px-6 py-12 text-center bg-red-500/5 h-full flex flex-col items-center justify-center min-h-[220px]">
-                            <IoWarningOutline className="text-danger text-5xl mx-auto mb-4 opacity-50" />
-                            <p className="text-gray-400 font-medium">ไม่มีกระทู้ที่โดนรายงานใหม่ในขณะนี้</p>
-                        </div>
+                        {(!stats?.urgentReports || stats.urgentReports.length === 0) ? (
+                            <div className="px-6 py-12 text-center bg-white/5 h-full flex flex-col items-center justify-center min-h-[220px]">
+                                <IoShieldCheckmarkOutline className="text-gray-500 text-5xl mx-auto mb-4 opacity-50" />
+                                <p className="text-gray-400 font-medium">ระบบปกติ ไม่มีรายงานด่วนในขณะนี้</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-2 p-4 h-full min-h-[220px]">
+                                {stats.urgentReports.map((report: any) => (
+                                    <div key={report.id} className="flex justify-between items-center bg-danger/10 border-l-4 border-danger p-3 rounded-md">
+                                        <div className="flex flex-col">
+                                            <span className="text-danger font-bold text-sm">{report.type}: {report.reason}</span>
+                                            <span className="text-gray-400 text-xs truncate max-w-[200px]">{report.description || `Target ID: ${report.targetId}`}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {report.targetUrl && (
+                                                <Button size="sm" color="default" variant="flat" onPress={() => window.open(report.targetUrl, '_blank')}>ดูต้นทาง</Button>
+                                            )}
+                                            <Button size="sm" color="danger" variant="flat" onPress={() => window.location.href = '/admin/reports'}>จัดการ</Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </CardBody>
                 </Card>
             </section>

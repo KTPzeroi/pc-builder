@@ -17,8 +17,11 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
 
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
+    const post = await prisma.post.findFirst({
+      where: { 
+        id: postId,
+        status: { not: "Hidden" }
+      },
       include: {
         author: { select: { id: true, name: true, image: true, username: true } },
         pcBuild: true,

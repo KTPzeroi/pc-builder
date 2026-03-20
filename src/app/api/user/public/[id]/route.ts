@@ -23,6 +23,7 @@ export async function GET(
                     }
                 },
                 posts: {
+                    where: { status: { not: "Hidden" } },
                     orderBy: { createdAt: 'desc' },
                     take: 5,
                     select: {

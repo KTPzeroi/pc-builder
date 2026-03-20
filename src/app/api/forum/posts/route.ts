@@ -10,6 +10,9 @@ const prisma = new PrismaClient();
 export async function GET() {
   try {
     const posts = await prisma.post.findMany({
+      where: {
+        status: { not: "Hidden" }
+      },
       include: {
         author: {
           select: { id: true, name: true, image: true, username: true }

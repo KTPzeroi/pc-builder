@@ -58,6 +58,11 @@ export default function PostDetailPage() {
   const [commentInput, setCommentInput] = useState("");
   // --- ส่วนที่เพิ่มเข้ามา ---
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // สำหรับ Modal รายงาน
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
 
   const fetchPostDetail = async () => {
     try {
@@ -115,9 +120,39 @@ export default function PostDetailPage() {
     toast.success("คัดลอกลิงก์เรียบร้อย!");
   };
 
-  const handleSendReport = (onClose: () => void) => {
-    toast.error("ส่งรายงานสำเร็จ ทีมงานจะรีบตรวจสอบ");
-    onClose();
+  const handleSendReport = async (onClose: () => void) => {
+    if (!session) {
+      toast.error("กรุณาเข้าสู่ระบบก่อนรายงาน");
+      return;
+    }
+    if (!reportReason) {
+      toast.error("กรุณาเลือกเหตุผลในการรายงาน");
+      return;
+    }
+
+    try {
+        setIsReporting(true);
+        const res = await fetch(`/api/forum/posts/${params.id}/report`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reportReason, description: reportDescription }),
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "ส่งรายงานไม่สำเร็จ");
+        }
+        
+        toast.success("ส่งรายงานสำเร็จ ทีมงานจะรีบตรวจสอบ");
+        setReportReason("");
+        setReportDescription("");
+        onClose();
+    } catch (error) {
+        // @ts-ignore
+        toast.error(error.message || "เกิดข้อผิดพลาด");
+    } finally {
+        setIsReporting(false);
+    }
   };
 
   if (isLoading) {
@@ -295,17 +330,23 @@ export default function PostDetailPage() {
               <ModalHeader className="border-b border-white/5">รายงานเนื้อหาที่ไม่เหมาะสม</ModalHeader>
               <ModalBody className="py-6">
                 <p className="text-sm text-gray-400 mb-4">โปรดระบุเหตุผลในการรายงานกระทู้นี้:</p>
-                <RadioGroup color="danger">
+                <RadioGroup color="danger" value={reportReason} onValueChange={setReportReason}>
                   <Radio value="harassment">เนื้อหาหยาบคาย หรือคุกคาม</Radio>
                   <Radio value="spam">สแปม หรือข้อมูลเท็จ</Radio>
                   <Radio value="misplaced">โพสต์ผิดหมวดหมู่</Radio>
                   <Radio value="sexual">เนื้อหาลามกอนาจาร</Radio>
                 </RadioGroup>
-                <Textarea label="รายละเอียดเพิ่มเติม" variant="bordered" className="mt-4" />
+                <Textarea 
+                  label="รายละเอียดเพิ่มเติม" 
+                  variant="bordered" 
+                  className="mt-4" 
+                  value={reportDescription}
+                  onValueChange={setReportDescription}
+                />
               </ModalBody>
               <ModalFooter className="border-t border-white/5">
                 <Button variant="light" onPress={onClose}>ยกเลิก</Button>
-                <Button color="danger" onPress={() => handleSendReport(onClose)}>
+                <Button color="danger" onPress={() => handleSendReport(onClose)} isLoading={isReporting}>
                   ส่งรายงาน
                 </Button>
               </ModalFooter>

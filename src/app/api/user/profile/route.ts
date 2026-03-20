@@ -21,9 +21,11 @@ export async function GET(req: Request) {
       },
       include: {
         posts: {
+          where: { status: { not: "Hidden" } },
           orderBy: { createdAt: 'desc' }
         },
         comments: {
+          where: { post: { status: { not: "Hidden" } } },
           include: {
             post: true
           },

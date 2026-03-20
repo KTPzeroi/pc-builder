@@ -44,6 +44,7 @@ model User {
   role          String    @default("USER")
   status        String    @default("ACTIVE") // "ACTIVE", "SUSPENDED", "BANNED"
   reportCount   Int       @default(0)
+  reports       Report[]
 }
 
 model Post {
@@ -137,6 +138,29 @@ model PCBuild {
   updatedAt     DateTime @updatedAt
   
   posts         Post[]
+}
+
+// ----------------------------------------------------
+// ระบบรายงานปัญหา (Report System)
+// ----------------------------------------------------
+model Report {
+  id          String   @id @default(cuid())
+  type        String   // "POST", "COMMENT", "USER", "PCBUILD"
+  reason      String   // หมวดหมู่ เช่น "Spam", "Inappropriate", "Harassment"
+  description String?  @db.Text
+  severity    String   @default("LOW")     // "LOW", "MEDIUM", "HIGH", "URGENT"
+  status      String   @default("PENDING") // "PENDING", "RESOLVED", "IGNORED"
+  
+  // ผู้รายงาน
+  reporterId  String
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  // สิ่งที่ถูกรายงาน (เก็บเป็น ID ยืดหยุ่น หรืออาจจะโยง relation ชัดเจนถ้าต้องการ)
+  targetId    String   
+  targetUrl   String?  // ลิงก์ไปยังสิ่งที่ถูกรายงาน (Optional ประหยัดเวลา Query)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ----------------------------------------------------

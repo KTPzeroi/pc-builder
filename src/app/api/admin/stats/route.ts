@@ -17,6 +17,7 @@ export async function GET() {
         let activityData: any[] = [];
         let categoriesData: any[] = [];
         let activeReports = 0;
+        let urgentReports: any[] = [];
 
         try {
             // 1. Total Users
@@ -94,8 +95,21 @@ export async function GET() {
                 { category: "3D/Render", count: renderCount }
             ];
 
-            // 5. Active Reports (Mock 0 for now)
-            activeReports = 0;
+            // 5. Active Reports (Pending reports)
+            activeReports = await prisma.report.count({
+                where: { status: "PENDING" }
+            });
+
+            // 6. Urgent Reports (High/Urgent severity and pending)
+            const getUrgentReports = await prisma.report.findMany({
+                where: { 
+                    status: "PENDING",
+                    severity: { in: ["HIGH", "URGENT"] } 
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 3,
+            });
+            urgentReports = getUrgentReports;
 
         } catch (dbErr) {
             console.error("Database Connection Error:", dbErr);
@@ -114,6 +128,7 @@ export async function GET() {
             totalUsers,
             totalBuilds,
             activeReports,
+            urgentReports,
             activityData,
             categoriesData
         });
