@@ -4,14 +4,14 @@ import {
   Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button,
   Modal, ModalContent, ModalHeader, ModalBody,
   useDisclosure, Input, Divider,
-  Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User as HeroUser
+  Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User as HeroUser, Badge, ScrollShadow
 } from "@heroui/react";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion"; // เก็บไว้ใช้กับ Navbar Active Tab เท่านั้น
 import { FcGoogle } from "react-icons/fc";
 import { signIn, signOut, useSession, getSession } from "next-auth/react";
-import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline, IoNotificationsOutline, IoChatbubbleEllipsesOutline, IoWarning, IoHeart } from "react-icons/io5";
 
 export default function AppNavbar() {
   const pathname = usePathname();
@@ -25,6 +25,9 @@ export default function AppNavbar() {
   const [isVisible, setIsVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     setMounted(true);
     if (!isOpen) {
@@ -32,6 +35,29 @@ export default function AppNavbar() {
       setIsVisible(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (session) {
+      // ดึงการแจ้งเตือน
+      const fetchNotifications = async () => {
+        try {
+          const res = await fetch("/api/notifications");
+          if (res.ok) {
+            const data = await res.json();
+            setNotifications(data.notifications || []);
+            setUnreadCount(data.unreadCount || 0);
+          }
+        } catch (error) {
+          console.error("Failed to fetch notifications");
+        }
+      };
+      fetchNotifications();
+      
+      // อัปเดตทุกๆ 30 วินาที
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
 
   useEffect(() => {
     setErrorMessage("");
@@ -151,35 +177,106 @@ export default function AppNavbar() {
                 LOGIN
               </Button>
             ) : (
-              <Dropdown placement="bottom-end" className="bg-black/90 border border-white/10 text-white shadow-2xl">
-                <DropdownTrigger>
-                  <div className="flex items-center outline-none">
-                    <HeroUser
-                      as="button"
-                      avatarProps={{
-                        isBordered: true,
-                        src: session.user?.image || undefined,
-                        showFallback: true,
-                        name: (session.user?.name || "U").charAt(0).toUpperCase(),
-                        className: "border-blue-500 bg-slate-800 ml-3"
-                      }}
-                      className="transition-transform"
-                      name={session.user?.name || "User"}
-                      classNames={{
-                        name: "text-white font-bold text-sm",
-                      }}
-                    />
-                  </div>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="User Actions" variant="flat">
-                  <DropdownItem key="profile" onPress={() => router.push("/profile")}>
-                    User Profile
-                  </DropdownItem>
-                  <DropdownItem key="logout" color="danger" className="text-danger" onPress={handleLogout}>
-                    Log Out
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+              <div className="flex items-center gap-4">
+                {/* 🔴 Notification Bell */}
+                <Dropdown placement="bottom-end" className="bg-black/95 border border-white/10 text-white shadow-2xl min-w-[300px]">
+                  <DropdownTrigger>
+                    <button className="relative p-2 rounded-full hover:bg-white/5 transition-colors focus:outline-none flex items-center justify-center">
+                      <Badge content={unreadCount} color="danger" shape="circle" isInvisible={unreadCount === 0} size="sm">
+                        <IoNotificationsOutline className="text-2xl text-gray-300" />
+                      </Badge>
+                    </button>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Notifications" variant="flat" disabledKeys={["empty"]} className="p-0">
+                    {/* @ts-ignore */}
+                    {[
+                      <DropdownItem key="header" isReadOnly className="cursor-default border-b border-white/5 py-3">
+                        <p className="font-bold text-lg text-white">การแจ้งเตือน</p>
+                      </DropdownItem>,
+                      
+                      ...((notifications || []).length === 0 ? [
+                        <DropdownItem key="empty" isReadOnly className="text-center py-6 text-gray-500">
+                          ไม่มีการแจ้งเตือนใหม่
+                        </DropdownItem>
+                      ] : notifications.map((notif: any) => (
+                        <DropdownItem 
+                          key={notif.id} 
+                          onPress={async () => {
+                            if (!notif.isRead) {
+                              try {
+                                setUnreadCount(prev => Math.max(0, prev - 1));
+                                setNotifications(prev => prev.filter(n => n.id !== notif.id)); // 🔴 ลบข้อความออกจากรายการทันที
+                                await fetch("/api/notifications", {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ notifId: notif.id })
+                                });
+                              } catch(e) {}
+                            }
+                            router.push(notif.link);
+                          }}
+                          className={`py-3 px-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${!notif.isRead ? 'bg-white/5' : 'opacity-70'}`}
+                          textValue={notif.message}
+                        >
+                          <div className="flex gap-3 items-start">
+                            <div className="mt-1">
+                              {/* 🔴 ถ้ายังไม่ได้อ่านให้มีจุดแดงเล็กๆกำกับด้วย */}
+                              {!notif.isRead && <div className="absolute top-4 left-2 w-2 h-2 bg-danger rounded-full shadow-[0_0_8px_rgba(255,0,0,0.8)] animate-pulse" />}
+                              {notif.type === 'REPORT' || notif.type === 'WARNING' ? (
+                                <IoWarning className="text-danger text-xl ml-2" />
+                              ) : notif.type === 'LIKE' ? (
+                                <IoHeart className="text-danger text-xl ml-2" />
+                              ) : (
+                                <IoChatbubbleEllipsesOutline className="text-primary text-xl ml-2" />
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className={`text-sm whitespace-normal ${!notif.isRead ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{notif.message}</span>
+                              <span className="text-xs text-gray-500 mt-1">
+                                {new Date(notif.date).toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                              </span>
+                            </div>
+                          </div>
+                        </DropdownItem>
+                      )))
+                    ]}
+                    
+                  </DropdownMenu>
+                </Dropdown>
+
+                {/* 🟢 Profile Dropdown */}
+                <Dropdown placement="bottom-end" className="bg-black/90 border border-white/10 text-white shadow-2xl">
+                  <DropdownTrigger>
+                    <div className="flex items-center outline-none cursor-pointer">
+                      <HeroUser
+                        as="button"
+                        avatarProps={{
+                          isBordered: true,
+                          src: session.user?.image || undefined,
+                          showFallback: true,
+                          name: (session.user?.name || "U").charAt(0).toUpperCase(),
+                          className: "border-blue-500 bg-slate-800"
+                        }}
+                        className="transition-transform"
+                        name={session.user?.name || "User"}
+                        description={(session.user as any)?.role === "ADMIN" ? "Admin" : ""}
+                        classNames={{
+                          name: "text-white font-bold text-sm",
+                          description: "text-danger-400 text-xs font-bold"
+                        }}
+                      />
+                    </div>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="User Actions" variant="flat">
+                    <DropdownItem key="profile" onPress={() => router.push("/profile")}>
+                      User Profile
+                    </DropdownItem>
+                    <DropdownItem key="logout" color="danger" className="text-danger" onPress={handleLogout}>
+                      Log Out
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              </div>
             )}
           </NavbarItem>
         </NavbarContent>

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast, Toaster } from "react-hot-toast";
+import { IoWarningOutline, IoHeartOutline, IoHeart } from "react-icons/io5";
 
 interface Comment {
   id: string;
@@ -24,6 +25,7 @@ interface Comment {
     username?: string | null;
   };
   isExpert?: boolean;
+  likedBy?: { id: string }[];
 }
 
 interface PostDetail {
@@ -39,12 +41,14 @@ interface PostDetail {
     username?: string | null;
   };
   comments: Comment[];
+  images?: string[];
+  likedBy?: { id: string }[];
   _count: {
     comments: number;
+    likedBy: number;
   };
   specs?: { label: string; val: string }[];
   price?: string;
-  images?: string[];
 }
 
 export default function PostDetailPage() {
@@ -63,6 +67,7 @@ export default function PostDetailPage() {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [isReporting, setIsReporting] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{type: 'POST' | 'COMMENT', id: string}>({ type: 'POST', id: "" });
 
   const fetchPostDetail = async () => {
     try {
@@ -71,6 +76,7 @@ export default function PostDetailPage() {
       if (!res.ok) throw new Error("Post not found");
       const data = await res.json();
       setPost(data);
+      setReportTarget({ type: 'POST', id: data.id });
     } catch (error) {
       console.error("Fetch Error:", error);
       setPost(null);
@@ -132,7 +138,11 @@ export default function PostDetailPage() {
 
     try {
         setIsReporting(true);
-        const res = await fetch(`/api/forum/posts/${params.id}/report`, {
+        const endpoint = reportTarget.type === 'POST' 
+            ? `/api/forum/posts/${reportTarget.id}/report` 
+            : `/api/forum/comments/${reportTarget.id}/report`;
+
+        const res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ reason: reportReason, description: reportDescription }),
@@ -153,6 +163,53 @@ export default function PostDetailPage() {
     } finally {
         setIsReporting(false);
     }
+  };
+
+  const handleLikePost = async () => {
+    if (!session) { toast.error("กรุณาเข้าสู่ระบบก่อนกดถูกใจ"); return; }
+    try {
+      const res = await fetch(`/api/forum/posts/${params.id}/like`, { method: "POST" });
+      if (res.ok) {
+        setPost(prev => {
+          if (!prev) return prev;
+          // @ts-ignore
+          const userId = session.user.id;
+          const isLiked = prev.likedBy?.some(u => u.id === userId);
+          return {
+            ...prev,
+            likedBy: isLiked ? prev.likedBy?.filter(u => u.id !== userId) : [...(prev.likedBy || []), { id: userId }],
+            _count: { ...prev._count, likedBy: isLiked ? prev._count.likedBy - 1 : prev._count.likedBy + 1 }
+          };
+        });
+      }
+    } catch(e) {}
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    if (!session) { toast.error("กรุณาเข้าสู่ระบบก่อนกดถูกใจ"); return; }
+    try {
+      const res = await fetch(`/api/forum/comments/${commentId}/like`, { method: "POST" });
+      if (res.ok) {
+        setPost(prev => {
+          if (!prev) return prev;
+          // @ts-ignore
+          const userId = session.user.id;
+          return {
+            ...prev,
+            comments: prev.comments.map(c => {
+              if (String(c.id) === String(commentId)) {
+                const isLiked = c.likedBy?.some(u => u.id === userId);
+                return {
+                  ...c,
+                  likedBy: isLiked ? c.likedBy?.filter(u => u.id !== userId) : [...(c.likedBy || []), { id: userId }]
+                };
+              }
+              return c;
+            })
+          };
+        });
+      }
+    } catch(e) {}
   };
 
   if (isLoading) {
@@ -197,6 +254,20 @@ export default function PostDetailPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button 
+                variant="light" 
+                // @ts-ignore
+                color={post.likedBy?.some(u => u.id === session?.user?.id) ? "danger" : "default"}
+                // @ts-ignore
+                className={post.likedBy?.some(u => u.id === session?.user?.id) ? "text-danger" : "text-gray-400"}
+                onPress={handleLikePost}
+                startContent={
+                  // @ts-ignore
+                  post.likedBy?.some(u => u.id === session?.user?.id) ? <IoHeart className="text-xl" /> : <IoHeartOutline className="text-xl" />
+                }
+              >
+                {post._count?.likedBy || 0}
+              </Button>
               <Chip color="primary" variant="flat" size="sm" className="font-bold">
                 {post.category?.replace('_', ' ') || "BUILD ADVICE"}
               </Chip>
@@ -206,7 +277,10 @@ export default function PostDetailPage() {
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Post actions">
                   <DropdownItem key="share" onPress={handleShare}>คัดลอกลิงก์โพสต์</DropdownItem>
-                  <DropdownItem key="report" className="text-danger" color="danger" onPress={onOpen}>
+                  <DropdownItem key="report" className="text-danger" color="danger" onPress={() => {
+                    setReportTarget({ type: 'POST', id: post.id });
+                    onOpen();
+                  }}>
                     รายงานกระทู้
                   </DropdownItem>
                 </DropdownMenu>
@@ -310,6 +384,37 @@ export default function PostDetailPage() {
                       <span className="text-[10px] text-gray-500 uppercase">{new Date(comment.createdAt).toLocaleDateString('th-TH')}</span>
                     </div>
                     <p className="text-sm text-gray-300 leading-relaxed">{comment.content}</p>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                      <Button 
+                        size="sm" 
+                        variant="light" 
+                        // @ts-ignore
+                        color={comment.likedBy?.some(u => u.id === session?.user?.id) ? "danger" : "default"}
+                        className={`min-w-0 px-2 h-8 ${
+                          // @ts-ignore
+                          comment.likedBy?.some(u => u.id === session?.user?.id) ? "text-danger" : "text-gray-400"
+                        }`}
+                        onPress={() => handleLikeComment(comment.id)}
+                        startContent={
+                          // @ts-ignore
+                          comment.likedBy?.some(u => u.id === session?.user?.id) ? <IoHeart /> : <IoHeartOutline />
+                        }
+                      >
+                        {comment.likedBy?.length || 0}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        isIconOnly 
+                        variant="light" 
+                        className="text-gray-500 hover:text-danger min-w-0 h-8 px-2"
+                        onPress={() => {
+                          setReportTarget({ type: 'COMMENT', id: comment.id });
+                          onOpen();
+                        }}
+                      >
+                        <IoWarningOutline />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardBody>

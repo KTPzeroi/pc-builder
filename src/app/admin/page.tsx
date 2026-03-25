@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">ยินดีต้อนรับกลับมา! นี่คือสรุปกิจกรรมล่าสุดในระบบของคุณ</p>
                 </div>
-                <Button onPress={() => alert('ฟีเจอร์ดาวน์โหลดรายงาน กำลังอยู่ระหว่างการพัฒนา')} color="primary" variant="flat" className="font-bold uppercase tracking-widest text-[10px]">
+                <Button onPress={() => window.open('/api/admin/reports/download')} color="primary" variant="flat" className="font-bold uppercase tracking-widest text-[10px]">
                     Download Report
                 </Button>
             </header>

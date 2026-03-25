@@ -25,13 +25,15 @@ export async function GET(
       include: {
         author: { select: { id: true, name: true, image: true, username: true } },
         pcBuild: true,
+        likedBy: { select: { id: true } },
         comments: {
           include: {
-            author: { select: { id: true, name: true, image: true, username: true } }
+            author: { select: { id: true, name: true, image: true, username: true } },
+            likedBy: { select: { id: true } }
           },
           orderBy: { createdAt: 'desc' }
         },
-        _count: { select: { comments: true } }
+        _count: { select: { comments: true, likedBy: true } }
       }
     });
 
@@ -106,30 +108,31 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content: content,
-        // แทนที่จะใช้ postId: parseInt(id) ตรงๆ 
-        // ให้ใช้การ connect ไปที่ post object แทน
-        post: {
-          connect: {
-            id: parseInt(id)
-          }
-        },
-        // การเชื่อมต่อ author ก็ใช้ email ตามเดิม (ตรวจสอบให้แน่ใจว่า email "test" มีอยู่ใน DB)
-        author: {
-          connect: {
-            email: session.user.email
-          }
-        },
+        post: { connect: { id: parseInt(id) } },
+        author: { connect: { email: session.user.email } },
       },
       include: {
-        author: {
-          select: {
-            name: true,
-            image: true,
-            username: true
-          }
-        }
+        author: { select: { name: true, image: true, username: true, id: true } }
       }
     });
+
+    // 🔴 สร้างการแจ้งเตือน (ถ้าคนคอมเมนต์ไม่ใช่เจ้าของโพสต์)
+    const postData = await prisma.post.findUnique({
+      where: { id: parseInt(id) },
+      select: { authorId: true, title: true }
+    });
+
+    if (postData && postData.authorId !== comment.author.id) {
+        // @ts-ignore
+        await prisma.notification.create({
+            data: {
+                userId: postData.authorId,
+                type: 'COMMENT',
+                message: `${comment.author.name || comment.author.username} ตอบกลับกระทู้ "${postData.title}"`,
+                link: `/forum/${id}#comment-${comment.id}`
+            }
+        });
+    }
 
     return NextResponse.json(comment);
   } catch (error) {

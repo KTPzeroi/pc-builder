@@ -45,6 +45,10 @@ model User {
   status        String    @default("ACTIVE") // "ACTIVE", "SUSPENDED", "BANNED"
   reportCount   Int       @default(0)
   reports       Report[]
+  
+  notifications Notification[]
+  likedPosts    Post[]         @relation("UserPostLikes")
+  likedComments Comment[]      @relation("UserCommentLikes")
 }
 
 model Post {
@@ -64,6 +68,8 @@ model Post {
   
   pcBuildId String?
   pcBuild   PCBuild? @relation(fields: [pcBuildId], references: [id])
+  
+  likedBy   User[]   @relation("UserPostLikes")
 }
 
 model Comment {
@@ -74,7 +80,20 @@ model Comment {
   authorId  String   // เปลี่ยนเป็น String ให้ตรงกับ User.id
   author    User     @relation(fields: [authorId], references: [id])
   postId    Int
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  likedBy   User[]   @relation("UserCommentLikes")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   // ฝั่งผู้รับ (เช่น Admin, User)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "REPORT", "SYSTEM", "WARNING" ฯลฯ
+  message   String
+  link      String?  // ลิงก์ตอนคลิก (Optional)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 
