@@ -41,6 +41,15 @@ export async function GET(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+    const userRole = (session?.user as any)?.role;
+
+    // ถ้า post เป็น Private จะดูได้เฉพาะเจ้าของโพสต์ หรือ Admin เท่านั้น
+    if (post.status === "Private" && post.author.id !== userId && userRole !== "ADMIN") {
+      return NextResponse.json({ error: 'This post is private' }, { status: 403 });
+    }
+
     let specs: { label: string, val: string }[] = [];
     let priceStr = undefined;
 

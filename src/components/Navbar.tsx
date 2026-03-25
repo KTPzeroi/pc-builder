@@ -19,7 +19,7 @@ export default function AppNavbar() {
   const { data: session, status } = useSession();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isVisible, setIsVisible] = useState(false);
@@ -136,6 +136,31 @@ export default function AppNavbar() {
     await signOut({ callbackUrl: "/" });
   };
 
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      setErrorMessage("กรุณากรอก Email ที่ใช้สมัคร");
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+
+      alert(data.message || "ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว");
+      setAuthMode("login");
+    } catch(err: any) {
+      setErrorMessage(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!mounted) return <div className="h-16 bg-black/40 border-b border-white/10" />;
 
   const menuItems = [
@@ -148,7 +173,9 @@ export default function AppNavbar() {
     <>
       <Navbar maxWidth="xl" className="bg-black/40 backdrop-blur-md border-b border-white/10 fixed top-0">
         <NavbarBrand>
-          <NextLink href="/"><p className="font-bold text-2xl text-white tracking-widest cursor-pointer">LOGO</p></NextLink>
+          <NextLink href={(session?.user as any)?.role === "ADMIN" ? "/admin" : "/"}>
+            <p className="font-bold text-2xl text-white tracking-widest cursor-pointer">LOGO</p>
+          </NextLink>
         </NavbarBrand>
 
         <NavbarContent className="hidden sm:flex gap-4" justify="center">
@@ -298,11 +325,13 @@ export default function AppNavbar() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                {authMode === "login" ? "Login" : "Create Account"}
+                {authMode === "login" ? "Login" : authMode === "register" ? "Create Account" : "Reset Password"}
                 <p className="text-sm font-normal text-gray-400">
                   {authMode === "login" 
                     ? "Welcome back! Please enter your details." 
-                    : "Join us to save and share your PC builds."}
+                    : authMode === "register"
+                    ? "Join us to save and share your PC builds."
+                    : "Enter your email to receive a password reset link."}
                 </p>
               </ModalHeader>
               
@@ -329,21 +358,23 @@ export default function AppNavbar() {
                   classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
                 />
                 
-                <Input 
-                  label="Password" 
-                  type={isVisible ? "text" : "password"} 
-                  variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  endContent={
-                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
-                      {isVisible ? (
-                        <IoEyeOffOutline className="text-2xl text-default-400" />
-                      ) : (
-                        <IoEyeOutline className="text-2xl text-default-400" />
-                      )}
-                    </button>
-                  }
-                />
+                {authMode !== "forgot" && (
+                  <Input 
+                    label="Password" 
+                    type={isVisible ? "text" : "password"} 
+                    variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    endContent={
+                      <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                        {isVisible ? (
+                          <IoEyeOffOutline className="text-2xl text-default-400" />
+                        ) : (
+                          <IoEyeOutline className="text-2xl text-default-400" />
+                        )}
+                      </button>
+                    }
+                  />
+                )}
                 
                 {authMode === "register" && (
                   <Input 
@@ -352,13 +383,22 @@ export default function AppNavbar() {
                   />
                 )}
 
-                <Button color="primary" className="w-full font-bold mt-2" isLoading={isLoading} onPress={handleAuth}>
-                  {authMode === "login" ? "Log In" : "Sign Up"}
+                <Button color="primary" className="w-full font-bold mt-2" isLoading={isLoading} onPress={authMode === "forgot" ? handleForgotPassword : handleAuth}>
+                  {authMode === "login" ? "Log In" : authMode === "register" ? "Sign Up" : "Send Reset Link"}
                 </Button>
                 
-                <div className="text-center mt-2">
+                <div className="text-center mt-2 flex flex-col gap-2">
+                  {authMode === "login" && (
+                    <button 
+                      onClick={() => setAuthMode("forgot")}
+                      className="text-xs text-gray-400 hover:text-white hover:underline transition-all"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                  
                   <p className="text-xs text-gray-500">
-                    {authMode === "login" ? "Don't have an account?" : "Already have an account?"}
+                    {authMode === "login" ? "Don't have an account?" : authMode === "forgot" ? "Remembered your password?" : "Already have an account?"}
                     <button 
                       onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
                       className="ml-2 text-blue-400 hover:underline font-bold transition-all"

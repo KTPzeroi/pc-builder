@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Card, CardBody, Avatar, Button, Tabs, Tab,
   Divider, Modal, ModalContent, ModalHeader,
@@ -9,6 +9,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 
 // --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
 function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
@@ -168,6 +169,11 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  
+  const { isOpen: isPwdOpen, onOpen: onPwdOpen, onOpenChange: onPwdChange } = useDisclosure();
+  const [pwdData, setPwdData] = useState({ current: "", new: "", confirm: "" });
+  const [isPwdVisible, setIsPwdVisible] = useState(false);
+  const [isChangingPwd, setIsChangingPwd] = useState(false);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -343,6 +349,39 @@ export default function ProfilePage() {
     }
   };
 
+  const handleChangePassword = async (onClose: () => void) => {
+    if (!pwdData.current || !pwdData.new || !pwdData.confirm) {
+      alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
+    }
+    if (pwdData.new !== pwdData.confirm) {
+      alert("รหัสผ่านใหม่ไม่ตรงกัน");
+      return;
+    }
+    
+    setIsChangingPwd(true);
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwdData.current, newPassword: pwdData.new }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || "เกิดข้อผิดพลาด");
+      }
+      
+      alert(data.message || "เปลี่ยนรหัสผ่านเรียบร้อย!");
+      setPwdData({ current: "", new: "", confirm: "" });
+      onClose();
+    } catch (err: any) {
+      alert(err.message || "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน");
+    } finally {
+      setIsChangingPwd(false);
+    }
+  };
+
   if (status === "loading" || isLoadingData) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 text-white">
@@ -383,14 +422,24 @@ export default function ProfilePage() {
                   <span><strong>{userData.comments.length}</strong> Comments</span>
                 </div>
               </div>
-              <Button
-                onPress={handleOpenEdit}
-                color="primary"
-                variant="bordered"
-                className="font-bold border-white/10 text-white hover:bg-white/5 transition-all uppercase tracking-widest text-[10px] px-8"
-              >
-                Edit Profile
-              </Button>
+              <div className="flex flex-col md:flex-row gap-3">
+                <Button
+                  onPress={onPwdOpen}
+                  color="default"
+                  variant="flat"
+                  className="font-bold border-white/10 text-gray-300 hover:text-white transition-all uppercase tracking-widest text-[10px] px-6"
+                >
+                  Change Password
+                </Button>
+                <Button
+                  onPress={handleOpenEdit}
+                  color="primary"
+                  variant="bordered"
+                  className="font-bold border-white/10 text-white hover:bg-white/5 transition-all uppercase tracking-widest text-[10px] px-8"
+                >
+                  Edit Profile
+                </Button>
+              </div>
             </CardBody>
           </Card>
         </section>
@@ -509,6 +558,45 @@ export default function ProfilePage() {
                     className="font-bold px-10 bg-blue-600 shadow-xl shadow-blue-500/20 uppercase text-[10px] tracking-widest"
                   >
                     Save Profile
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+
+        {/* 4. Change Password Modal */}
+        <Modal isOpen={isPwdOpen} onOpenChange={onPwdChange} backdrop="blur" placement="center" classNames={{ base: "bg-slate-900 border border-white/10 text-white p-2" }}>
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1 border-b border-white/5">
+                  <h2 className="text-xl font-bold uppercase tracking-tight">Change Password</h2>
+                  <p className="text-[10px] text-gray-500 font-normal tracking-widest uppercase">เปลี่ยนรหัสผ่านของคุณ</p>
+                </ModalHeader>
+                <ModalBody className="py-6 flex flex-col gap-4">
+                  <Input 
+                    label="Current Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านปัจจุบัน" 
+                    value={pwdData.current} onChange={(e) => setPwdData({...pwdData, current: e.target.value})}
+                  />
+                  <Input 
+                    label="New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านใหม่" 
+                    value={pwdData.new} onChange={(e) => setPwdData({...pwdData, new: e.target.value})}
+                    endContent={
+                      <button className="focus:outline-none" type="button" onClick={() => setIsPwdVisible(!isPwdVisible)}>
+                        {isPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
+                      </button>
+                    }
+                  />
+                  <Input 
+                    label="Confirm New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="ยืนยันรหัสผ่านใหม่" 
+                    value={pwdData.confirm} onChange={(e) => setPwdData({...pwdData, confirm: e.target.value})}
+                  />
+                </ModalBody>
+                <ModalFooter className="border-t border-white/5">
+                  <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase text-[10px]">Cancel</Button>
+                  <Button color="primary" isLoading={isChangingPwd} onPress={() => handleChangePassword(onClose)} className="font-bold px-8 bg-blue-600 shadow-xl shadow-blue-500/20 uppercase text-[10px]">
+                    Update Password
                   </Button>
                 </ModalFooter>
               </>

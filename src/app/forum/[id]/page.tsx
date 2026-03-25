@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast, Toaster } from "react-hot-toast";
-import { IoWarningOutline, IoHeartOutline, IoHeart } from "react-icons/io5";
+import { IoWarningOutline, IoHeartOutline, IoHeart, IoEyeOffOutline } from "react-icons/io5";
 
 interface Comment {
   id: string;
@@ -49,6 +49,7 @@ interface PostDetail {
   };
   specs?: { label: string; val: string }[];
   price?: string;
+  status?: string;
 }
 
 export default function PostDetailPage() {
@@ -165,6 +166,22 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleTogglePrivacy = async () => {
+    try {
+      if (!post) return;
+      const res = await fetch(`/api/forum/posts/${post.id}/privacy`, { method: "PUT" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "เปลี่ยนสถานะไม่สำเร็จ");
+      }
+      const data = await res.json();
+      setPost((prev) => prev ? { ...prev, status: data.status } : null);
+      toast.success(data.status === "Private" ? "ซ่อนกระทู้ (Private) เรียบร้อย" : "เปิดเป็นสาธารณะ (Public) เรียบร้อย");
+    } catch (error: any) {
+      toast.error(error.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
+    }
+  };
+
   const handleLikePost = async () => {
     if (!session) { toast.error("กรุณาเข้าสู่ระบบก่อนกดถูกใจ"); return; }
     try {
@@ -240,8 +257,13 @@ export default function PostDetailPage() {
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-start gap-4">
             <div className="flex flex-col gap-3 flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+              <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight leading-tight flex items-center gap-3">
                 {post.title}
+                {post.status === "Private" && (
+                  <Chip color="default" variant="flat" size="sm" startContent={<IoEyeOffOutline />}>
+                    Private
+                  </Chip>
+                )}
               </h1>
               <div className="flex items-center gap-3">
                 <Link href={`/profile/${post.author.id}`} className="shrink-0 relative group/avatar z-10 hover:opacity-80 transition-opacity">
@@ -277,12 +299,19 @@ export default function PostDetailPage() {
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Post actions">
                   <DropdownItem key="share" onPress={handleShare}>คัดลอกลิงก์โพสต์</DropdownItem>
-                  <DropdownItem key="report" className="text-danger" color="danger" onPress={() => {
-                    setReportTarget({ type: 'POST', id: post.id });
-                    onOpen();
-                  }}>
-                    รายงานกระทู้
-                  </DropdownItem>
+                  
+                  {session && (session.user as any)?.id === post.author.id ? (
+                    <DropdownItem key="privacy" onPress={handleTogglePrivacy} color={post.status === "Private" ? "success" : "warning"} className={post.status === "Private" ? "text-success" : "text-warning"}>
+                      {post.status === "Private" ? "เปิดเป็นสาธารณะ (Public)" : "ซ่อนกระทู้ (Private)"}
+                    </DropdownItem>
+                  ) : (
+                    <DropdownItem key="report" className="text-danger" color="danger" onPress={() => {
+                      setReportTarget({ type: 'POST', id: post.id });
+                      onOpen();
+                    }}>
+                      รายงานกระทู้
+                    </DropdownItem>
+                  )}
                 </DropdownMenu>
               </Dropdown>
             </div>
@@ -402,18 +431,22 @@ export default function PostDetailPage() {
                       >
                         {comment.likedBy?.length || 0}
                       </Button>
-                      <Button 
-                        size="sm" 
-                        isIconOnly 
-                        variant="light" 
-                        className="text-gray-500 hover:text-danger min-w-0 h-8 px-2"
-                        onPress={() => {
-                          setReportTarget({ type: 'COMMENT', id: comment.id });
-                          onOpen();
-                        }}
-                      >
-                        <IoWarningOutline />
-                      </Button>
+                      
+                      {(!session || (session.user as any)?.id !== comment.author.id) && (
+                        <Button 
+                          size="sm" 
+                          isIconOnly 
+                          variant="light" 
+                          className="text-gray-500 hover:text-danger min-w-0 h-8 px-2"
+                          onPress={() => {
+                            setReportTarget({ type: 'COMMENT', id: comment.id });
+                            onOpen();
+                          }}
+                        >
+                          <IoWarningOutline />
+                        </Button>
+                      )}
+
                     </div>
                   </div>
                 </div>

@@ -51,6 +51,15 @@ model User {
   likedComments Comment[]      @relation("UserCommentLikes")
 }
 
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
 model Post {
   id        Int      @id @default(autoincrement())
   title     String
