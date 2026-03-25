@@ -113,7 +113,7 @@ export default function AdminReportsPage() {
                                 <TableHeader>
                                     <TableColumn className="bg-white/5 text-white/70">TYPE</TableColumn>
                                     <TableColumn className="bg-white/5 text-white/70">REASON</TableColumn>
-                                    <TableColumn className="bg-white/5 text-white/70">SEVERITY</TableColumn>
+                                    <TableColumn className="bg-white/5 text-white/70">REPORTED USER & CONTENT</TableColumn>
                                     <TableColumn className="bg-white/5 text-white/70">STATUS</TableColumn>
                                     <TableColumn className="bg-white/5 text-white/70 text-right">ACTIONS</TableColumn>
                                 </TableHeader>
@@ -130,9 +130,12 @@ export default function AdminReportsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Chip size="sm" color={report.severity === 'URGENT' ? 'danger' : (report.severity === 'MEDIUM' ? 'warning' : 'default')} variant="flat">
-                                                    {report.severity}
-                                                </Chip>
+                                                <div className="flex flex-col gap-1 max-w-[300px]">
+                                                    <span className="text-xs font-bold text-danger">@{report.targetAuthor || "Unknown"}</span>
+                                                    <span className="text-xs text-gray-300 truncate" title={report.targetContent}>
+                                                        {report.targetContent ? `"${report.targetContent}"` : "[No Content]"}
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip size="sm" color={report.status === 'PENDING' ? 'danger' : (report.status === 'RESOLVED' ? 'success' : 'default')} variant="dot">

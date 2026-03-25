@@ -45,6 +45,18 @@ export async function POST(
       }
     });
 
+    // ดึงรายชื่อ Admin ทั้งหมดเพื่อส่งแจ้งเตือน
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+    if (admins.length > 0) {
+        const notifications = admins.map(admin => ({
+            userId: admin.id,
+            type: "REPORT",
+            message: `มีรายงานคอมเมนต์ใหม่ (เหตุผล: ${reason})`,
+            link: `/admin/reports`
+        }));
+        await prisma.notification.createMany({ data: notifications });
+    }
+
     return NextResponse.json({ success: true, report });
 
   } catch (error) {

@@ -44,14 +44,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             }
         });
 
-        // อัปเดต reportCount ในตาราง User ของเจ้าของกระทู้ (ถ้าต้องการ)
-        // const post = await prisma.post.findUnique({ where: { id: postId } });
-        // if (post) {
-        //     await prisma.user.update({
-        //         where: { id: post.authorId },
-        //         data: { reportCount: { increment: 1 } }
-        //     });
-        // }
+        // ดึงรายชื่อ Admin ทั้งหมดเพื่อส่งแจ้งเตือน
+        const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+        if (admins.length > 0) {
+            const notifications = admins.map(admin => ({
+                userId: admin.id,
+                type: "REPORT",
+                message: `มีรายงานกระทู้ใหม่ (เหตุผล: ${reason})`,
+                link: `/admin/reports`
+            }));
+            await prisma.notification.createMany({ data: notifications });
+        }
 
         return NextResponse.json({ success: true, report: newReport }, { status: 201 });
 

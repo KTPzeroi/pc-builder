@@ -11,32 +11,69 @@ export async function GET() {
             return new Response("Unauthorized", { status: 401 });
         }
 
-        const reports = await prisma.report.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: {
-                reporter: {
-                    select: { name: true, email: true }
-                }
-            }
+        const reportsData = await prisma.report.findMany({
+            orderBy: { createdAt: 'desc' }
         });
 
+        // Get unique target IDs per type
+        const postIds = reportsData.filter(r => r.type === "POST").map(r => r.targetId);
+        const commentIds = reportsData.filter(r => r.type === "COMMENT").map(r => r.targetId);
+
+        // Fetch targets in batch to get the offending content AND author context
+        const [posts, comments] = await Promise.all([
+            prisma.post.findMany({
+              where: { id: { in: postIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)) } },
+              include: { author: { select: { username: true, name: true, email: true } } }
+            }),
+            prisma.comment.findMany({
+              where: { id: { in: commentIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)) } },
+              include: { author: { select: { username: true, name: true, email: true } } }
+            })
+        ]);
+
+        const postMap = new Map(posts.map(p => [p.id.toString(), p]));
+        const commentMap = new Map(comments.map(c => [c.id.toString(), c]));
+
         // สร้าง Header ของไฟล์ CSV (รองรับภาษาไทยด้วย BOM \uFEFF)
-        let csvContent = "\uFEFF" + "ID,Type,Reason,Severity,Status,Reporter Name,Reporter Email,Target URL,Date\n";
+        let csvContent = "\uFEFF" + "No.,Type,Reason,Reported Content,Status,Reported User Name,Reported User Email,Date\n";
 
         // ลูบข้อมูลมาใส่ในแต่ละแถว
-        reports.forEach(report => {
-            const id = report.id;
+        reportsData.forEach((report, index) => {
+            const no = index + 1; // ลำดับที่อ่านง่ายขึ้น แทนที่จะเป็น CUID ยาวๆ
             const type = report.type;
-            // เครื่องหมายคำพูดกันเวลามีคอมม่าข้างในจะได้ไม่มีปัญหา
             const reason = `"${report.reason.replace(/"/g, '""')}"`; 
-            const severity = report.severity;
             const status = report.status;
-            const reporterName = `"${report.reporter.name || 'Unknown'}"`;
-            const reporterEmail = report.reporter.email || 'No Email';
-            const targetUrl = report.targetUrl;
+            
+            let reportedContent = "";
+            let reportedName = "Unknown";
+            let reportedEmail = "No Email";
+            
+            // หาข้อมูลเนื้อหาและผู้ที่โดนรายงาน
+            if (report.type === "POST") {
+                const p = postMap.get(report.targetId);
+                if (p) {
+                    reportedContent = (p.title + " - " + p.content).substring(0, 200).replace(/"/g, '""').replace(/\n/g, ' ');
+                    reportedName = p.author?.username || p.author?.name || "Unknown";
+                    reportedEmail = p.author?.email || "No Email";
+                } else {
+                    reportedContent = "[Post Deleted]";
+                }
+            } else if (report.type === "COMMENT") {
+                const c = commentMap.get(report.targetId);
+                if (c) {
+                    reportedContent = (c.content).substring(0, 200).replace(/"/g, '""').replace(/\n/g, ' ');
+                    reportedName = c.author?.username || c.author?.name || "Unknown";
+                    reportedEmail = c.author?.email || "No Email";
+                } else {
+                    reportedContent = "[Comment Deleted]";
+                }
+            }
+
+            const safeReportedContent = `"${reportedContent}"`;
+            const safeReportedName = `"${reportedName}"`;
             const date = new Date(report.createdAt).toLocaleString('th-TH');
 
-            const row = `${id},${type},${reason},${severity},${status},${reporterName},${reporterEmail},${targetUrl},"${date}"\n`;
+            const row = `${no},${type},${reason},${safeReportedContent},${status},${safeReportedName},${reportedEmail},"${date}"\n`;
             csvContent += row;
         });
 
