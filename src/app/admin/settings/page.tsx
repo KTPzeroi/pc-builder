@@ -1,19 +1,90 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Divider, Button, Input, Textarea, Tabs, Tab } from "@heroui/react";
+import React, { useState, useEffect } from "react";
+import { Card, CardBody, CardHeader, Divider, Button, Input, Textarea, Tabs, Tab, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Spinner } from "@heroui/react";
 import { IoSettingsOutline, IoSaveOutline, IoWarningOutline } from "react-icons/io5";
 
 export default function SystemConfigPage() {
+    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [modalType, setModalType] = useState<"system" | "rules">("system");
+    
+    // Config State
+    const [config, setConfig] = useState({
+        gaming_gpu_baseline: "25000",
+        working_cpu_baseline: "4500", // Single Thread baseline
+        creative_gpu_baseline: "35000",
+        creative_cpu_baseline: "40000", // Multi Thread baseline
+        // weights (gaming)
+        w_gaming_gpu: "60",
+        w_gaming_cpu: "30",
+        w_gaming_ram: "10",
+        // weights (working)
+        w_working_cpu: "50",
+        w_working_ram: "40",
+        w_working_gpu: "10",
+        // weights (creative)
+        w_creative_cpu: "40",
+        w_creative_gpu: "35",
+        w_creative_ram: "15",
+        w_creative_vram: "10",
+        // rules
+        forum_rules: "1. กรุณาใช้คำสุภาพ\n2. ห้ามโพสต์สแปม\n3. เคารพความเห็นของผู้อื่น",
+        forum_tags: "DISCUSSION, QUESTION, BUILD_ADVICE, NEWS_AND_RUMORS"
+    });
+
+    useEffect(() => {
+        fetch("/api/admin/settings")
+            .then(res => res.json())
+            .then(data => {
+                if (Object.keys(data).length > 0) {
+                    setConfig(prev => ({ ...prev, ...data }));
+                }
+                setIsLoading(false);
+            })
+            .catch(console.error);
+    }, []);
+
+    const handleChange = (key: string, value: string) => {
+        setConfig(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleSave = async (onClose: () => void) => {
+        setIsSaving(true);
+        try {
+            const res = await fetch("/api/admin/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(config)
+            });
+            if (res.ok) {
+                alert("บันทึกการตั้งค่าสำเร็จ!");
+                onClose();
+            } else {
+                alert("Failed to save settings");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error saving settings");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
+    }
+
     return (
         <div className="flex flex-col gap-8">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 md:gap-3">
                         <IoSettingsOutline className="text-blue-500" />
                         System Config
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">ปรับแต่งเกณฑ์คะแนน (Baseline), น้ำหนักความสำคัญของสเปกคอม, หมวดหมู่ และกฎของบอร์ด</p>
+                    <p className="text-gray-500 text-xs md:text-sm mt-1">ปรับแต่งเกณฑ์คะแนน (Baseline), น้ำหนักความสำคัญของสเปกคอม, หมวดหมู่ และกฎของบอร์ด</p>
                 </div>
             </header>
 
@@ -28,37 +99,21 @@ export default function SystemConfigPage() {
                         <Card className="bg-black/40 border border-white/10 shadow-xl max-w-4xl">
                             <CardHeader className="p-6 border-b border-white/5 flex flex-col items-start gap-1">
                                 <h4 className="text-lg font-bold text-white uppercase tracking-widest text-sm italic">Metric Baselines</h4>
-                                <p className="text-xs text-gray-400">กำหนดตัวเลข PassMark เริ่มต้นที่เป็นเกณฑ์คะแนน 100% สำหรับแต่ละสายงาน (อัปเดตตอนตกรุ่น)</p>
+                                <p className="text-xs text-gray-400">กำหนดตัวเลข PassMark เริ่มต้นที่เป็นเกณฑ์คะแนน (100%) สำหรับการจัดสเปกแต่ละสายงาน</p>
                             </CardHeader>
                             <CardBody className="p-8 flex flex-col gap-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Input
-                                        type="number"
-                                        label="Gaming Baseline Score (G3D Mark)"
-                                        placeholder="e.g. 25000"
-                                        defaultValue="25000"
-                                        description="คะแนนเฉลี่ยการ์ดจอที่จะวิ่งเกมยุคนี้ได้ลื่น"
-                                        variant="faded"
-                                    />
-                                    <Input
-                                        type="number"
-                                        label="Working Baseline Score (CPU Mark)"
-                                        placeholder="e.g. 15000"
-                                        defaultValue="15000"
-                                        description="คะแนนเฉลี่ย CPU สำหรับงาน Office/Coding"
-                                        variant="faded"
-                                    />
-                                    <Input
-                                        type="number"
-                                        label="3D Render Baseline (Multi-thread + G3D)"
-                                        placeholder="e.g. 40000"
-                                        defaultValue="40000"
-                                        description="คะแนนปนกันสำหรับสายขึ้นรูปโมเดล"
-                                        variant="faded"
-                                    />
+                                    <Input type="number" label="Gaming Baseline Score (GPU G3D)" variant="faded"
+                                        value={config.gaming_gpu_baseline} onChange={(e) => handleChange("gaming_gpu_baseline", e.target.value)} />
+                                    <Input type="number" label="Working Baseline Score (CPU Single)" variant="faded"
+                                        value={config.working_cpu_baseline} onChange={(e) => handleChange("working_cpu_baseline", e.target.value)} />
+                                    <Input type="number" label="Creative Score (CPU Multi)" variant="faded"
+                                        value={config.creative_cpu_baseline} onChange={(e) => handleChange("creative_cpu_baseline", e.target.value)} />
+                                    <Input type="number" label="Creative Score (GPU G3D)" variant="faded"
+                                        value={config.creative_gpu_baseline} onChange={(e) => handleChange("creative_gpu_baseline", e.target.value)} />
                                 </div>
                                 <div className="flex justify-end mt-4">
-                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20">
+                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20" onPress={() => { setModalType("system"); onOpen(); }}>
                                         <IoSaveOutline className="text-lg" />
                                         Save Baselines
                                     </Button>
@@ -69,32 +124,40 @@ export default function SystemConfigPage() {
 
                     <Tab key="weights" title="WEIGHTING CONFIG">
                         <Card className="bg-black/40 border border-white/10 shadow-xl max-w-4xl">
-                            <CardHeader className="p-6 border-b border-white/5 flex flex-col items-start gap-1">
-                                <h4 className="text-lg font-bold text-white uppercase tracking-widest text-sm italic">Calculation Weights</h4>
-                                <p className="text-xs text-gray-400">สัดส่วนเปอร์เซ็นต์ของฮาร์ดแวร์ในสมการประเมินความแรง</p>
+                            <CardHeader className="p-4 md:p-6 border-b border-white/5 flex flex-col items-start gap-1">
+                                <h4 className="text-base md:text-lg font-bold text-white uppercase tracking-widest italic">Calculation Weights</h4>
+                                <p className="text-xs text-gray-400">สัดส่วนเปอร์เซ็นต์ของฮาร์ดแวร์ในสมการประเมินความแรง (ถ้ารวมแล้วเกิน 100% ตัวกราฟจะเพี้ยน)</p>
                             </CardHeader>
-                            <CardBody className="p-8 flex flex-col gap-8">
+                            <CardBody className="p-4 md:p-8 flex flex-col gap-8">
                                 <div>
                                     <h5 className="font-bold text-blue-400 mb-4 flex items-center gap-2">Gaming Weight %</h5>
-                                    <div className="flex gap-4">
-                                        <Input type="number" label="GPU Weight" defaultValue="60" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
-                                        <Input type="number" label="CPU Weight" defaultValue="30" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
-                                        <Input type="number" label="RAM Weight" defaultValue="10" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                                        <Input type="number" label="GPU Weight" className="w-full" value={config.w_gaming_gpu} onChange={(e) => handleChange("w_gaming_gpu", e.target.value)} />
+                                        <Input type="number" label="CPU Weight" className="w-full" value={config.w_gaming_cpu} onChange={(e) => handleChange("w_gaming_cpu", e.target.value)} />
+                                        <Input type="number" label="RAM Weight" className="w-full" value={config.w_gaming_ram} onChange={(e) => handleChange("w_gaming_ram", e.target.value)} />
                                     </div>
-                                    <p className="text-xs text-danger mt-2 flex items-center gap-1"><IoWarningOutline /> Total must equal 100%</p>
                                 </div>
                                 <Divider className="bg-white/5" />
                                 <div>
                                     <h5 className="font-bold text-green-400 mb-4 flex items-center gap-2">Working Weight %</h5>
-                                    <div className="flex gap-4">
-                                        <Input type="number" label="CPU Weight" defaultValue="60" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
-                                        <Input type="number" label="RAM Weight" defaultValue="20" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
-                                        <Input type="number" label="Storage Weight" defaultValue="20" variant="bordered" className="max-w-[120px]" endContent={<span className="text-gray-500 text-sm">%</span>} />
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                                        <Input type="number" label="CPU Weight" className="w-full" value={config.w_working_cpu} onChange={(e) => handleChange("w_working_cpu", e.target.value)} />
+                                        <Input type="number" label="RAM Weight" className="w-full" value={config.w_working_ram} onChange={(e) => handleChange("w_working_ram", e.target.value)} />
+                                        <Input type="number" label="GPU Weight" className="w-full" value={config.w_working_gpu} onChange={(e) => handleChange("w_working_gpu", e.target.value)} />
                                     </div>
-                                    <p className="text-xs text-danger mt-2 flex items-center gap-1"><IoWarningOutline /> Total must equal 100%</p>
+                                </div>
+                                <Divider className="bg-white/5" />
+                                <div>
+                                    <h5 className="font-bold text-purple-400 mb-4 flex items-center gap-2">Creative & Render Weight %</h5>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                                        <Input type="number" label="CPU Multi" className="w-full" value={config.w_creative_cpu} onChange={(e) => handleChange("w_creative_cpu", e.target.value)} />
+                                        <Input type="number" label="GPU" className="w-full" value={config.w_creative_gpu} onChange={(e) => handleChange("w_creative_gpu", e.target.value)} />
+                                        <Input type="number" label="RAM Cap" className="w-full" value={config.w_creative_ram} onChange={(e) => handleChange("w_creative_ram", e.target.value)} />
+                                        <Input type="number" label="VRAM" className="w-full" value={config.w_creative_vram} onChange={(e) => handleChange("w_creative_vram", e.target.value)} />
+                                    </div>
                                 </div>
                                 <div className="flex justify-end mt-4">
-                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20">
+                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20 w-full sm:w-auto" onPress={() => { setModalType("system"); onOpen(); }}>
                                         <IoSaveOutline className="text-lg" />
                                         Save Weights
                                     </Button>
@@ -107,27 +170,18 @@ export default function SystemConfigPage() {
                         <Card className="bg-black/40 border border-white/10 shadow-xl max-w-4xl">
                             <CardHeader className="p-6 border-b border-white/5 flex flex-col items-start gap-1">
                                 <h4 className="text-lg font-bold text-white uppercase tracking-widest text-sm italic">Forum Policies</h4>
-                                <p className="text-xs text-gray-400">กฎกติกาและหมวดหมู่สำหรับการตั้งกระทู้</p>
                             </CardHeader>
                             <CardBody className="p-8 flex flex-col gap-6">
                                 <div>
                                     <h5 className="font-bold text-white mb-2">Forum Announcement & Rules</h5>
-                                    <Textarea
-                                        variant="bordered"
-                                        placeholder="เขียนกฎหรือประกาศที่ต้องการโชว์บนบอร์ด..."
-                                        defaultValue="1. กรุณาใช้คำสุภาพ&#10;2. ห้ามโพสต์สแปม&#10;3. เคารพความเห็นของผู้อื่น"
-                                        minRows={4}
-                                    />
+                                    <Textarea variant="bordered" minRows={4} value={config.forum_rules} onChange={(e) => handleChange("forum_rules", e.target.value)} />
                                 </div>
                                 <div>
                                     <h5 className="font-bold text-white mb-2">Category Labels (Comma separated)</h5>
-                                    <Input
-                                        variant="bordered"
-                                        defaultValue="DISCUSSION, QUESTION, BUILD_ADVICE, NEWS_AND_RUMORS"
-                                    />
+                                    <Input variant="bordered" value={config.forum_tags} onChange={(e) => handleChange("forum_tags", e.target.value)} />
                                 </div>
                                 <div className="flex justify-end mt-4">
-                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20">
+                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20" onPress={() => { setModalType("rules"); onOpen(); }}>
                                         <IoSaveOutline className="text-lg" />
                                         Apply Changes
                                     </Button>
@@ -137,6 +191,41 @@ export default function SystemConfigPage() {
                     </Tab>
                 </Tabs>
             </section>
+
+            {/* Confirmation Modal */}
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" classNames={{ base: "bg-slate-900 border border-white/10 text-white w-full max-w-[95vw] sm:max-w-md m-0 sm:m-auto" }}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1 border-b border-white/10 p-6">
+                                <h3 className={`text-xl font-bold flex items-center gap-2 uppercase ${modalType === 'system' ? 'text-danger' : 'text-blue-500'}`}>
+                                    <IoWarningOutline size={24} /> {modalType === 'system' ? 'Confirm System Updates' : 'Confirm Policy Updates'}
+                                </h3>
+                            </ModalHeader>
+                            <ModalBody className="p-6">
+                                {modalType === "system" ? (
+                                    <>
+                                        <p className="text-gray-300 font-medium">คุณกำลังจะทำการเปลี่ยนBaseline หรือ Weight สมการในระบบ</p>
+                                        <div className="bg-danger/10 border border-danger/20 p-4 rounded-xl mt-2">
+                                            <p className="text-sm text-danger font-semibold">
+                                                โปรดระวัง: การปรับเปลี่ยนตัวเลขเหล่านี้จะมีผลต่อ "เปอร์เซ็นต์คะแนน Benchmark" ในหน้าจัดสเปคทันที! อาจทำให้สเปกคอมที่เคยจัดไว้มีคะแนนเปลี่ยนไป
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-gray-300 font-medium text-lg">ยืนยันการอัปเดตกฎระเบียบของบอร์ด (Forum Policies/Tags) ใหม่?</p>
+                                )}
+                            </ModalBody>
+                            <ModalFooter className="border-t border-white/10 p-6">
+                                <Button variant="light" onPress={onClose} className="font-bold" isDisabled={isSaving}>ยกเลิก</Button>
+                                <Button color={modalType === "system" ? "danger" : "primary"} onPress={() => handleSave(onClose)} isLoading={isSaving} className={`font-bold px-8 shadow-lg ${modalType === 'system' ? 'shadow-danger-500/30' : 'shadow-blue-500/30'}`}>
+                                    ยืนยันและอัปเดตระบบ
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </div>
     );
 }

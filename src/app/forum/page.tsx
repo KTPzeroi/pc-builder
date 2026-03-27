@@ -67,6 +67,7 @@ export default function ForumPage() {
   // State เดิม
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sysConfig, setSysConfig] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -131,6 +132,10 @@ export default function ForumPage() {
 
   useEffect(() => {
     fetchPosts();
+    fetch("/api/admin/settings")
+      .then(res => res.json())
+      .then(data => setSysConfig(data))
+      .catch(console.error);
   }, []);
 
   // 🟢 2. Handle Create Post
@@ -265,8 +270,10 @@ export default function ForumPage() {
             </Card>
 
             <Card className="bg-blue-600/5 border border-blue-500/10 p-5 hidden lg:block">
-              <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 italic">Guidelines</h4>
-              <p className="text-[11px] text-gray-500 leading-relaxed font-medium">โปรดรักษามารยาทในการพูดคุยเพื่อให้สังคมน่าอยู่ครับ</p>
+              <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 italic">Forum Policies</h4>
+              <p className="text-[11px] text-gray-500 leading-relaxed font-medium whitespace-pre-wrap">
+                {sysConfig?.forum_rules || "โปรดรักษามารยาทในการพูดคุยเพื่อให้สังคมน่าอยู่ครับ"}
+              </p>
             </Card>
           </aside>
 

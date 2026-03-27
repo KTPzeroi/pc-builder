@@ -103,24 +103,24 @@ export default function UsersModerationPage() {
             <Toaster position="bottom-right" />
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 md:gap-3">
                         <IoShieldHalfOutline className="text-blue-500" />
                         Member & Moderation
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">จัดการรายชื่อสมาชิก, สิทธิ์การใช้งานแอคเคาท์ (Role) และรายงานการประพฤติผิด</p>
+                    <p className="text-gray-500 text-xs md:text-sm mt-1">จัดการรายชื่อสมาชิก, สิทธิ์การใช้งานแอคเคาท์ (Role) และรายงานการประพฤติผิด</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button color="danger" variant="flat" className="font-bold text-[10px] uppercase tracking-widest">
+                <div className="flex gap-2 w-full md:w-auto">
+                    <Button color="danger" variant="flat" className="font-bold text-[10px] uppercase tracking-widest w-full md:w-auto">
                         Review Reports (0)
                     </Button>
                 </div>
             </header>
 
             <section>
-                <Card className="bg-black/40 border border-white/10 shadow-xl">
-                    <CardHeader className="p-6 border-b border-white/5 flex gap-4 justify-between">
-                        <h4 className="text-lg font-bold text-white uppercase tracking-widest text-sm italic">User Database</h4>
-                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 w-full max-w-sm">
+                <Card className="bg-black/40 border border-white/10 shadow-xl overflow-hidden">
+                    <CardHeader className="p-4 md:p-6 border-b border-white/5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                        <h4 className="text-base md:text-lg font-bold text-white uppercase tracking-widest text-sm italic whitespace-nowrap">User Database</h4>
+                        <div className="flex items-center gap-2 bg-white/5 px-3 py-2 md:py-1.5 rounded-lg border border-white/10 w-full md:max-w-sm">
                             <IoSearchOutline className="text-gray-400" />
                             <input
                                 type="text"
@@ -131,8 +131,8 @@ export default function UsersModerationPage() {
                             />
                         </div>
                     </CardHeader>
-                    <CardBody className="p-0">
-                        <Table aria-label="Users Table" removeWrapper classNames={{ th: "bg-white/5 text-gray-400 border-b border-white/5", td: "border-b border-white/5 py-4" }}>
+                    <CardBody className="p-0 overflow-x-auto custom-scrollbar w-full">
+                        <Table aria-label="Users Table" removeWrapper classNames={{ wrapper: "min-w-[700px]", th: "bg-white/5 text-gray-400 border-b border-white/5", td: "border-b border-white/5 py-4 whitespace-nowrap" }}>
                             <TableHeader>
                                 <TableColumn>USER</TableColumn>
                                 <TableColumn>ROLE</TableColumn>
@@ -192,7 +192,9 @@ export default function UsersModerationPage() {
             </section>
 
             {/* Modal for Confirmations */}
-            <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" classNames={{
+                base: "w-full max-w-[95vw] sm:max-w-md m-0 sm:m-auto"
+            }}>
                 <ModalContent className="bg-slate-900 border border-white/10 text-white">
                     {(onClose) => (
                         <>

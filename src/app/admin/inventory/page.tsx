@@ -127,8 +127,8 @@ export default function InventoryCRUDPage() {
     };
 
     const handleSave = async (onClose: () => void) => {
-        if (!formData.name || !formData.brand || formData.price === undefined) {
-            alert("กรุณากรอกข้อมูลพื้นฐานให้ครบ (ชื่อ, แบรนด์, ราคา)");
+        if (!formData.name || !formData.brand || formData.price === undefined || formData.price < 0) {
+            alert("กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วนและถูกต้อง (ชื่อ, แบรนด์, ราคาขั้นต่ำ 0)");
             return;
         }
 
@@ -137,21 +137,53 @@ export default function InventoryCRUDPage() {
             const url = modalMode === "ADD" ? "/api/admin/components" : `/api/admin/components/${selectedId}`;
             const method = modalMode === "ADD" ? "POST" : "PUT";
 
-            // Clean up empty strings to null or undefined
+            // สกัดค่าที่กรอกมาจัดการเป็น null กรณีว่าง
+            let pCapacity = formData.capacity ? parseInt(String(formData.capacity)) : null;
+            let pSingle = formData.cpuSingleScore ? parseInt(String(formData.cpuSingleScore)) : null;
+            let pMulti = formData.cpuMultiScore ? parseInt(String(formData.cpuMultiScore)) : null;
+            let pGpu = formData.gpuScore ? parseInt(String(formData.gpuScore)) : null;
+            let pVram = formData.vramGb ? parseInt(String(formData.vramGb)) : null;
+            let pRamSpd = formData.ramSpeed ? parseInt(String(formData.ramSpeed)) : null;
+            let pRw = formData.readWriteSpeed ? parseInt(String(formData.readWriteSpeed)) : null;
+
+            // ตรวจสอบความถูกต้องของคะแนนตามหมวดหมู่
+            if (formData.type === "CPU" && (!formData.socket || !pSingle || !pMulti)) {
+                return alert("กรุณากรอก Socket และคะแนน CPU (Single/Multi) ให้ครบถ้วน");
+            }
+            if (formData.type === "GPU" && (!pVram || !pGpu)) {
+                return alert("กรุณากรอก VRAM และ GPU Score ให้ครบถ้วน");
+            }
+            if (formData.type === "RAM" && (!formData.ramType || !pCapacity || !pRamSpd)) {
+                return alert("กรุณากรอกข้อมูล RAM (Type, Capacity, Speed) ให้ครบถ้วน");
+            }
+            if (formData.type === "MB" && (!formData.socket || !formData.ramType || !formData.formFactor)) {
+                return alert("กรุณากรอก Socket, RAM Type และ Form Factor ให้ครบถ้วน");
+            }
+            if (formData.type === "STORAGE" && (!pCapacity || !pRw)) {
+                return alert("กรุณากรอกความจุ (Capacity) และ Read/Write Speed ให้ครบถ้วน");
+            }
+
+            // กรองขยะ (Sanitization): ให้เหลือเฉพาะฟิลด์ของ Type นั้นเท่านั้น ฟิลด์อื่นบังคับ null ทิ้ง
+            const type = formData.type;
             const payload = {
-                ...formData,
+                name: formData.name,
+                type: formData.type,
+                brand: formData.brand,
                 price: parseFloat(String(formData.price)),
-                socket: formData.socket || null,
-                ramType: formData.ramType || null,
-                formFactor: formData.formFactor || null,
-                // These should be undefined if not provided so they update correctly
-                capacity: formData.capacity ? parseInt(String(formData.capacity)) : null,
-                cpuSingleScore: formData.cpuSingleScore ? parseInt(String(formData.cpuSingleScore)) : null,
-                cpuMultiScore: formData.cpuMultiScore ? parseInt(String(formData.cpuMultiScore)) : null,
-                gpuScore: formData.gpuScore ? parseInt(String(formData.gpuScore)) : null,
-                vramGb: formData.vramGb ? parseInt(String(formData.vramGb)) : null,
-                ramSpeed: formData.ramSpeed ? parseInt(String(formData.ramSpeed)) : null,
-                readWriteSpeed: formData.readWriteSpeed ? parseInt(String(formData.readWriteSpeed)) : null,
+                image: formData.image || null,
+                description: formData.description || null,
+                
+                // Allow only type-specific fields
+                socket: ["CPU", "MB"].includes(type || "") ? (formData.socket || null) : null,
+                ramType: ["RAM", "MB"].includes(type || "") ? (formData.ramType || null) : null,
+                formFactor: ["MB", "CASE"].includes(type || "") ? (formData.formFactor || null) : null,
+                capacity: ["RAM", "STORAGE", "PSU"].includes(type || "") ? pCapacity : null,
+                cpuSingleScore: type === "CPU" ? pSingle : null,
+                cpuMultiScore: type === "CPU" ? pMulti : null,
+                gpuScore: type === "GPU" ? pGpu : null,
+                vramGb: type === "GPU" ? pVram : null,
+                ramSpeed: type === "RAM" ? pRamSpd : null,
+                readWriteSpeed: type === "STORAGE" ? pRw : null,
             };
 
             const res = await fetch(url, {
@@ -173,6 +205,26 @@ export default function InventoryCRUDPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleCloneSpecs = (compId: string) => {
+        const source = components.find(c => c.id === compId);
+        if (!source) return;
+        setFormData(prev => ({
+            ...prev,
+            // คัดลอกเฉพาะสเปคเชิงลึก (ไม่ทับชื่อ แบรนด์ ราคา รูปภาพ)
+            socket: source.socket || "",
+            ramType: source.ramType || "",
+            formFactor: source.formFactor || "",
+            capacity: source.capacity || undefined,
+            cpuSingleScore: source.cpuSingleScore || undefined,
+            cpuMultiScore: source.cpuMultiScore || undefined,
+            gpuScore: source.gpuScore || undefined,
+            vramGb: source.vramGb || undefined,
+            ramSpeed: source.ramSpeed || undefined,
+            readWriteSpeed: source.readWriteSpeed || undefined,
+            description: prev.description || source.description || "",
+        }));
     };
 
     // Filter Logic
@@ -256,32 +308,32 @@ export default function InventoryCRUDPage() {
     return (
         <div className="flex flex-col gap-8">
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 md:gap-3">
                         <IoCubeOutline className="text-blue-500" />
                         สินค้า (Component Inventory)
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">ระบบเพิ่ม ลบ แก้ไข ข้อมูลสเปกคอมแยกตามหมวดหมู่อุปกรณ์</p>
+                    <p className="text-gray-500 text-xs md:text-sm mt-1">ระบบเพิ่ม ลบ แก้ไข ข้อมูลสเปกคอมแยกตามหมวดหมู่อุปกรณ์</p>
                 </div>
-                <Button color="primary" variant="shadow" className="font-bold tracking-wide" startContent={<IoAddCircleOutline size={20} />} onPress={handleOpenAddModal}>
+                <Button color="primary" variant="shadow" className="font-bold tracking-wide w-full sm:w-auto" startContent={<IoAddCircleOutline size={20} />} onPress={handleOpenAddModal}>
                     เพิ่มสินค้าใหม่
                 </Button>
             </header>
 
             {/* Filter & Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <Input
                     placeholder="ค้นหาชื่อ หรือ แบรนด์สินค้า..."
                     startContent={<IoSearch className="text-gray-400" />}
                     variant="faded"
-                    className="sm:max-w-xs"
+                    className="w-full sm:max-w-xs"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Select
                     placeholder="แยกตามประเภท (Type)"
-                    className="sm:max-w-xs"
+                    className="w-full sm:max-w-xs"
                     variant="faded"
                     selectedKeys={new Set([filterType])}
                     onSelectionChange={(keys) => setFilterType(Array.from(keys)[0] as string)}
@@ -291,18 +343,18 @@ export default function InventoryCRUDPage() {
             </div>
 
             {/* Main Table Area */}
-            <Card className="bg-black/40 border border-white/10 shadow-xl overflow-visible">
-                <CardBody className="p-0">
+            <Card className="bg-black/40 border border-white/10 shadow-xl overflow-hidden">
+                <CardBody className="p-0 overflow-x-auto custom-scrollbar w-full relative">
                     {isLoading ? (
-                        <div className="py-20 flex justify-center items-center flex-col gap-4">
+                        <div className="py-20 flex justify-center items-center flex-col gap-4 min-w-[600px]">
                             <Spinner size="lg" color="primary" />
                             <p className="text-gray-400 animate-pulse">กำลังโหลดข้อมูลอุปกรณ์...</p>
                         </div>
                     ) : (
                         <Table aria-label="Inventory Table" classNames={{
-                            wrapper: "bg-transparent shadow-none p-0",
+                            wrapper: "bg-transparent shadow-none p-0 min-w-[700px]",
                             th: "bg-white/5 text-white font-bold tracking-wider",
-                            td: "border-b border-white/5 py-4",
+                            td: "border-b border-white/5 py-4 whitespace-nowrap",
                         }}>
                             <TableHeader>
                                 <TableColumn>IMAGE</TableColumn>
@@ -373,10 +425,10 @@ export default function InventoryCRUDPage() {
 
             {/* Modal ADD / EDIT */}
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" scrollBehavior="inside" classNames={{
-                base: "bg-slate-900 border border-white/10 text-white",
-                header: "border-b border-white/5 py-4 px-6",
-                body: "py-6 px-6",
-                footer: "border-t border-white/5 py-4 px-6",
+                base: "bg-slate-900 border border-white/10 text-white w-full max-w-[95vw] md:max-w-3xl m-0 sm:m-auto",
+                header: "border-b border-white/5 py-4 px-4 md:px-6",
+                body: "py-6 px-4 md:px-6",
+                footer: "border-t border-white/5 py-4 px-4 md:px-6",
             }}>
                 <ModalContent>
                     {(onClose) => (
@@ -394,6 +446,35 @@ export default function InventoryCRUDPage() {
                                 {/* Basic Info Section */}
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest border-b border-white/10 pb-2 mb-4">ข้อมูลพื้นฐานทั่วไป (Basic Info)</h3>
+                                    
+                                    {/* Auto-Clone Feature */}
+                                    {modalMode === "ADD" && (
+                                        <div className="mb-6 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex flex-col gap-3">
+                                            <div className="flex items-center gap-2 text-blue-400 font-bold">
+                                                <IoCubeOutline size={20} />
+                                                <h4>ฟีเจอร์ โคลนสเปคออโต้! (Auto-Clone Specs)</h4>
+                                            </div>
+                                            <p className="text-xs text-gray-400">เลือกรุ่นที่มีอยู่แล้วเพื่อดึงค่าคะแนนและสเปคมาใส่ให้อัตโนมัติ (ประหยัดเวลาสุดๆ)</p>
+                                            <Select 
+                                                label="อ้างอิงข้อมูลสเปคจาก" 
+                                                placeholder="เลือกสินค้าต้นแบบ..." 
+                                                variant="faded"
+                                                color="primary"
+                                                classNames={{ trigger: "bg-black/40" }}
+                                                onSelectionChange={(keys) => {
+                                                    const id = Array.from(keys)[0] as string;
+                                                    if (id) handleCloneSpecs(id);
+                                                }}
+                                            >
+                                                {components.filter(c => c.type === formData.type).map(comp => (
+                                                    <SelectItem key={comp.id} textValue={comp.name}>
+                                                        {comp.brand} - {comp.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Select 
                                             label="Component Type (หมวดหมู่สินค้า)" 

@@ -62,37 +62,31 @@ export async function GET() {
 
             activityData = Object.values(activityMap);
 
-            // 4. Popular Build Categories
-            // Estimate by comparing highest score (gamingScore, workingScore, renderScore)
+            // 4. User Budget Tiers (งบประมาณแยกตามระดับ)
             const builds = await prisma.pCBuild.findMany({
-                select: { gamingScore: true, workingScore: true, renderScore: true }
+                select: { totalPrice: true }
             });
 
-            let gamingCount = 0;
-            let workingCount = 0;
-            let renderCount = 0;
+            let entryCount = 0;
+            let midCount = 0;
+            let highCount = 0;
 
             builds.forEach(b => {
-                const g = b.gamingScore || 0;
-                const w = b.workingScore || 0;
-                const r = b.renderScore || 0;
-
-                if (g >= w && g >= r && g > 0) {
-                    gamingCount++;
-                } else if (w >= g && w >= r && w > 0) {
-                    workingCount++;
-                } else if (r >= g && r >= w && r > 0) {
-                    renderCount++;
+                const price = b.totalPrice || 0;
+                if (price >= 50000) {
+                    highCount++;
+                } else if (price >= 25000) {
+                    midCount++;
                 } else {
-                    // default to gaming if all 0 or empty
-                    gamingCount++;
+                    // <= 24999
+                    entryCount++;
                 }
             });
 
             categoriesData = [
-                { category: "Gaming", count: gamingCount },
-                { category: "Working", count: workingCount },
-                { category: "3D/Render", count: renderCount }
+                { category: "Entry (<25k)", count: entryCount },
+                { category: "Mid (25k-50k)", count: midCount },
+                { category: "Hi-End (>50k)", count: highCount }
             ];
 
             // 5. Active Reports (Pending reports)

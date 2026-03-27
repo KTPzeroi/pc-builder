@@ -70,18 +70,22 @@ export default function BuildPage() {
   // เก็บข้อมูลสินค้าทั้งหมดจาก Database
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sysConfig, setSysConfig] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/components")
-      .then(res => res.json())
-      .then(data => {
-        setComponents(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch components", err);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/components").then(res => res.json()),
+      fetch("/api/admin/settings").then(res => res.json())
+    ])
+    .then(([compsData, settingsData]) => {
+      setComponents(compsData);
+      setSysConfig(settingsData);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Failed to fetch data", err);
+      setLoading(false);
+    });
   }, []);
 
   const [selectedProducts, setSelectedProducts] = useState<Record<string, Component | null>>({
@@ -136,7 +140,7 @@ export default function BuildPage() {
     };
   }, [selectedProducts]);
 
-  // 🧮 คำนวณ % จาก Database
+  // 🧮 คำนวณ % จาก Database + Dynamic Settings
   const totals = useMemo(() => {
     const values = Object.values(selectedProducts).filter(p => p !== null) as Component[];
     const cpu = selectedProducts["Processor"];
@@ -145,35 +149,59 @@ export default function BuildPage() {
 
     const cpuSingle = cpu?.cpuSingleScore || 0;
     const cpuMulti = cpu?.cpuMultiScore || 0;
-    // ถ้าไม่มี GPU แยก ให้ใช้คะแนน GPU ในตารางที่อาจเป็น 0 ไปก่อน (เดี๋ยวค่อยลดลั่นไว้ทีหลัง)
     const gpuScore = gpu?.gpuScore || 0;
     const ramCapacity = ram?.capacity || 0;
 
-    // 🎮 Gaming (100% = GPU 25k)
+    // Dynamic Baselines
+    const G_BASE = Number(sysConfig?.gaming_gpu_baseline || 25000);
+    const W_BASE = Number(sysConfig?.working_cpu_baseline || 4500);
+    const C_CPU = Number(sysConfig?.creative_cpu_baseline || 40000);
+    const C_GPU = Number(sysConfig?.creative_gpu_baseline || 35000);
+
+    // Dynamic Weights
+    const w_gaming_gpu = Number(sysConfig?.w_gaming_gpu ?? 60) / 100;
+    const w_gaming_cpu = Number(sysConfig?.w_gaming_cpu ?? 30) / 100;
+    const w_gaming_ram = Number(sysConfig?.w_gaming_ram ?? 10) / 100;
+
+    const w_working_cpu = Number(sysConfig?.w_working_cpu ?? 50) / 100;
+    const w_working_ram = Number(sysConfig?.w_working_ram ?? 40) / 100;
+    const w_working_gpu = Number(sysConfig?.w_working_gpu ?? 10) / 100;
+
+    const w_creative_cpu = Number(sysConfig?.w_creative_cpu ?? 40) / 100;
+    const w_creative_gpu = Number(sysConfig?.w_creative_gpu ?? 35) / 100;
+    const w_creative_ram = Number(sysConfig?.w_creative_ram ?? 15) / 100;
+    const w_creative_vram = Number(sysConfig?.w_creative_vram ?? 10) / 100;
+
+    // 🎮 Gaming
     let gaming = 0;
     if (gpu || cpu) {
-      gaming += Math.min((gpuScore / 25000) * 100, 100) * 0.6;
-      gaming += Math.min((cpuSingle / 4500) * 100, 100) * 0.3;
+      gaming += Math.min((gpuScore / G_BASE) * 100, 100) * w_gaming_gpu;
+      gaming += Math.min((cpuSingle / W_BASE) * 100, 100) * w_gaming_cpu;
       const ramScoreG = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 50 : 20);
-      gaming += ramScoreG * 0.1;
+      gaming += ramScoreG * w_gaming_ram;
     }
 
-    // 🎨 Creative/3D (100% = CPU Multi 40k, GPU 35k)
+    // 🎨 Creative/3D
     let creative = 0;
     if (gpu || cpu) {
-      creative += Math.min((cpuMulti / 40000) * 100, 100) * 0.45;
-      creative += Math.min((gpuScore / 35000) * 100, 100) * 0.4;
+      creative += Math.min((cpuMulti / C_CPU) * 100, 100) * w_creative_cpu;
+      creative += Math.min((gpuScore / C_GPU) * 100, 100) * w_creative_gpu;
+      
+      const vram = gpu?.vramGb || 0;
+      const vramScore = vram >= 16 ? 100 : (vram >= 12 ? 80 : (vram >= 8 ? 50 : 20));
+      creative += vramScore * w_creative_vram;
+
       const ramScore3D = ramCapacity >= 64 ? 100 : (ramCapacity >= 32 ? 80 : (ramCapacity >= 16 ? 50 : 20));
-      creative += ramScore3D * 0.15;
+      creative += ramScore3D * w_creative_ram;
     }
 
-    // 💼 Work/Office (100% = CPU Single 4.5k)
+    // 💼 Work/Office
     let office = 0;
     if (cpu) {
-      office += Math.min((cpuSingle / 4500) * 100, 100) * 0.5;
+      office += Math.min((cpuSingle / W_BASE) * 100, 100) * w_working_cpu;
       const ramScoreW = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 80 : 50);
-      office += ramScoreW * 0.4;
-      office += Math.min((gpuScore / 15000) * 100, 100) * 0.1;
+      office += ramScoreW * w_working_ram;
+      office += Math.min((gpuScore / (G_BASE * 0.6)) * 100, 100) * w_working_gpu; // simplified baseline for office GPU
     }
 
     return {
@@ -182,7 +210,7 @@ export default function BuildPage() {
       creative: Math.min(creative, 100),
       gaming: Math.min(gaming, 100),
     };
-  }, [selectedProducts]);
+  }, [selectedProducts, sysConfig]);
 
   const handleSelectProduct = (category: string, product: Component) => {
     setSelectedProducts((prev) => ({ ...prev, [category]: product }));
@@ -403,34 +431,36 @@ export default function BuildPage() {
         onOpenChange={(isOpen) => !isOpen && setSelectedCategory(null)} 
         size="5xl" 
         scrollBehavior="inside"
+        placement="bottom-center"
         classNames={{ 
-          base: "bg-slate-900 border border-white/10 text-white md:rounded-[2.5rem]", 
-          header: "border-b border-white/10 p-6 md:p-8 bg-slate-800/50",
-          body: "p-0"
+          wrapper: "sm:p-4",
+          base: "bg-slate-900 border border-white/10 text-white m-0 rounded-none sm:rounded-[2.5rem] w-full max-h-[90vh] sm:max-h-[85vh]", 
+          header: "border-b border-white/10 p-4 md:p-8 bg-slate-800/50",
+          body: "p-0 flex flex-col"
         }}
       >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex justify-between items-center">
+              <ModalHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold uppercase text-white">{selectedCategory}</h3>
                     <p className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-widest">เลือกอุปกรณ์ที่ต้องการ</p>
                   </div>
               </ModalHeader>
               <ModalBody>
-                <div className="flex flex-col md:flex-row flex-1 h-full min-h-[60vh] md:h-[70vh]">
-                  <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 space-y-4 bg-black/20 overflow-x-auto md:overflow-y-auto">
-                    <div className="flex md:flex-col gap-4">
+                <div className="flex flex-col md:flex-row flex-1 h-full min-h-0">
+                  <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 bg-black/20 shrink-0 overflow-hidden">
+                    <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-6 w-full items-start">
                       {categoryFilters[selectedCategory || ""]?.map((f) => (
-                        <Select key={f.key} label={f.label} labelPlacement="outside" placeholder="ทั้งหมด" size="sm" className="min-w-[140px] md:w-full"
-                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10", popoverContent: "text-white" }}>
+                        <Select key={f.key} label={f.label} labelPlacement="outside" placeholder="ทั้งหมด" size="sm" className="w-[47%] md:w-full flex-grow"
+                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "text-white" }}>
                           {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
                         </Select>
                       ))}
                     </div>
                   </aside>
-                  <ScrollShadow className="flex-1 p-4 md:p-8 bg-slate-950">
+                  <ScrollShadow className="flex-1 p-3 md:p-8 bg-slate-950">
                     {loading ? (
                       <div className="flex justify-center items-center h-full min-h-[300px]">
                         <Spinner color="primary" size="lg" />
@@ -525,8 +555,8 @@ function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-8">
       {products.map((product) => (
-        <Card key={product.id} className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1">
-          <CardBody className="p-0 flex flex-col h-full">
+        <Card key={product.id} shadow="sm" className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1 overflow-hidden">
+          <CardBody className="p-0 flex flex-col h-full overflow-hidden">
             <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => onSelectProduct(category, product)}>
               {product.image ? (
                 <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain" />

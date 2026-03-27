@@ -150,19 +150,19 @@ export default function AdminDashboardPage() {
                     </CardBody>
                 </Card>
 
-                {/* กราฟสเปกคอมยอดนิยม */}
+                {/* กราฟงบประมาณจัดสเปกคอม */}
                 <Card className="bg-black/40 border border-white/10 p-4 shadow-xl">
                     <CardHeader className="flex flex-col items-start px-4">
-                        <h4 className="text-lg font-bold text-white">Popular Build Categories</h4>
-                        <p className="text-xs text-gray-500">สัดส่วนการจัดสเปกคอมแยกตามจุดประสงค์</p>
+                        <h4 className="text-lg font-bold text-white">User Budget Tiers</h4>
+                        <p className="text-xs text-gray-500">เปรียบเทียบงบประมาณสเปกคอมยอดนิยมของยูสเซอร์ในระบบ</p>
                     </CardHeader>
                     <Divider className="my-4 bg-white/5" />
                     <CardBody className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={stats?.categoriesData || [
-                                { category: "Gaming", count: 0 },
-                                { category: "Working", count: 0 },
-                                { category: "3D/Render", count: 0 }
+                                { category: "Entry (<25k)", count: 0 },
+                                { category: "Mid (25k-50k)", count: 0 },
+                                { category: "Hi-End (>50k)", count: 0 }
                             ]}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
