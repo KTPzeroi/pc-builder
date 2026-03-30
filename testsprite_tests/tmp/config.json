@@ -1,0 +1,20 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "test",
+  "loginPassword": "1234",
+  "executionArgs": {
+    "projectName": "pc-builder",
+    "projectPath": "f:\\CODE\\FinalProj\\pc-builder",
+    "testIds": [],
+    "additionalInstruction": "Focus on critical user flows: homepage navigation, build wizard flow, forum browsing, and admin access control. The app uses Thai language UI. Authentication uses NextAuth with credentials provider.",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-8k2s4DSKJc-2Yo4DA0NHcEEPdHFljjQ6yAhn0suGUqSS7bVxC6uhFBmhuAvnmDYf2y0vAvqypTd3HAXTLAwkCa1yxd2YpxNfPaVdu5R1B7mpv_egKuiIW7I-qwspEk9yle0"
+    }
+  },
+  "serverPort": 62086,
+  "proxy": "http://69bc0cd3-0681-4336-9096-b0bc5da2984d:G9OiIfxZiwo95UCuqVjxtNxntmwlLrtb@tun.testsprite.com:8080"
+}

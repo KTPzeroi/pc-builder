@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Divider, Button, Input, Textarea, Tabs, Tab, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Spinner } from "@heroui/react";
-import { IoSettingsOutline, IoSaveOutline, IoWarningOutline } from "react-icons/io5";
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, CardBody, CardHeader, Divider, Button, Input, Textarea, Tabs, Tab, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Spinner, Chip } from "@heroui/react";
+import { IoSettingsOutline, IoSaveOutline, IoWarningOutline, IoCheckmarkCircleOutline, IoAlertCircleOutline } from "react-icons/io5";
 
 export default function SystemConfigPage() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -49,6 +49,24 @@ export default function SystemConfigPage() {
     const handleChange = (key: string, value: string) => {
         setConfig(prev => ({ ...prev, [key]: value }));
     };
+
+    // --- Weight Validation (Real-time) ---
+    const gamingSum = useMemo(() => (parseInt(config.w_gaming_gpu) || 0) + (parseInt(config.w_gaming_cpu) || 0) + (parseInt(config.w_gaming_ram) || 0), [config.w_gaming_gpu, config.w_gaming_cpu, config.w_gaming_ram]);
+    const workingSum = useMemo(() => (parseInt(config.w_working_cpu) || 0) + (parseInt(config.w_working_ram) || 0) + (parseInt(config.w_working_gpu) || 0), [config.w_working_cpu, config.w_working_ram, config.w_working_gpu]);
+    const creativeSum = useMemo(() => (parseInt(config.w_creative_cpu) || 0) + (parseInt(config.w_creative_gpu) || 0) + (parseInt(config.w_creative_ram) || 0) + (parseInt(config.w_creative_vram) || 0), [config.w_creative_cpu, config.w_creative_gpu, config.w_creative_ram, config.w_creative_vram]);
+    const allWeightsValid = gamingSum === 100 && workingSum === 100 && creativeSum === 100;
+
+    const WeightBadge = ({ label, sum }: { label: string; sum: number }) => (
+        <Chip
+            startContent={sum === 100 ? <IoCheckmarkCircleOutline size={16} /> : <IoAlertCircleOutline size={16} />}
+            color={sum === 100 ? "success" : "danger"}
+            variant="flat"
+            size="sm"
+            className="font-bold"
+        >
+            {label}: {sum}%
+        </Chip>
+    );
 
     const handleSave = async (onClose: () => void) => {
         setIsSaving(true);
@@ -130,36 +148,67 @@ export default function SystemConfigPage() {
                             </CardHeader>
                             <CardBody className="p-4 md:p-8 flex flex-col gap-8">
                                 <div>
-                                    <h5 className="font-bold text-blue-400 mb-4 flex items-center gap-2">Gaming Weight %</h5>
+                                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                        <h5 className="font-bold text-blue-400 flex items-center gap-2">Gaming Weight %</h5>
+                                        <WeightBadge label="Sum" sum={gamingSum} />
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-                                        <Input type="number" label="GPU Weight" className="w-full" value={config.w_gaming_gpu} onChange={(e) => handleChange("w_gaming_gpu", e.target.value)} />
-                                        <Input type="number" label="CPU Weight" className="w-full" value={config.w_gaming_cpu} onChange={(e) => handleChange("w_gaming_cpu", e.target.value)} />
-                                        <Input type="number" label="RAM Weight" className="w-full" value={config.w_gaming_ram} onChange={(e) => handleChange("w_gaming_ram", e.target.value)} />
+                                        <Input type="number" label="GPU Weight" className="w-full" color={gamingSum !== 100 ? "danger" : "default"} value={config.w_gaming_gpu} onChange={(e) => handleChange("w_gaming_gpu", e.target.value)} />
+                                        <Input type="number" label="CPU Weight" className="w-full" color={gamingSum !== 100 ? "danger" : "default"} value={config.w_gaming_cpu} onChange={(e) => handleChange("w_gaming_cpu", e.target.value)} />
+                                        <Input type="number" label="RAM Weight" className="w-full" color={gamingSum !== 100 ? "danger" : "default"} value={config.w_gaming_ram} onChange={(e) => handleChange("w_gaming_ram", e.target.value)} />
                                     </div>
                                 </div>
                                 <Divider className="bg-white/5" />
                                 <div>
-                                    <h5 className="font-bold text-green-400 mb-4 flex items-center gap-2">Working Weight %</h5>
+                                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                        <h5 className="font-bold text-green-400 flex items-center gap-2">Working Weight %</h5>
+                                        <WeightBadge label="Sum" sum={workingSum} />
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-                                        <Input type="number" label="CPU Weight" className="w-full" value={config.w_working_cpu} onChange={(e) => handleChange("w_working_cpu", e.target.value)} />
-                                        <Input type="number" label="RAM Weight" className="w-full" value={config.w_working_ram} onChange={(e) => handleChange("w_working_ram", e.target.value)} />
-                                        <Input type="number" label="GPU Weight" className="w-full" value={config.w_working_gpu} onChange={(e) => handleChange("w_working_gpu", e.target.value)} />
+                                        <Input type="number" label="CPU Weight" className="w-full" color={workingSum !== 100 ? "danger" : "default"} value={config.w_working_cpu} onChange={(e) => handleChange("w_working_cpu", e.target.value)} />
+                                        <Input type="number" label="RAM Weight" className="w-full" color={workingSum !== 100 ? "danger" : "default"} value={config.w_working_ram} onChange={(e) => handleChange("w_working_ram", e.target.value)} />
+                                        <Input type="number" label="GPU Weight" className="w-full" color={workingSum !== 100 ? "danger" : "default"} value={config.w_working_gpu} onChange={(e) => handleChange("w_working_gpu", e.target.value)} />
                                     </div>
                                 </div>
                                 <Divider className="bg-white/5" />
                                 <div>
-                                    <h5 className="font-bold text-purple-400 mb-4 flex items-center gap-2">Creative & Render Weight %</h5>
+                                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                        <h5 className="font-bold text-purple-400 flex items-center gap-2">Creative & Render Weight %</h5>
+                                        <WeightBadge label="Sum" sum={creativeSum} />
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-                                        <Input type="number" label="CPU Multi" className="w-full" value={config.w_creative_cpu} onChange={(e) => handleChange("w_creative_cpu", e.target.value)} />
-                                        <Input type="number" label="GPU" className="w-full" value={config.w_creative_gpu} onChange={(e) => handleChange("w_creative_gpu", e.target.value)} />
-                                        <Input type="number" label="RAM Cap" className="w-full" value={config.w_creative_ram} onChange={(e) => handleChange("w_creative_ram", e.target.value)} />
-                                        <Input type="number" label="VRAM" className="w-full" value={config.w_creative_vram} onChange={(e) => handleChange("w_creative_vram", e.target.value)} />
+                                        <Input type="number" label="CPU Multi" className="w-full" color={creativeSum !== 100 ? "danger" : "default"} value={config.w_creative_cpu} onChange={(e) => handleChange("w_creative_cpu", e.target.value)} />
+                                        <Input type="number" label="GPU" className="w-full" color={creativeSum !== 100 ? "danger" : "default"} value={config.w_creative_gpu} onChange={(e) => handleChange("w_creative_gpu", e.target.value)} />
+                                        <Input type="number" label="RAM Cap" className="w-full" color={creativeSum !== 100 ? "danger" : "default"} value={config.w_creative_ram} onChange={(e) => handleChange("w_creative_ram", e.target.value)} />
+                                        <Input type="number" label="VRAM" className="w-full" color={creativeSum !== 100 ? "danger" : "default"} value={config.w_creative_vram} onChange={(e) => handleChange("w_creative_vram", e.target.value)} />
                                     </div>
                                 </div>
+
+                                {/* Weight Validation Summary */}
+                                {!allWeightsValid && (
+                                    <div className="bg-danger/10 border border-danger/30 p-4 rounded-xl flex items-start gap-3">
+                                        <IoAlertCircleOutline className="text-danger text-2xl flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-danger font-bold text-sm">ค่า Weight ไม่ถูกต้อง — ไม่สามารถบันทึกได้!</p>
+                                            <p className="text-gray-400 text-xs mt-1">ทุกหมวดหมู่ต้องมีผลรวมเท่ากับ 100% พอดี กรุณาตรวจสอบและปรับเปลี่ยนค่าให้ถูกต้องก่อนบันทึก</p>
+                                            <div className="flex flex-wrap gap-2 mt-3">
+                                                <WeightBadge label="Gaming" sum={gamingSum} />
+                                                <WeightBadge label="Working" sum={workingSum} />
+                                                <WeightBadge label="Creative" sum={creativeSum} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-end mt-4">
-                                    <Button color="primary" className="font-bold px-8 shadow-lg shadow-blue-500/20 w-full sm:w-auto" onPress={() => { setModalType("system"); onOpen(); }}>
+                                    <Button 
+                                        color={allWeightsValid ? "primary" : "default"} 
+                                        className={`font-bold px-8 w-full sm:w-auto ${allWeightsValid ? 'shadow-lg shadow-blue-500/20' : 'opacity-60 cursor-not-allowed'}`}
+                                        isDisabled={!allWeightsValid}
+                                        onPress={() => { setModalType("system"); onOpen(); }}
+                                    >
                                         <IoSaveOutline className="text-lg" />
-                                        Save Weights
+                                        {allWeightsValid ? "Save Weights" : "กรุณาปรับ Weight ให้ครบ 100%"}
                                     </Button>
                                 </div>
                             </CardBody>

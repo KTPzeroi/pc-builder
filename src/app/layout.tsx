@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import AppNavbar from "@/components/Navbar";
+import AppFooter from "@/components/Footer";
 import { Kanit } from "next/font/google";
 
 const kanit = Kanit({
@@ -16,13 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${kanit.variable}`}>
-      <body className={`antialiased bg-black text-white min-h-screen font-sans`}>
+      <body className={`antialiased bg-black text-white min-h-screen font-sans flex flex-col`}>
         <Providers>
           <AppNavbar /> 
-          {/* 🟢 เพิ่ม className="pt-20" เพื่อเว้นระยะจาก Navbar */}
-          <main> 
+          <main className="flex-1"> 
             {children} 
           </main>
+          <AppFooter />
         </Providers>
       </body>
     </html>

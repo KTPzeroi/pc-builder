@@ -75,9 +75,28 @@ export default function AppNavbar() {
   const handleAuth = async () => {
     setErrorMessage("");
 
-    if (authMode === "register" && formData.password !== formData.confirmPassword) {
-      setErrorMessage("รหัสผ่านไม่ตรงกัน");
-      return;
+    // Validate inputs
+    if (authMode === "register") {
+      if (!formData.username.trim() || !formData.email.trim() || !formData.password.trim()) {
+        setErrorMessage("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+        return;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setErrorMessage("รูปแบบอีเมลไม่ถูกต้อง");
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setErrorMessage("รหัสผ่านไม่ตรงกัน");
+        return;
+      }
+    } else if (authMode === "login") {
+      if (!formData.email.trim() || !formData.password.trim()) {
+        setErrorMessage("กรุณากรอกอีเมล/ชื่อผู้ใช้ และรหัสผ่าน");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -109,7 +128,7 @@ export default function AppNavbar() {
         });
 
         if (result?.error) {
-          setErrorMessage("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+          setErrorMessage("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         } else {
           onOpenChange();
           // ตรวจสอบ Role ของผู้ใช้ที่เพิ่งเข้าสู่ระบบ
@@ -348,6 +367,7 @@ export default function AppNavbar() {
                   <Input 
                     label="Username" variant="bordered" labelPlacement="outside" placeholder="Enter your username" 
                     onChange={(e) => setFormData({...formData, username: e.target.value})}
+                    isRequired
                   />
                 )}
                 
@@ -356,6 +376,7 @@ export default function AppNavbar() {
                   variant="bordered" labelPlacement="outside" placeholder="Enter your email" 
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
+                  isRequired
                 />
                 
                 {authMode !== "forgot" && (
@@ -364,6 +385,7 @@ export default function AppNavbar() {
                     type={isVisible ? "text" : "password"} 
                     variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    isRequired
                     endContent={
                       <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                         {isVisible ? (
@@ -380,6 +402,8 @@ export default function AppNavbar() {
                   <Input 
                     label="Confirm Password" type="password" variant="bordered" labelPlacement="outside" placeholder="Confirm your password" 
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                    isRequired
+                    classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
                   />
                 )}
 

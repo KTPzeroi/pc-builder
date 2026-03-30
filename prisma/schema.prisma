@@ -201,3 +201,22 @@ model SystemSetting {
   description String?
   updatedAt   DateTime @updatedAt
 }
+
+// ----------------------------------------------------
+// ส่วนสำหรับสเปกแนะนำ (Preset Builds / Build Wizard)
+// Admin สามารถสร้าง/แก้ไข Preset สเปกแนะนำสำเร็จรูป
+// ที่จะแสดงใน Build Wizard เมื่อผู้ใช้ตอบคำถาม
+// ----------------------------------------------------
+
+model PresetBuild {
+  id          String   @id @default(cuid())
+  name        String   // ชื่อ Preset เช่น "สเปกเล่นเกม งบ 15,000"
+  usage       String   // "GAMING" | "WORKING" | "CREATIVE"
+  budget      String   // "ENTRY" | "MID" | "HIGHEND" | "ULTRA"
+  description String?  @db.Text // คำอธิบายสั้นๆ ของ Preset นี้
+  components  Json     // [{ type, name, reason, price }]
+  totalPrice  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

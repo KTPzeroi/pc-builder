@@ -238,6 +238,25 @@ async function main() {
         "vramGb": null,
         "ramSpeed": null,
         "readWriteSpeed": 7000
+    },
+    {
+        "id": "cmnd1fkln0000y0exv1gl4mgk",
+        "name": "DARK FOREST WHITE SFX",
+        "type": "PSU",
+        "brand": "ITSONAS",
+        "price": 3160,
+        "image": "https://img.advice.co.th/images_nas/pic_product4/A0163169/A0163169OK_BIG_1.jpg",
+        "description": null,
+        "socket": null,
+        "ramType": null,
+        "formFactor": null,
+        "capacity": 750,
+        "cpuSingleScore": null,
+        "cpuMultiScore": null,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null
     }
 ];
 

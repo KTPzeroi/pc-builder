@@ -1,0 +1,315 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Next.js 16 (App Router)
+  - React 19
+  - HeroUI (UI Component Library)
+  - Prisma ORM
+  - PostgreSQL
+  - NextAuth.js (Authentication)
+  - Cloudinary (Image Upload)
+  - Recharts (Charts)
+  - react-hot-toast (Notifications)
+  - Framer Motion (Animations)
+  - TailwindCSS 4
+routes:
+  - path: /
+    file: src/app/page.tsx
+    auth_required: false
+    description: Homepage with Hero banner, build steps, PC Component Guide slider
+  - path: /build
+    file: src/app/build/page.tsx
+    auth_required: false
+    description: PC Build page where users select components and view benchmark scores
+  - path: /plan
+    file: src/app/plan/page.tsx
+    auth_required: false
+    description: Build Wizard - step-by-step guide to choose usage and budget for recommended builds
+  - path: /forum
+    file: src/app/forum/page.tsx
+    auth_required: false
+    description: Community forum with posts, comments, likes, and reporting
+  - path: /profile
+    file: src/app/profile/page.tsx
+    auth_required: true
+    description: User profile page with saved builds and account settings
+  - path: /reset-password
+    file: src/app/reset-password/page.tsx
+    auth_required: false
+    description: Password reset page with token validation
+  - path: /admin
+    file: src/app/admin/page.tsx
+    auth_required: true
+    description: Admin dashboard with stats, graphs, reports summary
+  - path: /admin/inventory
+    file: src/app/admin/inventory/page.tsx
+    auth_required: true
+    description: Admin hardware inventory management (CRUD components)
+  - path: /admin/presets
+    file: src/app/admin/presets/page.tsx
+    auth_required: true
+    description: Admin preset build management for Build Wizard
+  - path: /admin/users
+    file: src/app/admin/users/page.tsx
+    auth_required: true
+    description: Admin user management (roles, status, bans)
+  - path: /admin/settings
+    file: src/app/admin/settings/page.tsx
+    auth_required: true
+    description: System configuration for baselines, weights, forum policies
+features:
+  - name: User Registration
+    description: Register new account with email, username, and password
+    files:
+      - src/components/Navbar.tsx
+      - src/app/api/auth/credentials/route.ts
+    entry_route: /
+    user_interactions:
+      - Click Sign Up button in Navbar
+      - Fill name, username, email, password fields
+      - Click Register button
+      - See success toast or error message
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/credentials
+    auth_required: false
+  - name: User Login
+    description: Login with email/password or Google OAuth
+    files:
+      - src/components/Navbar.tsx
+      - src/app/api/auth/[...nextauth]/route.ts
+    entry_route: /
+    user_interactions:
+      - Click Sign In button in Navbar
+      - Fill email and password fields
+      - Click Login button
+      - Or click Google OAuth button
+      - See Navbar update with user info on success
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/callback/credentials
+    auth_required: false
+  - name: PC Build System
+    description: Select PC components across 8 categories and view benchmark scores
+    files:
+      - src/app/build/page.tsx
+      - src/app/api/components/route.ts
+      - src/app/api/builds/route.ts
+    entry_route: /build
+    user_interactions:
+      - Click on component category (CPU, GPU, RAM, etc.)
+      - Select a component from the modal list
+      - See total price update automatically
+      - See Gaming, Working, Creative benchmark scores
+      - Enter build name
+      - Click Save Build button
+    api_calls:
+      - method: GET
+        endpoint: /api/components
+      - method: POST
+        endpoint: /api/builds
+      - method: GET
+        endpoint: /api/admin/settings
+    auth_required: false
+  - name: Build Wizard
+    description: Guided step-by-step wizard to recommend PC specs based on usage and budget
+    files:
+      - src/app/plan/page.tsx
+      - src/app/api/admin/presets/route.ts
+    entry_route: /plan
+    user_interactions:
+      - Select usage type (Gaming, Working, Creative)
+      - Select budget tier (Entry, Mid, Hi-End, Ultra)
+      - View recommended preset build with component details and reasons
+      - Click to customize in Build page
+      - Click back button to change selections
+    api_calls:
+      - method: GET
+        endpoint: /api/admin/presets?usage=X&budget=Y
+    auth_required: false
+  - name: Forum Posts
+    description: Create, view, like posts in community forum
+    files:
+      - src/app/forum/page.tsx
+      - src/app/api/forum/posts/route.ts
+      - src/app/api/forum/posts/[id]/route.ts
+      - src/app/api/forum/posts/[id]/like/route.ts
+    entry_route: /forum
+    user_interactions:
+      - Click New Post button
+      - Fill title, content, select category
+      - Optionally upload images
+      - Optionally attach a PC Build
+      - Click Submit
+      - Like/unlike posts
+      - Click on post to view details
+    api_calls:
+      - method: GET
+        endpoint: /api/forum/posts
+      - method: POST
+        endpoint: /api/forum/posts
+      - method: POST
+        endpoint: /api/forum/posts/[id]/like
+    auth_required: true
+  - name: Forum Comments
+    description: Add comments to forum posts and like comments
+    files:
+      - src/app/api/forum/posts/[id]/route.ts
+      - src/app/api/forum/comments/[id]/like/route.ts
+    entry_route: /forum
+    user_interactions:
+      - Open a post detail view
+      - Type comment in input field
+      - Click submit comment
+      - Like/unlike comments
+    api_calls:
+      - method: POST
+        endpoint: /api/forum/posts/[id]
+      - method: POST
+        endpoint: /api/forum/comments/[id]/like
+    auth_required: true
+  - name: Report System
+    description: Report inappropriate posts or comments
+    files:
+      - src/app/api/forum/posts/[id]/report/route.ts
+      - src/app/api/forum/comments/[id]/report/route.ts
+    entry_route: /forum
+    user_interactions:
+      - Click report button on post or comment
+      - Select reason from dropdown
+      - Optionally add description
+      - Submit report
+    api_calls:
+      - method: POST
+        endpoint: /api/forum/posts/[id]/report
+      - method: POST
+        endpoint: /api/forum/comments/[id]/report
+    auth_required: true
+  - name: Admin Dashboard
+    description: Overview statistics and system health for administrators
+    files:
+      - src/app/admin/page.tsx
+      - src/app/api/admin/stats/route.ts
+    entry_route: /admin
+    user_interactions:
+      - View total users, components, posts, builds counts
+      - View activity chart
+      - View latest reports
+      - Navigate via sidebar to other admin pages
+    api_calls:
+      - method: GET
+        endpoint: /api/admin/stats
+    auth_required: true
+  - name: Admin Hardware Inventory
+    description: CRUD operations for PC components in database
+    files:
+      - src/app/admin/inventory/page.tsx
+      - src/app/api/admin/components/route.ts
+      - src/app/api/admin/components/[id]/route.ts
+    entry_route: /admin/inventory
+    user_interactions:
+      - View list of all components
+      - Filter by component type
+      - Click Add button to open form
+      - Fill component details (name, brand, price, specs)
+      - See dynamic fields based on selected type (CPU shows socket, GPU shows vram)
+      - Submit to save
+      - Edit existing component
+      - Delete component
+    api_calls:
+      - method: GET
+        endpoint: /api/components
+      - method: POST
+        endpoint: /api/admin/components
+      - method: PUT
+        endpoint: /api/admin/components/[id]
+      - method: DELETE
+        endpoint: /api/admin/components/[id]
+    auth_required: true
+  - name: Admin Preset Management
+    description: Manage recommended PC build presets for Build Wizard
+    files:
+      - src/app/admin/presets/page.tsx
+      - src/app/api/admin/presets/route.ts
+      - src/app/api/admin/presets/[id]/route.ts
+    entry_route: /admin/presets
+    user_interactions:
+      - View list of all presets
+      - Click Add Preset button
+      - Select usage type and budget tier
+      - Select components from database dropdown
+      - See auto-fill name and price
+      - Add reason for each component
+      - See total price auto-calculated
+      - Save preset
+      - Toggle active/inactive
+      - Edit or delete preset
+    api_calls:
+      - method: GET
+        endpoint: /api/admin/presets?all=true
+      - method: POST
+        endpoint: /api/admin/presets
+      - method: PUT
+        endpoint: /api/admin/presets/[id]
+      - method: DELETE
+        endpoint: /api/admin/presets/[id]
+    auth_required: true
+  - name: Admin System Configuration
+    description: Configure benchmark baselines, weights, and forum policies
+    files:
+      - src/app/admin/settings/page.tsx
+      - src/app/api/admin/settings/route.ts
+    entry_route: /admin/settings
+    user_interactions:
+      - View current baseline values
+      - Edit baseline values
+      - Save with critical confirmation modal
+      - View weight values with real-time sum validation
+      - See green badge when weights sum to 100%
+      - See red badge and disabled save when weights dont sum to 100%
+      - Edit forum categories and policies
+    api_calls:
+      - method: GET
+        endpoint: /api/admin/settings
+      - method: PUT
+        endpoint: /api/admin/settings
+    auth_required: true
+  - name: Admin User Management
+    description: Manage user roles, status, and accounts
+    files:
+      - src/app/admin/users/page.tsx
+      - src/app/api/admin/users/route.ts
+      - src/app/api/admin/users/[id]/route.ts
+    entry_route: /admin/users
+    user_interactions:
+      - View list of all users
+      - Change user role (USER/ADMIN)
+      - Change user status (ACTIVE/SUSPENDED/BANNED)
+      - Delete user account
+    api_calls:
+      - method: GET
+        endpoint: /api/admin/users
+      - method: PATCH
+        endpoint: /api/admin/users/[id]
+      - method: DELETE
+        endpoint: /api/admin/users/[id]
+    auth_required: true
+  - name: Notification System
+    description: Real-time notifications for users
+    files:
+      - src/components/Navbar.tsx
+      - src/app/api/notifications/route.ts
+    entry_route: /
+    user_interactions:
+      - See notification badge on navbar bell icon
+      - Click to open notification dropdown
+      - Click notification to navigate to target
+      - Mark as read
+    api_calls:
+      - method: GET
+        endpoint: /api/notifications
+      - method: PATCH
+        endpoint: /api/notifications
+    auth_required: true
+known_limitations: []

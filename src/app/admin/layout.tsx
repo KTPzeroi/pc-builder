@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IoGridOutline, IoCubeOutline, IoShieldHalfOutline, IoSettingsOutline, IoLogOutOutline } from 'react-icons/io5';
+import { IoGridOutline, IoCubeOutline, IoShieldHalfOutline, IoSettingsOutline, IoLogOutOutline, IoRocketOutline } from 'react-icons/io5';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -27,6 +27,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div className={`flex items-center gap-2 md:gap-3 px-4 py-2 md:py-3 rounded-lg flex-shrink-0 transition-colors cursor-pointer ${pathname === '/admin/inventory' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
                             <IoCubeOutline className="text-lg" />
                             <span className="text-[11px] md:text-sm font-bold tracking-wider uppercase whitespace-nowrap">Hardware</span>
+                        </div>
+                    </Link>
+                    <Link href="/admin/presets">
+                        <div className={`flex items-center gap-2 md:gap-3 px-4 py-2 md:py-3 rounded-lg flex-shrink-0 transition-colors cursor-pointer ${pathname === '/admin/presets' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
+                            <IoRocketOutline className="text-lg" />
+                            <span className="text-[11px] md:text-sm font-bold tracking-wider uppercase whitespace-nowrap">Presets</span>
                         </div>
                     </Link>
                     <Link href="/admin/users">

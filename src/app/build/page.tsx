@@ -44,13 +44,14 @@ const categoryToTypeMap: Record<string, string> = {
 
 // --- Helper Components ---
 function HeroBenchmark({ label, value, color }: { label: string, value: number, color: any }) {
+  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.round(value));
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-end">
         <span className="text-[10px] font-bold uppercase tracking-widest text-default-500">{label}</span>
-        <span className={`text-sm font-bold text-${color}`}>{Math.round(value)}%</span>
+        <span className={`text-sm font-bold text-${color}`}>{safeValue}%</span>
       </div>
-      <Progress size="sm" value={value} color={color} aria-label={label} />
+      <Progress size="sm" value={safeValue} color={color} aria-label={label} />
     </div>
   );
 }
@@ -65,6 +66,7 @@ export default function BuildPage() {
   const { isOpen: isLoginAlertOpen, onOpen: onLoginAlertOpen, onOpenChange: onLoginAlertChange } = useDisclosure();
 
   const [buildName, setBuildName] = useState("");
+  const [buildNameError, setBuildNameError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   // เก็บข้อมูลสินค้าทั้งหมดจาก Database
@@ -92,6 +94,8 @@ export default function BuildPage() {
     Processor: null, Motherboard: null, "Graphics Card": null, Memory: null, Storage: null, "Power Supply": null, Case: null, Cooling: null,
   });
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('pc_builder_selection');
@@ -102,12 +106,15 @@ export default function BuildPage() {
         console.error("Failed to parse saved build");
       }
     }
+    setIsLoaded(true);
   }, []);
 
   // Save to localStorage when selection changes
   useEffect(() => {
-    localStorage.setItem('pc_builder_selection', JSON.stringify(selectedProducts));
-  }, [selectedProducts]);
+    if (isLoaded) {
+      localStorage.setItem('pc_builder_selection', JSON.stringify(selectedProducts));
+    }
+  }, [selectedProducts, isLoaded]);
 
   // 🛡 เช็คความเข้ากันได้
   const checkCompatibility = useMemo(() => {
@@ -197,11 +204,11 @@ export default function BuildPage() {
 
     // 💼 Work/Office
     let office = 0;
-    if (cpu) {
-      office += Math.min((cpuSingle / W_BASE) * 100, 100) * w_working_cpu;
+    if (cpu || gpu) {
+      if (cpu) office += Math.min((cpuSingle / W_BASE) * 100, 100) * w_working_cpu;
       const ramScoreW = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 80 : 50);
       office += ramScoreW * w_working_ram;
-      office += Math.min((gpuScore / (G_BASE * 0.6)) * 100, 100) * w_working_gpu; // simplified baseline for office GPU
+      if (gpu) office += Math.min((gpuScore / (G_BASE * 0.6)) * 100, 100) * w_working_gpu; // simplified baseline for office GPU
     }
 
     return {
@@ -226,10 +233,12 @@ export default function BuildPage() {
   };
 
   const handleSaveBuildSubmit = async () => {
-    if (!buildName) {
+    if (!buildName.trim()) {
+      setBuildNameError("กรุณากรอกชื่อสเปก");
       addToast({ title: "Please Enter Build Name", color: "danger" });
       return;
     }
+    setBuildNameError("");
 
     setIsSaving(true);
     try {
@@ -373,7 +382,21 @@ export default function BuildPage() {
                 <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">ตรวจสอบข้อมูลและตั้งชื่อสเปกของคุณ</p>
               </ModalHeader>
               <ModalBody className="p-8 space-y-6">
-                <Input label="ชื่อสเปก (Build Name)" placeholder="เช่น สเปกเล่นเกมงบ 30k" variant="bordered" labelPlacement="outside" value={buildName} onValueChange={setBuildName} classNames={{ label: "font-bold text-gray-400", input: "text-lg font-semibold" }} />
+                <Input 
+                  label="ชื่อสเปก (Build Name)" 
+                  placeholder="เช่น สเปกเล่นเกมงบ 30k" 
+                  variant="bordered" 
+                  labelPlacement="outside" 
+                  value={buildName} 
+                  onValueChange={(val) => {
+                    setBuildName(val);
+                    if (val.trim()) setBuildNameError("");
+                  }} 
+                  isRequired
+                  isInvalid={!!buildNameError}
+                  errorMessage={buildNameError}
+                  classNames={{ label: "font-bold text-gray-400", input: "text-lg font-semibold" }} 
+                />
                 <div className="bg-black/40 border border-white/5 p-6 rounded-2xl space-y-3">
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">All Part</p>
                   <ScrollShadow className="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">

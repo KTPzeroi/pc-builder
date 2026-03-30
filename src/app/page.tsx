@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useState, useRef, MouseEvent, TouchEvent } from "react";
-// นำเข้า HeroUI Components ที่ช่วยเรื่องความสวยงาม
-import { 
-  Button, 
-  Card, 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
+import {
+  Button,
+  Card,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
   ModalFooter,
   Chip
 } from "@heroui/react";
+import { IoChevronDownOutline } from "react-icons/io5";
 
 import { PiGraphicsCardBold } from "react-icons/pi";
 import { BsCpu } from "react-icons/bs";
@@ -142,7 +142,7 @@ export default function Page() {
   // ==========================================
   const sliderRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
-  
+
   const mouseDownAt = useRef<number>(0);
   const left = useRef<number>(0);
   const [selectedItem, setSelectedItem] = useState<ComponentDetail | null>(null);
@@ -159,8 +159,8 @@ export default function Page() {
     if (sliderRef.current && formRef.current) {
       sliderRef.current.style.userSelect = "unset";
       sliderRef.current.style.cursor = "grab";
-      formRef.current.style.pointerEvents = "unset"; 
-      
+      formRef.current.style.pointerEvents = "unset";
+
       formRef.current.classList.remove("left");
       formRef.current.classList.remove("right");
     }
@@ -170,12 +170,12 @@ export default function Page() {
     if (mouseDownAt.current === 0) return;
 
     const mouseDelta = clientX - mouseDownAt.current;
-    if (Math.abs(mouseDelta) < 10) return; 
+    if (Math.abs(mouseDelta) < 10) return;
     if (!sliderRef.current || !formRef.current) return;
 
     sliderRef.current.style.userSelect = "none";
-    sliderRef.current.style.cursor = "grabbing"; 
-    formRef.current.style.pointerEvents = "none"; 
+    sliderRef.current.style.cursor = "grabbing";
+    formRef.current.style.pointerEvents = "none";
 
     if (clientX > mouseDownAt.current) {
       formRef.current.classList.add("left");
@@ -185,7 +185,7 @@ export default function Page() {
       formRef.current.classList.remove("left");
     }
 
-    const speed = 1.2; 
+    const speed = 1.2;
     const leftTemporary = left.current + mouseDelta / speed;
     const containerWidth = sliderRef.current.offsetWidth;
     const contentWidth = formRef.current.scrollWidth;
@@ -209,7 +209,7 @@ export default function Page() {
     <main>
       {/* SECTION 1: HERO BANNER */}
       <section className="banner">
-        <div className="banner-slider" style={{ ["--quantity" as any]: 9 }}>
+        {/* <div className="banner-slider" style={{ ["--quantity" as any]: 9 }}>
           <div className="banner-item" style={{ ["--position" as any]: 1 }}><BsCpu style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
           <div className="banner-item" style={{ ["--position" as any]: 2 }}><PiGraphicsCardBold style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
           <div className="banner-item" style={{ ["--position" as any]: 3 }}><BsMotherboard style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
@@ -219,15 +219,15 @@ export default function Page() {
           <div className="banner-item" style={{ ["--position" as any]: 7 }}><BiTachometer style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
           <div className="banner-item" style={{ ["--position" as any]: 8 }}><LuPcCase style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
           <div className="banner-item" style={{ ["--position" as any]: 9 }}><PiFan style={{ width: "75%", height: "100%", color: "#f6f6f7" }} /></div>
-        </div>
+        </div> */}
 
         <div className="banner-content">
           <h1 data-content="PC BUILDER">PC <br></br>BUILDER</h1>
           <div className="cta-container">
-            <a href="#plan" style={{ textDecoration: 'none' }}>
-              <Button 
-                color="primary" 
-                variant="shadow" 
+            <a href="/plan" style={{ textDecoration: 'none' }}>
+              <Button
+                color="primary"
+                variant="shadow"
                 radius="full"
                 size="lg"
                 className="px-10 py-6 text-[1.3rem] font-semibold tracking-wider shadow-[0_0_20px_rgba(0,210,255,0.4)] bg-[#00d2ff] text-[#fffff]"
@@ -235,6 +235,10 @@ export default function Page() {
                 PLAN YOUR BUILD
               </Button>
             </a>
+            {/* Scroll down indicator */}
+            <div className="scroll-hint" onClick={() => document.querySelector('.build-sequence-section')?.scrollIntoView({ behavior: 'smooth' })}>
+              <IoChevronDownOutline className="scroll-hint-icon" />
+            </div>
           </div>
           <div className="model"></div>
         </div>
@@ -244,7 +248,7 @@ export default function Page() {
       <section className="build-sequence-section">
         <div className="sequence-container">
           <div className="sequence-track">
-            
+
             <div className="seq-item">
               <div className="seq-icon"><BsCpu /></div>
               <p>1. CPU</p>
@@ -314,7 +318,7 @@ export default function Page() {
           <div className={`form ${isDragging ? "dragging" : "sliding"}`} ref={formRef}>
             {componentData.map((item, index) => (
               <div className="item" key={index}>
-                <Card 
+                <Card
                   isHoverable
                   radius="lg"
                   className="content !bg-[#0f172a] border-none shadow-[0_10px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.2)]"
@@ -322,7 +326,7 @@ export default function Page() {
                   <div className="icon-wrapper">
                     {item.icon}
                   </div>
-                  
+
                   <div className="des bg-black/60 backdrop-blur-sm border-t border-white/10">
                     <div className="text-ellipsis">
                       {item.title.split("–")[0]}
@@ -334,7 +338,7 @@ export default function Page() {
                       radius="sm"
                       className="font-semibold bg-[#00d2ff] text-black"
                       onClick={(e) => {
-                        e.stopPropagation(); 
+                        e.stopPropagation();
                         setSelectedItem(item);
                       }}
                     >
@@ -349,16 +353,16 @@ export default function Page() {
       </section>
 
       {/* HERO UI: POPUP MODAL */}
-      <Modal 
-        isOpen={!!selectedItem} 
+      <Modal
+        isOpen={!!selectedItem}
         onOpenChange={(isOpen) => !isOpen && setSelectedItem(null)}
-        backdrop="blur" 
+        backdrop="blur"
         size="2xl"
         classNames={{
           base: "bg-gradient-to-br from-[#1e293b] to-[#0B0F19] text-white border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)]",
-          header: "border-b border-white/5 pb-3 pt-5 px-8", 
-          body: "py-6 px-8", 
-          footer: "border-t border-white/5 py-3 px-8", 
+          header: "border-b border-white/5 pb-3 pt-5 px-8",
+          body: "py-6 px-8",
+          footer: "border-t border-white/5 py-3 px-8",
           closeButton: "hover:bg-white/10 active:bg-white/20 text-white/70 hover:text-white transition-colors top-4 right-4",
         }}
         motionProps={{
@@ -376,28 +380,28 @@ export default function Page() {
               </ModalHeader>
               <ModalBody>
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  
+
                   <div className="flex-shrink-0 w-[140px] h-[140px] rounded-2xl bg-black/40 flex justify-center items-center shadow-[inset_0_0_20px_rgba(0,210,255,0.05)] border border-white/10 relative group overflow-hidden">
                     <div className="absolute inset-0 bg-[#00d2ff]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="w-20 h-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] relative z-10 transition-transform duration-300 group-hover:scale-110">
-                       {React.isValidElement(selectedItem?.icon) 
-                          ? React.cloneElement(selectedItem.icon as React.ReactElement<any>, { 
-                              style: { width: '100%', height: '100%' } 
-                            }) 
-                          : selectedItem?.icon}
+                      {React.isValidElement(selectedItem?.icon)
+                        ? React.cloneElement(selectedItem.icon as React.ReactElement<any>, {
+                          style: { width: '100%', height: '100%' }
+                        })
+                        : selectedItem?.icon}
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-3 w-full pt-1">
                     <p className="text-white/85 text-[1rem] leading-relaxed font-light line-clamp-3">
                       {selectedItem?.desc}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selectedItem?.details.map((line, idx) => (
-                        <Chip 
-                          key={idx} 
-                          variant="flat" 
-                          color="primary" 
+                        <Chip
+                          key={idx}
+                          variant="flat"
+                          color="primary"
                           size="sm"
                           className="bg-[#00d2ff]/10 border border-[#00d2ff]/20 text-white/95 py-1 px-2"
                         >
@@ -593,7 +597,7 @@ export default function Page() {
             background-color: #020617;
             position: relative;
             z-index: 5;
-            padding: 50px 0;
+            padding: 30px 0;
         }
 
         .cta-container {
@@ -605,6 +609,31 @@ export default function Page() {
             width: 100%;
             text-align: center;
             pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .scroll-hint {
+            cursor: pointer;
+            pointer-events: auto;
+            animation: bounceDown 2s ease-in-out infinite;
+        }
+
+        .scroll-hint-icon {
+            font-size: 1.8rem;
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.3s ease;
+        }
+
+        .scroll-hint:hover .scroll-hint-icon {
+            color: #00d2ff;
+        }
+
+        @keyframes bounceDown {
+            0%, 100% { transform: translateY(0); opacity: 0.4; }
+            50% { transform: translateY(8px); opacity: 1; }
         }
 
         /* --- MEDIA QUERIES FOR RESPONSIVE DESIGN --- */
@@ -706,25 +735,21 @@ export default function Page() {
         .slider .form {
             width: max-content;
             --left: 0;
-            transform: translateX(var(--left));
+            transform: translate3d(var(--left), 0, 0);
             margin: 0 15px;
             display: flex;
             gap: 20px;
-            will-change: transform; 
+            will-change: transform;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
         }
         
-        /* -----------------------------------------------------------
-           เวทย์มนตร์เรื่องความ Smooth อยู่ตรง CSS บล็อคนี้ครับ!
-           ผมแค่เปลี่ยนค่า transition ให้ซับแรงกระแทกจาก JS
-        ------------------------------------------------------------- */
         .slider .form.sliding {
-            /* จังหวะปล่อยมือ: เปลี่ยนให้เบรกแบบมีน้ำหนัก ไหลลื่นๆ (Glide) */
-            transition: transform 0.6s cubic-bezier(0.25, 1, 0.3, 1); 
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); 
         }
         
         .slider .form.dragging {
-            /* จังหวะกำลังลาก: เพิ่ม transition สั้นๆ เพื่อลบรอยกระตุก (Stutter) ที่เกิดจากเมาส์ */
-            transition: transform 0.15s ease-out; 
+            transition: transform 0.08s linear; 
         }
 
         .form .item {
@@ -782,7 +807,7 @@ export default function Page() {
         .slider .form.left .item .content { transform: rotateY(-8deg) scale(0.95); }
         .slider .form.right .item .content { transform: rotateY(8deg) scale(0.95); }
       `}</style>
-      
+
     </main>
   );
 }
