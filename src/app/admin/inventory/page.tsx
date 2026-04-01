@@ -8,7 +8,7 @@ import {
     Chip,
     Tooltip
 } from "@heroui/react";
-import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch } from "react-icons/io5";
+import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch, IoCloudUploadOutline, IoImageOutline, IoLinkOutline } from "react-icons/io5";
 
 type ComponentData = {
     id: string;
@@ -52,6 +52,9 @@ export default function InventoryCRUDPage() {
     const [modalMode, setModalMode] = useState<"ADD" | "EDIT">("ADD");
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageMode, setImageMode] = useState<"FILE" | "URL">("FILE");
 
     // Form Data
     const [formData, setFormData] = useState<Partial<ComponentData>>({
@@ -94,6 +97,9 @@ export default function InventoryCRUDPage() {
             cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
             vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined
         });
+        setImageFile(null);
+        setImagePreview(null);
+        setImageMode("FILE");
         onOpen();
     };
 
@@ -108,6 +114,9 @@ export default function InventoryCRUDPage() {
             vramGb: comp.vramGb || undefined, ramSpeed: comp.ramSpeed || undefined,
             readWriteSpeed: comp.readWriteSpeed || undefined
         });
+        setImageFile(null);
+        setImagePreview(comp.image || null);
+        setImageMode(comp.image ? "URL" : "FILE");
         onOpen();
     };
 
@@ -136,6 +145,24 @@ export default function InventoryCRUDPage() {
         try {
             const url = modalMode === "ADD" ? "/api/admin/components" : `/api/admin/components/${selectedId}`;
             const method = modalMode === "ADD" ? "POST" : "PUT";
+
+            // อัปโหลดไฟล์รูปภาพไปยัง Cloudinary ก่อน (ถ้ามี)
+            let finalImageUrl = formData.image || null;
+            if (imageFile) {
+                const uploadFormData = new FormData();
+                uploadFormData.append("files", imageFile);
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: uploadFormData,
+                });
+                if (!uploadRes.ok) {
+                    alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+                    setIsSaving(false);
+                    return;
+                }
+                const uploadData = await uploadRes.json();
+                finalImageUrl = uploadData.urls?.[0] || null;
+            }
 
             // สกัดค่าที่กรอกมาจัดการเป็น null กรณีว่าง
             let pCapacity = formData.capacity ? parseInt(String(formData.capacity)) : null;
@@ -170,7 +197,7 @@ export default function InventoryCRUDPage() {
                 type: formData.type,
                 brand: formData.brand,
                 price: parseFloat(String(formData.price)),
-                image: formData.image || null,
+                image: finalImageUrl,
                 description: formData.description || null,
                 
                 // Allow only type-specific fields
@@ -498,8 +525,89 @@ export default function InventoryCRUDPage() {
                                             value={formData.price?.toString()} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
 
                                         <div className="col-span-full">
-                                            <Input label="Image URL (ลิงก์รูปภาพ)" placeholder="https://..." variant="bordered"
-                                                value={formData.image || ""} onChange={e => setFormData({...formData, image: e.target.value})} />
+                                            <label className="text-sm font-medium mb-2 block text-gray-400">รูปภาพสินค้า</label>
+                                            {/* Toggle buttons for image mode */}
+                                            <div className="flex gap-2 mb-3">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant={imageMode === "FILE" ? "solid" : "bordered"}
+                                                    color={imageMode === "FILE" ? "primary" : "default"}
+                                                    startContent={<IoCloudUploadOutline size={16} />}
+                                                    onPress={() => setImageMode("FILE")}
+                                                    className="font-bold"
+                                                >
+                                                    อัปโหลดจากเครื่อง
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant={imageMode === "URL" ? "solid" : "bordered"}
+                                                    color={imageMode === "URL" ? "primary" : "default"}
+                                                    startContent={<IoLinkOutline size={16} />}
+                                                    onPress={() => setImageMode("URL")}
+                                                    className="font-bold"
+                                                >
+                                                    ใส่ลิงก์ URL
+                                                </Button>
+                                            </div>
+
+                                            {imageMode === "FILE" ? (
+                                                <div className="space-y-3">
+                                                    <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-white/20 rounded-xl cursor-pointer bg-white/5 hover:bg-white/10 hover:border-blue-500/50 transition-all group">
+                                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                            <IoCloudUploadOutline size={32} className="text-gray-400 group-hover:text-blue-400 transition-colors mb-2" />
+                                                            <p className="text-sm text-gray-400 group-hover:text-gray-300">
+                                                                <span className="font-bold text-blue-400">คลิกเพื่อเลือกไฟล์</span> หรือลากวาง
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (สูงสุด 5MB)</p>
+                                                        </div>
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            accept="image/png,image/jpeg,image/webp,image/gif"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    if (file.size > 5 * 1024 * 1024) {
+                                                                        alert("ไฟล์มีขนาดเกิน 5MB");
+                                                                        return;
+                                                                    }
+                                                                    setImageFile(file);
+                                                                    const reader = new FileReader();
+                                                                    reader.onloadend = () => {
+                                                                        setImagePreview(reader.result as string);
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                    // Clear URL mode image
+                                                                    setFormData({...formData, image: ""});
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+                                                    {imageFile && (
+                                                        <div className="flex items-center gap-2 text-sm text-gray-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
+                                                            <IoImageOutline className="text-blue-400" size={18} />
+                                                            <span className="truncate flex-1 font-medium">{imageFile.name}</span>
+                                                            <span className="text-xs text-gray-500 shrink-0">{(imageFile.size / 1024).toFixed(1)} KB</span>
+                                                            <Button size="sm" isIconOnly variant="light" color="danger" onPress={() => { setImageFile(null); setImagePreview(null); }}>
+                                                                <IoTrash size={14} />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <Input label="Image URL (ลิงก์รูปภาพ)" placeholder="https://..." variant="bordered"
+                                                    value={formData.image || ""} onChange={e => { setFormData({...formData, image: e.target.value}); setImagePreview(e.target.value || null); setImageFile(null); }} />
+                                            )}
+
+                                            {/* Image Preview */}
+                                            {imagePreview && (
+                                                <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                                                    <p className="text-xs text-gray-400 mb-2 font-bold">ตัวอย่างรูปภาพ:</p>
+                                                    <div className="flex justify-center">
+                                                        <img src={imagePreview} alt="Preview" className="max-h-40 max-w-full object-contain rounded-lg" />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         
                                         <div className="col-span-full">

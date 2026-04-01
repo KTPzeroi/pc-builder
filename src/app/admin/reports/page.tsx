@@ -180,16 +180,16 @@ export default function AdminReportsPage() {
                                         isLoading={isProcessing}
                                         onPress={() => handleAction("hide_target", onClose)}
                                     >
-                                        ❌ ลบ/ซ่อนโพสต์เป้าหมาย และ ปิดคดี (Resolve)
+                                        ❌ ลบหรือซ่อนโพสต์
                                     </Button>
                                     <Button 
-                                        color="success" 
+                                        color="warning" 
                                         variant="flat" 
                                         className="justify-start font-bold"
                                         isLoading={isProcessing}
                                         onPress={() => handleAction("resolve", onClose)}
                                     >
-                                        ✔️ ยอมรับว่าผิด แต่แค่ตักเตือน (Resolve)
+                                        ✔️ ยืนยันการกระทำผิด พร้อมดำเนินการแจ้งเตือน
                                     </Button>
                                     <Button 
                                         color="default" 
@@ -198,7 +198,7 @@ export default function AdminReportsPage() {
                                         isLoading={isProcessing}
                                         onPress={() => handleAction("ignore", onClose)}
                                     >
-                                        👀 ผู้ใช้เข้าใจผิด (Ignore Report)
+                                        👀 ข้ามรายงานนี้
                                     </Button>
                                 </div>
                             </ModalBody>

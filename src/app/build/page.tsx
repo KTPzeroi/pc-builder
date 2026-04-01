@@ -74,6 +74,14 @@ export default function BuildPage() {
   const [loading, setLoading] = useState(true);
   const [sysConfig, setSysConfig] = useState<any>(null);
 
+  // Filter state for selection modal
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+  // Reset filters when category changes
+  useEffect(() => {
+    setActiveFilters({});
+  }, [selectedCategory]);
+
   useEffect(() => {
     Promise.all([
       fetch("/api/components").then(res => res.json()),
@@ -294,9 +302,15 @@ export default function BuildPage() {
             <Card isPressable key={cat} onPress={() => setSelectedCategory(cat)}
               className={`bg-black/40 border border-white/10 hover:border-blue-500/50 transition-all h-28 md:h-32 ${selectedProducts[cat] ? 'ring-1 ring-blue-500/30' : ''}`}>
               <CardBody className="flex-row items-center gap-4 md:gap-6 p-4 md:p-6 text-left">
-                <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[10px] md:text-[12px] font-bold text-gray-500 border border-white/5 shadow-inner">
-                  {cat.substring(0, 3).toUpperCase()}
-                </div>
+                {selectedProducts[cat]?.image ? (
+                  <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 shadow-inner p-1">
+                    <img src={selectedProducts[cat]!.image!} alt={selectedProducts[cat]!.name} className="max-w-full max-h-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[10px] md:text-[12px] font-bold text-gray-500 border border-white/5 shadow-inner">
+                    {cat.substring(0, 3).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col truncate flex-1">
                   <span className="text-[9px] md:text-[11px] font-semibold uppercase text-gray-500 tracking-wider mb-1">{cat}</span>
                   <h3 className={`text-base md:text-lg font-bold truncate ${selectedProducts[cat] ? 'text-white' : 'text-gray-400'}`}>
@@ -304,7 +318,22 @@ export default function BuildPage() {
                   </h3>
                   {selectedProducts[cat] && <span className="text-xs md:text-sm font-bold text-blue-500 mt-1">฿{selectedProducts[cat]?.price.toLocaleString()}</span>}
                 </div>
-                <div className="ml-auto text-gray-500 font-light text-xl md:text-2xl">{!selectedProducts[cat] && "+"}</div>
+                <div className="ml-auto shrink-0">
+                  {selectedProducts[cat] ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProducts(prev => ({ ...prev, [cat]: null }));
+                      }}
+                      className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
+                      title={`ลบ ${cat}`}
+                    >
+                      ✕
+                    </button>
+                  ) : (
+                    <span className="text-gray-500 font-light text-xl md:text-2xl">+</span>
+                  )}
+                </div>
               </CardBody>
             </Card>
           ))}
@@ -476,8 +505,20 @@ export default function BuildPage() {
                   <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 bg-black/20 shrink-0 overflow-hidden">
                     <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-6 w-full items-start">
                       {categoryFilters[selectedCategory || ""]?.map((f) => (
-                        <Select key={f.key} label={f.label} labelPlacement="outside" placeholder="ทั้งหมด" size="sm" className="w-[47%] md:w-full flex-grow"
-                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "text-white" }}>
+                        <Select 
+                          key={f.key} 
+                          label={f.label} 
+                          labelPlacement="outside" 
+                          placeholder="ทั้งหมด" 
+                          size="sm" 
+                          className="w-[47%] md:w-full flex-grow"
+                          selectedKeys={activeFilters[f.key] ? new Set([activeFilters[f.key]]) : new Set(["All"])}
+                          onSelectionChange={(keys) => {
+                            const selected = Array.from(keys)[0] as string;
+                            setActiveFilters(prev => ({ ...prev, [f.key]: selected || "All" }));
+                          }}
+                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "bg-slate-800 text-white" }}
+                        >
                           {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
                         </Select>
                       ))}
@@ -494,7 +535,8 @@ export default function BuildPage() {
                         allComponents={components} 
                         onSelectProduct={handleSelectProduct} 
                         onViewDetails={setViewDetailsComp}
-                        categoryToType={categoryToTypeMap} 
+                        categoryToType={categoryToTypeMap}
+                        activeFilters={activeFilters}
                       />
                     )}
                   </ScrollShadow>
@@ -567,12 +609,43 @@ export default function BuildPage() {
   );
 }
 
-function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string> }) {
+function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string> }) {
   const targetType = categoryToType[category];
-  const products = allComponents.filter(c => c.type === targetType);
+
+  // Filter by type, then by active filters (brand, type, etc.)
+  const products = useMemo(() => {
+    let filtered = allComponents.filter(c => c.type === targetType);
+
+    // Apply brand filter
+    const brandFilter = activeFilters["brand"];
+    if (brandFilter && brandFilter !== "All") {
+      filtered = filtered.filter(c =>
+        c.brand.toLowerCase().includes(brandFilter.toLowerCase())
+      );
+    }
+
+    // Apply type filter (for RAM, Storage, etc.)
+    const typeFilter = activeFilters["type"];
+    if (typeFilter && typeFilter !== "All") {
+      filtered = filtered.filter(c => {
+        const name = c.name.toLowerCase();
+        const ramType = c.ramType?.toLowerCase() || "";
+        const filterLower = typeFilter.toLowerCase();
+        return name.includes(filterLower) || ramType.includes(filterLower);
+      });
+    }
+
+    return filtered;
+  }, [allComponents, targetType, activeFilters]);
 
   if (products.length === 0) {
-    return <div className="text-gray-400 text-center py-10">ยังไม่มีสินค้าในหมวดหมู่นี้</div>;
+    return (
+      <div className="text-center py-16 space-y-3">
+        <div className="text-4xl">🔍</div>
+        <p className="text-gray-400 text-lg font-semibold">ไม่พบสินค้า</p>
+        <p className="text-gray-500 text-sm">ลองเปลี่ยนตัวกรองหรือคำค้นหา</p>
+      </div>
+    );
   }
 
   return (
@@ -593,11 +666,11 @@ function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails
                 <h4 className="text-sm font-bold text-white leading-tight line-clamp-2" title={product.name}>{product.name}</h4>
               </div>
               <div className="mt-auto">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-2">
                   <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="flat" color="default" className="text-xs font-bold text-gray-300" onPress={() => onViewDetails(product)}>รายละเอียด</Button>
-                    <Button size="sm" color="primary" className="text-xs font-bold shadow-lg shadow-blue-500/20" onPress={() => onSelectProduct(category, product)}>เลือก</Button>
+                  <div className="flex gap-2 w-full">
+                    <Button size="sm" variant="flat" color="default" className="text-xs font-bold text-gray-300 flex-1" onPress={() => onViewDetails(product)}>รายละเอียด</Button>
+                    <Button size="sm" color="primary" className="text-xs font-bold shadow-lg shadow-blue-500/20 flex-1" onPress={() => onSelectProduct(category, product)}>เลือก</Button>
                   </div>
                 </div>
               </div>

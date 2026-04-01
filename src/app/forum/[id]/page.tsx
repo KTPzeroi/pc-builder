@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast, Toaster } from "react-hot-toast";
-import { IoWarningOutline, IoHeartOutline, IoHeart, IoEyeOffOutline } from "react-icons/io5";
+import { IoWarningOutline, IoHeartOutline, IoHeart, IoEyeOffOutline, IoTrashOutline } from "react-icons/io5";
 
 interface Comment {
   id: string;
@@ -182,6 +182,44 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!post) return;
+    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบกระทู้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+
+    try {
+      const res = await fetch(`/api/forum/posts/${post.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "ลบกระทู้ไม่สำเร็จ");
+      }
+      toast.success("ลบกระทู้เรียบร้อยแล้ว");
+      router.push("/forum");
+    } catch (error: any) {
+      toast.error(error.message || "เกิดข้อผิดพลาดในการลบกระทู้");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบคอมเมนต์นี้?")) return;
+
+    try {
+      const res = await fetch(`/api/forum/comments/${commentId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "ลบคอมเมนต์ไม่สำเร็จ");
+      }
+      // Update UI immediately
+      setPost(prev => prev ? {
+        ...prev,
+        comments: prev.comments.filter(c => String(c.id) !== String(commentId)),
+        _count: { ...prev._count, comments: prev._count.comments - 1 }
+      } : null);
+      toast.success("ลบคอมเมนต์เรียบร้อยแล้ว");
+    } catch (error: any) {
+      toast.error(error.message || "เกิดข้อผิดพลาดในการลบคอมเมนต์");
+    }
+  };
+
   const handleLikePost = async () => {
     if (!session) { toast.error("กรุณาเข้าสู่ระบบก่อนกดถูกใจ"); return; }
     try {
@@ -301,9 +339,14 @@ export default function PostDetailPage() {
                   <DropdownItem key="share" onPress={handleShare}>คัดลอกลิงก์โพสต์</DropdownItem>
                   
                   {session && (session.user as any)?.id === post.author.id ? (
-                    <DropdownItem key="privacy" onPress={handleTogglePrivacy} color={post.status === "Private" ? "success" : "warning"} className={post.status === "Private" ? "text-success" : "text-warning"}>
-                      {post.status === "Private" ? "เปิดเป็นสาธารณะ (Public)" : "ซ่อนกระทู้ (Private)"}
-                    </DropdownItem>
+                    <>
+                      <DropdownItem key="privacy" onPress={handleTogglePrivacy} color={post.status === "Private" ? "success" : "warning"} className={post.status === "Private" ? "text-success" : "text-warning"}>
+                        {post.status === "Private" ? "เปิดเป็นสาธารณะ (Public)" : "ซ่อนกระทู้ (Private)"}
+                      </DropdownItem>
+                      <DropdownItem key="delete" className="text-danger" color="danger" onPress={handleDeletePost}>
+                        ลบกระทู้
+                      </DropdownItem>
+                    </>
                   ) : (
                     <DropdownItem key="report" className="text-danger" color="danger" onPress={() => {
                       setReportTarget({ type: 'POST', id: post.id });
@@ -432,7 +475,7 @@ export default function PostDetailPage() {
                         {comment.likedBy?.length || 0}
                       </Button>
                       
-                      {(!session || (session.user as any)?.id !== comment.author.id) && (
+                      {(!session || (session.user as any)?.id !== comment.author.id) ? (
                         <Button 
                           size="sm" 
                           isIconOnly 
@@ -444,6 +487,16 @@ export default function PostDetailPage() {
                           }}
                         >
                           <IoWarningOutline />
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          isIconOnly 
+                          variant="light" 
+                          className="text-gray-500 hover:text-danger min-w-0 h-8 px-2"
+                          onPress={() => handleDeleteComment(comment.id)}
+                        >
+                          <IoTrashOutline />
                         </Button>
                       )}
 

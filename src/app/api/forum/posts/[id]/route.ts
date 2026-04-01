@@ -149,3 +149,44 @@ export async function POST(
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+// --- DELETE: ลบกระทู้ (เฉพาะเจ้าของโพสต์) ---
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any)?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const postId = parseInt(id);
+    if (isNaN(postId)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true }
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const userId = (session.user as any).id;
+    if (post.authorId !== userId) {
+      return NextResponse.json({ error: "Forbidden: You can only delete your own posts" }, { status: 403 });
+    }
+
+    // Delete the post (comments will cascade delete via Prisma schema)
+    await prisma.post.delete({ where: { id: postId } });
+
+    return NextResponse.json({ message: "Post deleted successfully" });
+  } catch (error) {
+    console.error("DELETE Post Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
