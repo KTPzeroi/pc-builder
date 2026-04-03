@@ -8,7 +8,7 @@ import {
     Chip,
     Tooltip
 } from "@heroui/react";
-import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch, IoCloudUploadOutline, IoImageOutline, IoLinkOutline } from "react-icons/io5";
+import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch, IoCloudUploadOutline, IoImageOutline, IoLinkOutline, IoWarningOutline } from "react-icons/io5";
 
 type ComponentData = {
     id: string;
@@ -55,6 +55,11 @@ export default function InventoryCRUDPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [imageMode, setImageMode] = useState<"FILE" | "URL">("FILE");
+
+    // Delete Modal State
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange } = useDisclosure();
+    const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Form Data
     const [formData, setFormData] = useState<Partial<ComponentData>>({
@@ -120,18 +125,29 @@ export default function InventoryCRUDPage() {
         onOpen();
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ ${name}?`)) return;
+    const triggerDelete = (item: {id: string, name: string}) => {
+        setItemToDelete(item);
+        onDeleteOpen();
+    };
 
+    const confirmDelete = async (onClose: () => void) => {
+        if (!itemToDelete) return;
+        
+        setIsDeleting(true);
         try {
-            const res = await fetch(`/api/admin/components/${id}`, { method: "DELETE" });
+            const res = await fetch(`/api/admin/components/${itemToDelete.id}`, { method: "DELETE" });
             if (res.ok) {
                 fetchComponents();
+                onClose();
             } else {
                 alert("เกิดข้อผิดพลาดในการลบข้อมูล");
             }
         } catch (error) {
             console.error("Error deleting", error);
+            alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+        } finally {
+            setIsDeleting(false);
+            setItemToDelete(null);
         }
     };
 
@@ -436,7 +452,7 @@ export default function InventoryCRUDPage() {
                                                     </Button>
                                                 </Tooltip>
                                                 <Tooltip content="ลบออกจากระบบ" color="danger">
-                                                    <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(item.id, item.name)}>
+                                                    <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => triggerDelete({ id: item.id, name: item.name })}>
                                                         <IoTrash size={18} />
                                                     </Button>
                                                 </Tooltip>
@@ -637,6 +653,56 @@ export default function InventoryCRUDPage() {
                                 </Button>
                                 <Button color="primary" variant="shadow" className="font-bold" isLoading={isSaving} onPress={() => handleSave(onClose)}>
                                     {modalMode === "ADD" ? "บันทึกข้อมูลสินค้า" : "บันทึกการปรับปรุง"}
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+
+            {/* Modal Confirm Delete */}
+            <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} size="md" classNames={{
+                base: "bg-slate-900 border border-white/10 text-white",
+                header: "border-b border-white/5 py-4",
+                body: "py-6",
+                footer: "border-t border-white/5 py-4",
+            }}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1 items-center justify-center pt-8">
+                                <div className="w-16 h-16 rounded-full bg-danger/10 text-danger flex items-center justify-center mb-2">
+                                    <IoWarningOutline size={32} />
+                                </div>
+                                <h2 className="text-xl font-bold">ยืนยันการลบอุปกรณ์</h2>
+                            </ModalHeader>
+                            <ModalBody className="text-center">
+                                <p className="text-gray-400">
+                                    คุณแน่ใจหรือไม่ว่าต้องการลบอุปกรณ์ <br/>
+                                    <span className="text-white font-bold text-lg mt-2 inline-block">"{itemToDelete?.name}"</span>
+                                </p>
+                                <p className="text-sm text-danger mt-4 font-medium">
+                                    * การกระทำนี้ไม่สามารถย้อนกลับได้
+                                </p>
+                            </ModalBody>
+                            <ModalFooter className="flex justify-center gap-3 pb-8">
+                                <Button 
+                                    color="default" 
+                                    variant="bordered" 
+                                    onPress={onClose} 
+                                    isDisabled={isDeleting}
+                                    className="font-bold border-white/20 hover:bg-white/5"
+                                >
+                                    ยกเลิก
+                                </Button>
+                                <Button 
+                                    color="danger" 
+                                    variant="shadow" 
+                                    onPress={() => confirmDelete(onClose)} 
+                                    isLoading={isDeleting}
+                                    className="font-bold px-8 shadow-danger/30"
+                                >
+                                    ยืนยันการลบ
                                 </Button>
                             </ModalFooter>
                         </>

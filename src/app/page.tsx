@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, MouseEvent, TouchEvent } from "react";
+import React, { useState, useRef, useEffect, MouseEvent, TouchEvent } from "react";
 import {
   Button,
   Card,
@@ -147,6 +147,11 @@ export default function Page() {
   const left = useRef<number>(0);
   const [selectedItem, setSelectedItem] = useState<ComponentDetail | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const startDrag = (clientX: number) => {
     mouseDownAt.current = clientX;
@@ -204,6 +209,14 @@ export default function Page() {
   const handleTouchStart = (e: TouchEvent) => startDrag(e.touches[0].clientX);
   const handleTouchEnd = () => endDrag();
   const handleTouchMove = (e: TouchEvent) => moveDrag(e.touches[0].clientX);
+
+  if (!isMounted) {
+    return (
+      <main>
+        <div style={{ width: '100%', height: '100vh', backgroundColor: '#020617' }} />
+      </main>
+    );
+  }
 
   return (
     <main>
@@ -644,24 +657,41 @@ export default function Page() {
         }
 
         @media (max-width: 768px) {
+            .banner {
+                height: 100svh;
+            }
             .banner .banner-slider {
                 transform: perspective(1000px) scale(0.5); 
                 top: 20%;
             }
+            .banner .banner-content {
+                height: 100svh;
+            }
+            .banner .banner-content h1 {
+                font-size: clamp(3rem, 18vw, 8rem);
+            }
             .banner .banner-content h1:after {
                 -webkit-text-stroke: 1px #d2d2d2; 
             }
+            .banner .banner-content .model {
+                height: 55svh;
+            }
             .cta-container {
-                bottom: 1%;
+                bottom: 3%;
+            }
+            .cta-container a .px-10 {
+                padding-left: 2rem;
+                padding-right: 2rem;
+                font-size: 1rem;
             }
             .banner .banner-content .author { margin-top: 10px; }
             
             /* --- Responsive Horizontal Scroll บนมือถือ --- */
             .build-sequence-section {
-                padding: 130px 0 40px; 
+                padding: 80px 0 40px; 
             }
             .sequence-container {
-                padding: 70px 0px 0px;
+                padding: 30px 0px 0px;
             }
             .sequence-track {
                 flex-wrap: nowrap; 
@@ -691,6 +721,21 @@ export default function Page() {
             .seq-arrow {
                 font-size: 1.2rem;
                 margin-top: calc(2.5rem / 2 - 0.6rem); 
+            }
+        }
+
+        @media (max-width: 480px) {
+            .banner .banner-content h1 {
+                font-size: clamp(2.5rem, 20vw, 5rem);
+            }
+            .banner .banner-content .model {
+                height: 50svh;
+            }
+            .cta-container {
+                bottom: 5%;
+            }
+            .build-sequence-section {
+                padding: 60px 0 30px;
             }
         }
       `}</style>
