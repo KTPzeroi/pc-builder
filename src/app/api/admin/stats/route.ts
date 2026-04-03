@@ -90,20 +90,23 @@ export async function GET() {
             ];
 
             // 5. Active Reports (Pending reports)
-            activeReports = await prisma.report.count({
-                where: { status: "PENDING" }
-            });
+            // เช็คก่อนว่ามีโมเดล Report ใน Schema หรือไม่ (อาจจะยังไม่ได้สร้าง)
+            if ((prisma as any).report) {
+                activeReports = await (prisma as any).report.count({
+                    where: { status: "PENDING" }
+                });
 
-            // 6. Urgent Reports (High/Urgent severity and pending)
-            const getUrgentReports = await prisma.report.findMany({
-                where: { 
-                    status: "PENDING",
-                    severity: { in: ["HIGH", "URGENT"] } 
-                },
-                orderBy: { createdAt: 'desc' },
-                take: 3,
-            });
-            urgentReports = getUrgentReports;
+                // 6. Urgent Reports (High/Urgent severity and pending)
+                const getUrgentReports = await (prisma as any).report.findMany({
+                    where: {
+                        status: "PENDING",
+                        severity: { in: ["HIGH", "URGENT"] }
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 3,
+                });
+                urgentReports = getUrgentReports;
+            }
 
         } catch (dbErr) {
             console.error("Database Connection Error:", dbErr);

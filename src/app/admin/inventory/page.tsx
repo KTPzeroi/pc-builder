@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-    Card, CardBody, CardHeader, Button, Input, Select, SelectItem, 
-    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, 
+import {
+    Card, CardBody, CardHeader, Button, Input, Select, SelectItem,
+    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
     Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Spinner,
     Chip,
     Tooltip
@@ -27,6 +27,12 @@ type ComponentData = {
     vramGb?: number | null;
     ramSpeed?: number | null;
     readWriteSpeed?: number | null;
+    tdp?: number | null;
+    lengthMm?: number | null;
+    maxGpuLength?: number | null;
+    maxCoolerHeight?: number | null;
+    supportedMobo?: string | null;
+    psuFormFactor?: string | null;
     createdAt?: string;
     description?: string | null;
 };
@@ -38,7 +44,8 @@ const TYPE_OPTIONS = [
     { label: "Motherboard (MB)", value: "MB" },
     { label: "Storage (SSD/HDD)", value: "STORAGE" },
     { label: "Power Supply (PSU)", value: "PSU" },
-    { label: "Case", value: "CASE" }
+    { label: "Case", value: "CASE" },
+    { label: "Cooling", value: "COOLING" }
 ];
 
 export default function InventoryCRUDPage() {
@@ -58,7 +65,7 @@ export default function InventoryCRUDPage() {
 
     // Delete Modal State
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange } = useDisclosure();
-    const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<{ id: string, name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Form Data
@@ -72,7 +79,9 @@ export default function InventoryCRUDPage() {
         // optional fields
         socket: "", ramType: "", formFactor: "", capacity: undefined,
         cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
-        vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined
+        vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
+        tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
+        maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: ""
     });
 
     useEffect(() => {
@@ -100,7 +109,9 @@ export default function InventoryCRUDPage() {
             name: "", type: "CPU", brand: "", price: 0, image: "", description: "",
             socket: "", ramType: "", formFactor: "", capacity: undefined,
             cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
-            vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined
+            vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
+            tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
+            maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -117,7 +128,10 @@ export default function InventoryCRUDPage() {
             capacity: comp.capacity || undefined, cpuSingleScore: comp.cpuSingleScore || undefined,
             cpuMultiScore: comp.cpuMultiScore || undefined, gpuScore: comp.gpuScore || undefined,
             vramGb: comp.vramGb || undefined, ramSpeed: comp.ramSpeed || undefined,
-            readWriteSpeed: comp.readWriteSpeed || undefined
+            readWriteSpeed: comp.readWriteSpeed || undefined,
+            tdp: comp.tdp || undefined, lengthMm: comp.lengthMm || undefined,
+            maxGpuLength: comp.maxGpuLength || undefined, maxCoolerHeight: comp.maxCoolerHeight || undefined,
+            supportedMobo: comp.supportedMobo || "", psuFormFactor: comp.psuFormFactor || ""
         });
         setImageFile(null);
         setImagePreview(comp.image || null);
@@ -125,14 +139,14 @@ export default function InventoryCRUDPage() {
         onOpen();
     };
 
-    const triggerDelete = (item: {id: string, name: string}) => {
+    const triggerDelete = (item: { id: string, name: string }) => {
         setItemToDelete(item);
         onDeleteOpen();
     };
 
     const confirmDelete = async (onClose: () => void) => {
         if (!itemToDelete) return;
-        
+
         setIsDeleting(true);
         try {
             const res = await fetch(`/api/admin/components/${itemToDelete.id}`, { method: "DELETE" });
@@ -188,6 +202,10 @@ export default function InventoryCRUDPage() {
             let pVram = formData.vramGb ? parseInt(String(formData.vramGb)) : null;
             let pRamSpd = formData.ramSpeed ? parseInt(String(formData.ramSpeed)) : null;
             let pRw = formData.readWriteSpeed ? parseInt(String(formData.readWriteSpeed)) : null;
+            let pTdp = formData.tdp ? parseInt(String(formData.tdp)) : null;
+            let pLengthMm = formData.lengthMm ? parseInt(String(formData.lengthMm)) : null;
+            let pMaxGpuLen = formData.maxGpuLength ? parseInt(String(formData.maxGpuLength)) : null;
+            let pMaxCoolerH = formData.maxCoolerHeight ? parseInt(String(formData.maxCoolerHeight)) : null;
 
             // ตรวจสอบความถูกต้องของคะแนนตามหมวดหมู่
             if (formData.type === "CPU" && (!formData.socket || !pSingle || !pMulti)) {
@@ -215,7 +233,7 @@ export default function InventoryCRUDPage() {
                 price: parseFloat(String(formData.price)),
                 image: finalImageUrl,
                 description: formData.description || null,
-                
+
                 // Allow only type-specific fields
                 socket: ["CPU", "MB"].includes(type || "") ? (formData.socket || null) : null,
                 ramType: ["RAM", "MB"].includes(type || "") ? (formData.ramType || null) : null,
@@ -227,6 +245,12 @@ export default function InventoryCRUDPage() {
                 vramGb: type === "GPU" ? pVram : null,
                 ramSpeed: type === "RAM" ? pRamSpd : null,
                 readWriteSpeed: type === "STORAGE" ? pRw : null,
+                tdp: ["CPU", "GPU"].includes(type || "") ? pTdp : null,
+                lengthMm: ["GPU", "COOLING"].includes(type || "") ? pLengthMm : null,
+                maxGpuLength: type === "CASE" ? pMaxGpuLen : null,
+                maxCoolerHeight: type === "CASE" ? pMaxCoolerH : null,
+                supportedMobo: type === "CASE" ? (formData.supportedMobo || null) : null,
+                psuFormFactor: type === "PSU" ? (formData.psuFormFactor || null) : null,
             };
 
             const res = await fetch(url, {
@@ -266,6 +290,12 @@ export default function InventoryCRUDPage() {
             vramGb: source.vramGb || undefined,
             ramSpeed: source.ramSpeed || undefined,
             readWriteSpeed: source.readWriteSpeed || undefined,
+            tdp: source.tdp || undefined,
+            lengthMm: source.lengthMm || undefined,
+            maxGpuLength: source.maxGpuLength || undefined,
+            maxCoolerHeight: source.maxCoolerHeight || undefined,
+            supportedMobo: source.supportedMobo || "",
+            psuFormFactor: source.psuFormFactor || "",
             description: prev.description || source.description || "",
         }));
     };
@@ -289,60 +319,99 @@ export default function InventoryCRUDPage() {
 
                 {/* Compatibility: Socket */}
                 {["CPU", "MB"].includes(type || "") && (
-                    <Input label="Socket" placeholder="e.g. LGA1700, AM5" variant="bordered" 
-                        value={formData.socket || ""} onChange={e => setFormData({...formData, socket: e.target.value})} />
+                    <Input label="Socket" placeholder="e.g. LGA1700, AM5" variant="bordered"
+                        value={formData.socket || ""} onChange={e => setFormData({ ...formData, socket: e.target.value })} />
                 )}
 
                 {/* Compatibility: RAM Type */}
                 {["RAM", "MB"].includes(type || "") && (
-                    <Input label="RAM Type" placeholder="e.g. DDR4, DDR5" variant="bordered" 
-                        value={formData.ramType || ""} onChange={e => setFormData({...formData, ramType: e.target.value})} />
+                    <Input label="RAM Type" placeholder="e.g. DDR4, DDR5" variant="bordered"
+                        value={formData.ramType || ""} onChange={e => setFormData({ ...formData, ramType: e.target.value })} />
                 )}
 
                 {/* Compatibility: Form Factor */}
                 {["MB", "CASE"].includes(type || "") && (
-                    <Input label="Form Factor" placeholder="e.g. ATX, mATX, ITX" variant="bordered" 
-                        value={formData.formFactor || ""} onChange={e => setFormData({...formData, formFactor: e.target.value})} />
+                    <Input label="Form Factor" placeholder="e.g. ATX, mATX, ITX" variant="bordered"
+                        value={formData.formFactor || ""} onChange={e => setFormData({ ...formData, formFactor: e.target.value })} />
                 )}
 
                 {/* Capacity */}
                 {["RAM", "STORAGE", "PSU"].includes(type || "") && (
-                    <Input label={type === "PSU" ? "Capacity (Watt)" : "Capacity (GB)"} type="number" variant="bordered" 
-                        value={formData.capacity?.toString() || ""} onChange={e => setFormData({...formData, capacity: Number(e.target.value)})} />
+                    <Input label={type === "PSU" ? "Capacity (Watt)" : "Capacity (GB)"} type="number" variant="bordered"
+                        value={formData.capacity?.toString() || ""} onChange={e => setFormData({ ...formData, capacity: Number(e.target.value) })} />
                 )}
 
                 {/* GPU VRAM */}
                 {type === "GPU" && (
-                    <Input label="VRAM (GB)" type="number" variant="bordered" 
-                        value={formData.vramGb?.toString() || ""} onChange={e => setFormData({...formData, vramGb: Number(e.target.value)})} />
+                    <Input label="VRAM (GB)" type="number" variant="bordered"
+                        value={formData.vramGb?.toString() || ""} onChange={e => setFormData({ ...formData, vramGb: Number(e.target.value) })} />
                 )}
-                
+
                 {/* Performance: CPU */}
                 {type === "CPU" && (
                     <>
-                        <Input label="CPU Single Score" type="number" variant="bordered" 
-                            value={formData.cpuSingleScore?.toString() || ""} onChange={e => setFormData({...formData, cpuSingleScore: Number(e.target.value)})} />
-                        <Input label="CPU Multi Score" type="number" variant="bordered" 
-                            value={formData.cpuMultiScore?.toString() || ""} onChange={e => setFormData({...formData, cpuMultiScore: Number(e.target.value)})} />
+                        <Input label="CPU Single Score" type="number" variant="bordered"
+                            value={formData.cpuSingleScore?.toString() || ""} onChange={e => setFormData({ ...formData, cpuSingleScore: Number(e.target.value) })} />
+                        <Input label="CPU Multi Score" type="number" variant="bordered"
+                            value={formData.cpuMultiScore?.toString() || ""} onChange={e => setFormData({ ...formData, cpuMultiScore: Number(e.target.value) })} />
                     </>
                 )}
 
                 {/* Performance: GPU */}
                 {type === "GPU" && (
-                    <Input label="GPU Score (G3D Mark)" type="number" variant="bordered" 
-                        value={formData.gpuScore?.toString() || ""} onChange={e => setFormData({...formData, gpuScore: Number(e.target.value)})} />
+                    <Input label="GPU Score (G3D Mark)" type="number" variant="bordered"
+                        value={formData.gpuScore?.toString() || ""} onChange={e => setFormData({ ...formData, gpuScore: Number(e.target.value) })} />
                 )}
 
                 {/* Performance: RAM */}
                 {type === "RAM" && (
-                    <Input label="RAM Speed (MHz)" placeholder="e.g. 3200, 6000" type="number" variant="bordered" 
-                        value={formData.ramSpeed?.toString() || ""} onChange={e => setFormData({...formData, ramSpeed: Number(e.target.value)})} />
+                    <Input label="RAM Speed (MHz)" placeholder="e.g. 3200, 6000" type="number" variant="bordered"
+                        value={formData.ramSpeed?.toString() || ""} onChange={e => setFormData({ ...formData, ramSpeed: Number(e.target.value) })} />
                 )}
 
                 {/* Performance: Storage */}
                 {type === "STORAGE" && (
-                    <Input label="Read/Write Speed (MB/s)" type="number" variant="bordered" 
-                        value={formData.readWriteSpeed?.toString() || ""} onChange={e => setFormData({...formData, readWriteSpeed: Number(e.target.value)})} />
+                    <Input label="Read/Write Speed (MB/s)" type="number" variant="bordered"
+                        value={formData.readWriteSpeed?.toString() || ""} onChange={e => setFormData({ ...formData, readWriteSpeed: Number(e.target.value) })} />
+                )}
+
+                {/* === NEW: Compatibility Fields === */}
+
+                {/* TDP (Power Consumption) */}
+                {["CPU", "GPU"].includes(type || "") && (
+                    <Input label="TDP / การกินไฟ (Watt)" placeholder="e.g. 65, 200, 285" type="number" variant="bordered"
+                        description="ดูได้จาก Passmark หรือสเปคผู้ผลิต"
+                        value={formData.tdp?.toString() || ""} onChange={e => setFormData({ ...formData, tdp: Number(e.target.value) })} />
+                )}
+
+                {/* Physical Length (GPU, Cooling) */}
+                {["GPU", "COOLING"].includes(type || "") && (
+                    <Input label={type === "GPU" ? "ความยาวการ์ดจอ (mm)" : "ความสูง/ความยาวพัดลม (mm)"}
+                        placeholder="e.g. 342" type="number" variant="bordered"
+                        description="ค่า Length ความยาวของการ์ดจอ"
+                        value={formData.lengthMm?.toString() || ""} onChange={e => setFormData({ ...formData, lengthMm: Number(e.target.value) })} />
+                )}
+
+                {/* Case-specific fields */}
+                {type === "CASE" && (
+                    <>
+                        <Input label="Max GPU Length (mm)" placeholder="e.g. 360" type="number" variant="bordered"
+                            description="ความยาวการ์ดจอสูงสุดที่เคสรองรับ"
+                            value={formData.maxGpuLength?.toString() || ""} onChange={e => setFormData({ ...formData, maxGpuLength: Number(e.target.value) })} />
+                        <Input label="Max CPU Cooler Height (mm)" placeholder="e.g. 160" type="number" variant="bordered"
+                            description="ความสูงซิงก์พัดลม CPU สูงสุดที่ใส่ได้"
+                            value={formData.maxCoolerHeight?.toString() || ""} onChange={e => setFormData({ ...formData, maxCoolerHeight: Number(e.target.value) })} />
+                        <Input label="Supported Motherboard Sizes" placeholder="e.g. ATX, Micro-ATX, Mini-ITX" variant="bordered"
+                            description="ระบุไซส์เมนบอร์ดที่รองรับ (คั่นด้วยคอมม่า)"
+                            value={formData.supportedMobo || ""} onChange={e => setFormData({ ...formData, supportedMobo: e.target.value })} />
+                    </>
+                )}
+
+                {/* PSU Form Factor */}
+                {type === "PSU" && (
+                    <Input label="PSU Form Factor" placeholder="e.g. ATX, SFX" variant="bordered"
+                        description="รูปแบบขนาดของ PSU"
+                        value={formData.psuFormFactor || ""} onChange={e => setFormData({ ...formData, psuFormFactor: e.target.value })} />
                 )}
             </div>
         );
@@ -381,7 +450,7 @@ export default function InventoryCRUDPage() {
                     selectedKeys={new Set([filterType])}
                     onSelectionChange={(keys) => setFilterType(Array.from(keys)[0] as string)}
                 >
-                    {[ {label: "ดูทุกประเภท", value: "ALL"}, ...TYPE_OPTIONS ].map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
+                    {[{ label: "ดูทุกประเภท", value: "ALL" }, ...TYPE_OPTIONS].map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
                 </Select>
             </div>
 
@@ -442,6 +511,9 @@ export default function InventoryCRUDPage() {
                                                 {item.ramType && <span>RAM: {item.ramType}</span>}
                                                 {item.capacity && <span>Cap: {item.capacity} {item.type === 'PSU' ? 'W' : 'GB'}</span>}
                                                 {item.formFactor && <span>Form: {item.formFactor}</span>}
+                                                {item.tdp != null && <span>TDP: {item.tdp}W</span>}
+                                                {item.lengthMm != null && <span>Length: {item.lengthMm}mm</span>}
+                                                {item.maxGpuLength != null && <span>Max GPU: {item.maxGpuLength}mm</span>}
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -489,7 +561,7 @@ export default function InventoryCRUDPage() {
                                 {/* Basic Info Section */}
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest border-b border-white/10 pb-2 mb-4">ข้อมูลพื้นฐานทั่วไป (Basic Info)</h3>
-                                    
+
                                     {/* Auto-Clone Feature */}
                                     {modalMode === "ADD" && (
                                         <div className="mb-6 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex flex-col gap-3">
@@ -498,9 +570,9 @@ export default function InventoryCRUDPage() {
                                                 <h4>ฟีเจอร์ โคลนสเปคออโต้! (Auto-Clone Specs)</h4>
                                             </div>
                                             <p className="text-xs text-gray-400">เลือกรุ่นที่มีอยู่แล้วเพื่อดึงค่าคะแนนและสเปคมาใส่ให้อัตโนมัติ (ประหยัดเวลาสุดๆ)</p>
-                                            <Select 
-                                                label="อ้างอิงข้อมูลสเปคจาก" 
-                                                placeholder="เลือกสินค้าต้นแบบ..." 
+                                            <Select
+                                                label="อ้างอิงข้อมูลสเปคจาก"
+                                                placeholder="เลือกสินค้าต้นแบบ..."
                                                 variant="faded"
                                                 color="primary"
                                                 classNames={{ trigger: "bg-black/40" }}
@@ -519,33 +591,33 @@ export default function InventoryCRUDPage() {
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Select 
-                                            label="Component Type (หมวดหมู่สินค้า)" 
-                                            variant="bordered" 
+                                        <Select
+                                            label="Component Type (หมวดหมู่สินค้า)"
+                                            variant="bordered"
                                             isRequired
                                             selectedKeys={new Set([formData.type || "CPU"])}
-                                            onSelectionChange={(keys) => setFormData({...formData, type: Array.from(keys)[0] as string})}
+                                            onSelectionChange={(keys) => setFormData({ ...formData, type: Array.from(keys)[0] as string })}
                                         >
                                             {TYPE_OPTIONS.map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
                                         </Select>
 
                                         <Input label="Brand (แบรนด์)" placeholder="e.g. Intel, AMD, ASUS, Corsair" variant="bordered" isRequired
-                                            value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} />
-                                        
+                                            value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
+
                                         <div className="col-span-full md:col-span-1">
                                             <Input label="Name (ชื่อรุ่น/รหัสสินค้า)" placeholder="e.g. Core i5-13400F" variant="bordered" isRequired
-                                                value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                                value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                         </div>
 
                                         <Input label="Price (ราคาตั้งต้น - บาท)" type="number" variant="bordered" isRequired
-                                            value={formData.price?.toString()} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
+                                            value={formData.price?.toString()} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
 
                                         <div className="col-span-full">
                                             <label className="text-sm font-medium mb-2 block text-gray-400">รูปภาพสินค้า</label>
                                             {/* Toggle buttons for image mode */}
                                             <div className="flex gap-2 mb-3">
-                                                <Button 
-                                                    size="sm" 
+                                                <Button
+                                                    size="sm"
                                                     variant={imageMode === "FILE" ? "solid" : "bordered"}
                                                     color={imageMode === "FILE" ? "primary" : "default"}
                                                     startContent={<IoCloudUploadOutline size={16} />}
@@ -554,8 +626,8 @@ export default function InventoryCRUDPage() {
                                                 >
                                                     อัปโหลดจากเครื่อง
                                                 </Button>
-                                                <Button 
-                                                    size="sm" 
+                                                <Button
+                                                    size="sm"
                                                     variant={imageMode === "URL" ? "solid" : "bordered"}
                                                     color={imageMode === "URL" ? "primary" : "default"}
                                                     startContent={<IoLinkOutline size={16} />}
@@ -576,9 +648,9 @@ export default function InventoryCRUDPage() {
                                                             </p>
                                                             <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (สูงสุด 5MB)</p>
                                                         </div>
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
                                                             accept="image/png,image/jpeg,image/webp,image/gif"
                                                             onChange={(e) => {
                                                                 const file = e.target.files?.[0];
@@ -594,7 +666,7 @@ export default function InventoryCRUDPage() {
                                                                     };
                                                                     reader.readAsDataURL(file);
                                                                     // Clear URL mode image
-                                                                    setFormData({...formData, image: ""});
+                                                                    setFormData({ ...formData, image: "" });
                                                                 }
                                                             }}
                                                         />
@@ -612,7 +684,7 @@ export default function InventoryCRUDPage() {
                                                 </div>
                                             ) : (
                                                 <Input label="Image URL (ลิงก์รูปภาพ)" placeholder="https://..." variant="bordered"
-                                                    value={formData.image || ""} onChange={e => { setFormData({...formData, image: e.target.value}); setImagePreview(e.target.value || null); setImageFile(null); }} />
+                                                    value={formData.image || ""} onChange={e => { setFormData({ ...formData, image: e.target.value }); setImagePreview(e.target.value || null); setImageFile(null); }} />
                                             )}
 
                                             {/* Image Preview */}
@@ -625,7 +697,7 @@ export default function InventoryCRUDPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="col-span-full">
                                             {/* Import Textarea if not auto-imported, wait we can just use Input type="textarea" but let's use standard Input or text element if Textarea is not from heroui */}
                                             {/* HeroUI Textarea is available as Textarea but not imported. We will just use regular HTML textarea styled to look good or Import Textarea */}
@@ -633,19 +705,19 @@ export default function InventoryCRUDPage() {
                                     </div>
                                     <div className="col-span-full mt-4">
                                         <label className="text-sm font-medium mb-1 block text-gray-400">Description (คุณสมบัติ/รายละเอียดทั้งหมด)</label>
-                                        <textarea 
+                                        <textarea
                                             className="w-full bg-transparent border-2 border-default-200 rounded-xl p-3 outline-none text-white focus:border-default-400 transition-colors"
                                             rows={4}
                                             placeholder="กรอกคุณสมบัติเพิ่มเติม หรือคำอธิบายสินค้า..."
-                                            value={formData.description || ""} 
-                                            onChange={e => setFormData({...formData, description: e.target.value})}
+                                            value={formData.description || ""}
+                                            onChange={e => setFormData({ ...formData, description: e.target.value })}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Dynamic Fields based on Type */}
                                 {renderDynamicFields()}
-                                
+
                             </ModalBody>
                             <ModalFooter>
                                 <Button color="danger" variant="light" onPress={onClose} isDisabled={isSaving}>
@@ -678,7 +750,7 @@ export default function InventoryCRUDPage() {
                             </ModalHeader>
                             <ModalBody className="text-center">
                                 <p className="text-gray-400">
-                                    คุณแน่ใจหรือไม่ว่าต้องการลบอุปกรณ์ <br/>
+                                    คุณแน่ใจหรือไม่ว่าต้องการลบอุปกรณ์ <br />
                                     <span className="text-white font-bold text-lg mt-2 inline-block">"{itemToDelete?.name}"</span>
                                 </p>
                                 <p className="text-sm text-danger mt-4 font-medium">
@@ -686,19 +758,19 @@ export default function InventoryCRUDPage() {
                                 </p>
                             </ModalBody>
                             <ModalFooter className="flex justify-center gap-3 pb-8">
-                                <Button 
-                                    color="default" 
-                                    variant="bordered" 
-                                    onPress={onClose} 
+                                <Button
+                                    color="default"
+                                    variant="bordered"
+                                    onPress={onClose}
                                     isDisabled={isDeleting}
                                     className="font-bold border-white/20 hover:bg-white/5"
                                 >
                                     ยกเลิก
                                 </Button>
-                                <Button 
-                                    color="danger" 
-                                    variant="shadow" 
-                                    onPress={() => confirmDelete(onClose)} 
+                                <Button
+                                    color="danger"
+                                    variant="shadow"
+                                    onPress={() => confirmDelete(onClose)}
                                     isLoading={isDeleting}
                                     className="font-bold px-8 shadow-danger/30"
                                 >

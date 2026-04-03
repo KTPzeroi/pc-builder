@@ -123,6 +123,14 @@ model Component {
   formFactor     String?  // ATX, ITX
   capacity       Int?     // GB สำหรับ RAM/Storage, Watt สำหรับ PSU
 
+  // -- Physical Dimensions & Power (Compatibility System) --
+  tdp            Int?     // การกินไฟ (Watt) สำหรับ CPU, GPU
+  lengthMm       Int?     // ความยาวอุปกรณ์ (mm) สำหรับ GPU, Cooling
+  maxGpuLength   Int?     // เฉพาะ CASE: ความยาว GPU สูงสุดที่รองรับ (mm)
+  maxCoolerHeight Int?    // เฉพาะ CASE: ความสูง CPU Cooler สูงสุดที่รองรับ (mm)
+  supportedMobo  String?  // เฉพาะ CASE: ไซส์บอร์ดที่รองรับ เช่น "ATX, Micro-ATX, Mini-ITX"
+  psuFormFactor  String?  // เฉพาะ PSU: รูปแบบ เช่น "ATX", "SFX"
+
   // -- Performance Scores (PassMark Based) --
   cpuSingleScore Int?     // Single Thread Rating
   cpuMultiScore  Int?     // Multi Thread Mark

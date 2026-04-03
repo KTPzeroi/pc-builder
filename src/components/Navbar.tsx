@@ -63,6 +63,16 @@ export default function AppNavbar() {
     setErrorMessage("");
   }, [authMode]);
 
+  // รับ Event จาก Component อื่นๆ (เช่นหน้า Build) เพื่อสั่งเปิด Modal
+  useEffect(() => {
+    const handleOpenLoginModal = () => {
+      setAuthMode("login");
+      onOpen();
+    };
+    window.addEventListener("open-login-modal", handleOpenLoginModal);
+    return () => window.removeEventListener("open-login-modal", handleOpenLoginModal);
+  }, [onOpen]);
+
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const [formData, setFormData] = useState({

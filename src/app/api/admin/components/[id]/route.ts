@@ -25,6 +25,7 @@ export async function PUT(req: Request, context: any) {
         const {
             name, type, brand, price, image, description,
             socket, ramType, formFactor, capacity,
+            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
             cpuSingleScore, cpuMultiScore, gpuScore,
             vramGb, ramSpeed, readWriteSpeed
         } = body;
@@ -43,6 +44,12 @@ export async function PUT(req: Request, context: any) {
                 ramType: ramType !== undefined ? ramType : existingComponent.ramType,
                 formFactor: formFactor !== undefined ? formFactor : existingComponent.formFactor,
                 capacity: capacity === undefined ? existingComponent.capacity : (capacity ? parseInt(capacity.toString()) : null),
+                tdp: tdp === undefined ? (existingComponent as any).tdp : (tdp ? parseInt(tdp.toString()) : null),
+                lengthMm: lengthMm === undefined ? (existingComponent as any).lengthMm : (lengthMm ? parseInt(lengthMm.toString()) : null),
+                maxGpuLength: maxGpuLength === undefined ? (existingComponent as any).maxGpuLength : (maxGpuLength ? parseInt(maxGpuLength.toString()) : null),
+                maxCoolerHeight: maxCoolerHeight === undefined ? (existingComponent as any).maxCoolerHeight : (maxCoolerHeight ? parseInt(maxCoolerHeight.toString()) : null),
+                supportedMobo: supportedMobo !== undefined ? (supportedMobo || null) : (existingComponent as any).supportedMobo,
+                psuFormFactor: psuFormFactor !== undefined ? (psuFormFactor || null) : (existingComponent as any).psuFormFactor,
                 cpuSingleScore: cpuSingleScore === undefined ? existingComponent.cpuSingleScore : (cpuSingleScore ? parseInt(cpuSingleScore.toString()) : null),
                 cpuMultiScore: cpuMultiScore === undefined ? existingComponent.cpuMultiScore : (cpuMultiScore ? parseInt(cpuMultiScore.toString()) : null),
                 gpuScore: gpuScore === undefined ? existingComponent.gpuScore : (gpuScore ? parseInt(gpuScore.toString()) : null),

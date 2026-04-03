@@ -63,7 +63,6 @@ export default function BuildPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewDetailsComp, setViewDetailsComp] = useState<Component | null>(null);
   const { isOpen: isSaveOpen, onOpen: onSaveOpen, onOpenChange: onSaveChange, onClose: onSaveClose } = useDisclosure();
-  const { isOpen: isLoginAlertOpen, onOpen: onLoginAlertOpen, onOpenChange: onLoginAlertChange } = useDisclosure();
 
   const [buildName, setBuildName] = useState("");
   const [buildNameError, setBuildNameError] = useState("");
@@ -87,15 +86,15 @@ export default function BuildPage() {
       fetch("/api/components").then(res => res.json()),
       fetch("/api/admin/settings").then(res => res.json())
     ])
-    .then(([compsData, settingsData]) => {
-      setComponents(compsData);
-      setSysConfig(settingsData);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error("Failed to fetch data", err);
-      setLoading(false);
-    });
+      .then(([compsData, settingsData]) => {
+        setComponents(compsData);
+        setSysConfig(settingsData);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch data", err);
+        setLoading(false);
+      });
   }, []);
 
   const [selectedProducts, setSelectedProducts] = useState<Record<string, Component | null>>({
@@ -124,34 +123,92 @@ export default function BuildPage() {
     }
   }, [selectedProducts, isLoaded]);
 
-  // 🛡 เช็คความเข้ากันได้
+  // 🛡 เช็คความเข้ากันได้ (Comprehensive Compatibility Check)
   const checkCompatibility = useMemo(() => {
     const issues: string[] = [];
+    const warnings: string[] = [];
     const cpu = selectedProducts["Processor"];
     const mb = selectedProducts["Motherboard"];
     const ram = selectedProducts["Memory"];
+    const gpu = selectedProducts["Graphics Card"];
+    const psu = selectedProducts["Power Supply"];
+    const pcCase = selectedProducts["Case"];
+    const cooling = selectedProducts["Cooling"];
 
+    // 1. Socket Check (CPU ↔ Motherboard)
     if (cpu && mb && cpu.socket && mb.socket && cpu.socket !== mb.socket) {
-      issues.push(`Socket ${cpu.socket} (CPU) ไม่เข้ากับ ${mb.socket} (Motherboard)`);
+      issues.push(`Socket ไม่ตรงกัน: CPU ใช้ ${cpu.socket} แต่ Motherboard ใช้ ${mb.socket}`);
     }
 
+    // 2. RAM Type Check (Motherboard ↔ RAM) หรือ (CPU ↔ RAM)
     if (mb && ram) {
       const mbDdr = mb.ramType || "";
       const ramDdr = ram.ramType || "";
       if (mbDdr && ramDdr && !mbDdr.includes(ramDdr) && !ramDdr.includes(mbDdr)) {
-        issues.push(`Motherboard รองรับ ${mbDdr} แต่ RAM เป็น ${ramDdr}`);
+        issues.push(`RAM ไม่รองรับ: Motherboard รองรับ ${mbDdr} แต่ RAM เป็น ${ramDdr}`);
       }
     } else if (cpu && ram && !mb) {
       const cpuDdr = cpu.ramType || "";
       const ramDdr = ram.ramType || "";
       if (cpuDdr && ramDdr && !cpuDdr.includes(ramDdr) && !ramDdr.includes(cpuDdr)) {
-        issues.push(`CPU รองรับ ${cpuDdr} แต่ระบบ RAM เป็น ${ramDdr}`);
+        issues.push(`RAM ไม่รองรับ: CPU รองรับ ${cpuDdr} แต่ RAM เป็น ${ramDdr}`);
+      }
+    }
+
+    // 3. Form Factor Check (Motherboard ↔ Case)
+    if (mb && pcCase) {
+      const mbForm = mb.formFactor?.trim().toUpperCase() || "";
+      const supportedMobo = (pcCase as any).supportedMobo || "";
+      if (mbForm && supportedMobo) {
+        const supportedList = supportedMobo.toUpperCase().split(",").map((s: string) => s.trim());
+        // เช็คว่า formFactor ของ MB ตรงกับรายการที่ Case รองรับไหม
+        const isSupported = supportedList.some((s: string) => s.includes(mbForm) || mbForm.includes(s));
+        if (!isSupported) {
+          issues.push(`ขนาด Motherboard ไม่พอดีกับ Case: บอร์ด ${mbForm} ไม่อยู่ในรายการที่ Case รองรับ (${supportedMobo})`);
+        }
+      }
+    }
+
+    // 4. GPU Length Check (GPU ↔ Case)
+    if (gpu && pcCase) {
+      const gpuLength = (gpu as any).lengthMm;
+      const maxGpuLen = (pcCase as any).maxGpuLength;
+      if (gpuLength && maxGpuLen && gpuLength > maxGpuLen) {
+        issues.push(`การ์ดจอยาวเกินไป: GPU ยาว ${gpuLength}mm แต่ Case รองรับสูงสุด ${maxGpuLen}mm`);
+      }
+    }
+
+    // 5. Cooler Height Check (Cooling ↔ Case)
+    if (cooling && pcCase) {
+      const coolerHeight = (cooling as any).lengthMm; // ใช้ lengthMm เป็นความสูง/ความยาวของ Cooler
+      const maxCoolerH = (pcCase as any).maxCoolerHeight;
+      if (coolerHeight && maxCoolerH && coolerHeight > maxCoolerH) {
+        issues.push(`พัดลม CPU สูงเกินไป: Cooler สูง ${coolerHeight}mm แต่ Case รองรับสูงสุด ${maxCoolerH}mm`);
+      }
+    }
+
+    // 6. Power Supply Check (CPU TDP + GPU TDP vs PSU Wattage)
+    if (psu) {
+      const cpuTdp = (cpu as any)?.tdp || 0;
+      const gpuTdp = (gpu as any)?.tdp || 0;
+      const totalTdp = cpuTdp + gpuTdp;
+      const psuWatt = psu.capacity || 0;
+
+      if (totalTdp > 0 && psuWatt > 0) {
+        // เผื่อ overhead 20% สำหรับ RAM, Storage, พัดลม ฯลฯ
+        const recommendedPsu = Math.ceil(totalTdp * 1.2);
+        if (psuWatt < totalTdp) {
+          issues.push(`PSU ไม่เพียงพอ! CPU+GPU กินไฟรวม ${totalTdp}W แต่ PSU มีแค่ ${psuWatt}W (แนะนำอย่างน้อย ${recommendedPsu}W)`);
+        } else if (psuWatt < recommendedPsu) {
+          warnings.push(`PSU อาจไม่เพียงพอ: CPU+GPU กินไฟรวม ${totalTdp}W, PSU ให้ ${psuWatt}W (แนะนำ ${recommendedPsu}W เพื่อความปลอดภัย)`);
+        }
       }
     }
 
     return {
       isOk: issues.length === 0,
-      issues
+      issues,
+      warnings
     };
   }, [selectedProducts]);
 
@@ -201,7 +258,7 @@ export default function BuildPage() {
     if (gpu || cpu) {
       creative += Math.min((cpuMulti / C_CPU) * 100, 100) * w_creative_cpu;
       creative += Math.min((gpuScore / C_GPU) * 100, 100) * w_creative_gpu;
-      
+
       const vram = gpu?.vramGb || 0;
       const vramScore = vram >= 16 ? 100 : (vram >= 12 ? 80 : (vram >= 8 ? 50 : 20));
       creative += vramScore * w_creative_vram;
@@ -234,7 +291,7 @@ export default function BuildPage() {
 
   const handleSaveBuildClick = () => {
     if (status === "unauthenticated") {
-      onLoginAlertOpen();
+      window.dispatchEvent(new Event("open-login-modal"));
     } else {
       onSaveOpen();
     }
@@ -351,11 +408,11 @@ export default function BuildPage() {
               {/* ตราประทับ Compatibility */}
               {Object.values(selectedProducts).some(p => p !== null) && (
                 <div className="space-y-2">
-                  <Badge variant="flat" color={checkCompatibility.isOk ? "success" : "danger"} className="mb-2">
-                    <div className={`flex items-center gap-2 px-1 py-1 text-${checkCompatibility.isOk ? "success" : "danger"}`}>
-                      <div className={`h-2 w-2 rounded-full bg-${checkCompatibility.isOk ? "success" : "danger"} shadow-[0_0_10px_currentColor]`}></div>
+                  <Badge variant="flat" color={checkCompatibility.isOk ? (checkCompatibility.warnings.length > 0 ? "warning" : "success") : "danger"} className="mb-2">
+                    <div className={`flex items-center gap-2 px-1 py-1 text-${checkCompatibility.isOk ? (checkCompatibility.warnings.length > 0 ? "warning" : "success") : "danger"}`}>
+                      <div className={`h-2 w-2 rounded-full bg-${checkCompatibility.isOk ? (checkCompatibility.warnings.length > 0 ? "warning" : "success") : "danger"} shadow-[0_0_10px_currentColor]`}></div>
                       <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest">
-                        {checkCompatibility.isOk ? "Compatibility: OK" : "Compatibility: Issues Found"}
+                        {!checkCompatibility.isOk ? "Compatibility: Issues Found" : checkCompatibility.warnings.length > 0 ? "Compatibility: Warning" : "Compatibility: OK"}
                       </span>
                     </div>
                   </Badge>
@@ -363,7 +420,15 @@ export default function BuildPage() {
                   {!checkCompatibility.isOk && (
                     <div className="bg-danger/10 border border-danger/20 rounded-md p-3 text-xs text-danger font-medium space-y-1">
                       {checkCompatibility.issues.map((issue, idx) => (
-                        <p key={idx}>⚠️ {issue}</p>
+                        <p key={idx}>❌ {issue}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {checkCompatibility.warnings.length > 0 && (
+                    <div className="bg-warning/10 border border-warning/20 rounded-md p-3 text-xs text-warning font-medium space-y-1">
+                      {checkCompatibility.warnings.map((warn, idx) => (
+                        <p key={idx}>⚠️ {warn}</p>
                       ))}
                     </div>
                   )}
@@ -411,20 +476,20 @@ export default function BuildPage() {
                 <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">ตรวจสอบข้อมูลและตั้งชื่อสเปกของคุณ</p>
               </ModalHeader>
               <ModalBody className="p-8 space-y-6">
-                <Input 
-                  label="ชื่อสเปก (Build Name)" 
-                  placeholder="เช่น สเปกเล่นเกมงบ 30k" 
-                  variant="bordered" 
-                  labelPlacement="outside" 
-                  value={buildName} 
+                <Input
+                  label="ชื่อสเปก (Build Name)"
+                  placeholder="เช่น สเปกเล่นเกมงบ 30k"
+                  variant="bordered"
+                  labelPlacement="outside"
+                  value={buildName}
                   onValueChange={(val) => {
                     setBuildName(val);
                     if (val.trim()) setBuildNameError("");
-                  }} 
+                  }}
                   isRequired
                   isInvalid={!!buildNameError}
                   errorMessage={buildNameError}
-                  classNames={{ label: "font-bold text-gray-400", input: "text-lg font-semibold" }} 
+                  classNames={{ label: "font-bold text-gray-400", input: "text-lg font-semibold" }}
                 />
                 <div className="bg-black/40 border border-white/5 p-6 rounded-2xl space-y-3">
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">All Part</p>
@@ -452,41 +517,18 @@ export default function BuildPage() {
         </ModalContent>
       </Modal>
 
-      {/* Login Alert Modal */}
-      <Modal isOpen={isLoginAlertOpen} onOpenChange={onLoginAlertChange} backdrop="blur" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-[1.5rem]" }}>
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1 p-6 border-b border-white/5">
-                <h3 className="text-xl font-bold uppercase text-danger">Authentication Required</h3>
-              </ModalHeader>
-              <ModalBody className="p-6">
-                <p className="text-gray-300">
-                  คุณจะต้องเข้าสู่ระบบก่อนเพื่อทำการบันทึกสเปกคอมพิวเตอร์ของคุณ
-                  สเปกปัจจุบันของคุณจะถูกบันทึกไว้ชั่วคราวและจะไม่หายไปเมื่อคุณกลับมาหลังจากเข้าสู่ระบบ
-                </p>
-              </ModalBody>
-              <ModalFooter className="p-6 border-t border-white/5">
-                <Button variant="light" onPress={onClose} className="font-bold uppercase">Cancel</Button>
-                <Button color="primary" className="font-bold px-8 uppercase" onPress={() => router.push("/api/auth/signin")}>
-                  Login Now
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+
 
       {/* 5. Selection Modal */}
-      <Modal 
-        isOpen={!!selectedCategory} 
-        onOpenChange={(isOpen) => !isOpen && setSelectedCategory(null)} 
-        size="5xl" 
+      <Modal
+        isOpen={!!selectedCategory}
+        onOpenChange={(isOpen) => !isOpen && setSelectedCategory(null)}
+        size="5xl"
         scrollBehavior="inside"
         placement="bottom-center"
-        classNames={{ 
+        classNames={{
           wrapper: "sm:p-4",
-          base: "bg-slate-900 border border-white/10 text-white m-0 rounded-none sm:rounded-[2.5rem] w-full max-h-[90vh] sm:max-h-[85vh]", 
+          base: "bg-slate-900 border border-white/10 text-white m-0 rounded-none sm:rounded-[2.5rem] w-full max-h-[90vh] sm:max-h-[85vh]",
           header: "border-b border-white/10 p-4 md:p-8 bg-slate-800/50",
           body: "p-0 flex flex-col"
         }}
@@ -495,22 +537,22 @@ export default function BuildPage() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                  <div>
-                    <h3 className="text-xl md:text-2xl font-bold uppercase text-white">{selectedCategory}</h3>
-                    <p className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-widest">เลือกอุปกรณ์ที่ต้องการ</p>
-                  </div>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold uppercase text-white">{selectedCategory}</h3>
+                  <p className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-widest">เลือกอุปกรณ์ที่ต้องการ</p>
+                </div>
               </ModalHeader>
               <ModalBody>
                 <div className="flex flex-col md:flex-row flex-1 h-full min-h-0">
                   <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 bg-black/20 shrink-0 overflow-hidden">
                     <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-6 w-full items-start">
                       {categoryFilters[selectedCategory || ""]?.map((f) => (
-                        <Select 
-                          key={f.key} 
-                          label={f.label} 
-                          labelPlacement="outside" 
-                          placeholder="ทั้งหมด" 
-                          size="sm" 
+                        <Select
+                          key={f.key}
+                          label={f.label}
+                          labelPlacement="outside"
+                          placeholder="ทั้งหมด"
+                          size="sm"
                           className="w-[47%] md:w-full flex-grow"
                           selectedKeys={activeFilters[f.key] ? new Set([activeFilters[f.key]]) : new Set(["All"])}
                           onSelectionChange={(keys) => {
@@ -530,10 +572,10 @@ export default function BuildPage() {
                         <Spinner color="primary" size="lg" />
                       </div>
                     ) : (
-                      <SelectionGrid 
-                        category={selectedCategory || ""} 
-                        allComponents={components} 
-                        onSelectProduct={handleSelectProduct} 
+                      <SelectionGrid
+                        category={selectedCategory || ""}
+                        allComponents={components}
+                        onSelectProduct={handleSelectProduct}
                         onViewDetails={setViewDetailsComp}
                         categoryToType={categoryToTypeMap}
                         activeFilters={activeFilters}
@@ -570,24 +612,24 @@ export default function BuildPage() {
                         <p className="text-sm font-bold text-gray-500 uppercase">{viewDetailsComp.brand}</p>
                         <h4 className="text-2xl font-bold">{viewDetailsComp.name}</h4>
                         <p className="text-xl font-bold text-success mt-2">฿{viewDetailsComp.price.toLocaleString()}</p>
-                        
+
                         <div className="pt-4 grid grid-cols-2 gap-4 text-sm mt-4">
-                            {viewDetailsComp.socket && <div><span className="text-gray-500 block text-xs">Socket</span><span className="font-semibold">{viewDetailsComp.socket}</span></div>}
-                            {viewDetailsComp.ramType && <div><span className="text-gray-500 block text-xs">RAM Type</span><span className="font-semibold">{viewDetailsComp.ramType}</span></div>}
-                            {viewDetailsComp.formFactor && <div><span className="text-gray-500 block text-xs">Form Factor</span><span className="font-semibold">{viewDetailsComp.formFactor}</span></div>}
-                            {viewDetailsComp.capacity !== null && viewDetailsComp.capacity !== undefined && <div><span className="text-gray-500 block text-xs">Capacity</span><span className="font-semibold">{viewDetailsComp.capacity} {viewDetailsComp.type === 'PSU' ? 'W' : 'GB'}</span></div>}
-                            {viewDetailsComp.cpuSingleScore !== null && viewDetailsComp.cpuSingleScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Single Score</span><span className="font-semibold">{viewDetailsComp.cpuSingleScore}</span></div>}
-                            {viewDetailsComp.cpuMultiScore !== null && viewDetailsComp.cpuMultiScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Multi Score</span><span className="font-semibold">{viewDetailsComp.cpuMultiScore}</span></div>}
-                            {viewDetailsComp.gpuScore !== null && viewDetailsComp.gpuScore !== undefined && <div><span className="text-gray-500 block text-xs">GPU Score</span><span className="font-semibold">{viewDetailsComp.gpuScore}</span></div>}
+                          {viewDetailsComp.socket && <div><span className="text-gray-500 block text-xs">Socket</span><span className="font-semibold">{viewDetailsComp.socket}</span></div>}
+                          {viewDetailsComp.ramType && <div><span className="text-gray-500 block text-xs">RAM Type</span><span className="font-semibold">{viewDetailsComp.ramType}</span></div>}
+                          {viewDetailsComp.formFactor && <div><span className="text-gray-500 block text-xs">Form Factor</span><span className="font-semibold">{viewDetailsComp.formFactor}</span></div>}
+                          {viewDetailsComp.capacity !== null && viewDetailsComp.capacity !== undefined && <div><span className="text-gray-500 block text-xs">Capacity</span><span className="font-semibold">{viewDetailsComp.capacity} {viewDetailsComp.type === 'PSU' ? 'W' : 'GB'}</span></div>}
+                          {viewDetailsComp.cpuSingleScore !== null && viewDetailsComp.cpuSingleScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Single Score</span><span className="font-semibold">{viewDetailsComp.cpuSingleScore}</span></div>}
+                          {viewDetailsComp.cpuMultiScore !== null && viewDetailsComp.cpuMultiScore !== undefined && <div><span className="text-gray-500 block text-xs">CPU Multi Score</span><span className="font-semibold">{viewDetailsComp.cpuMultiScore}</span></div>}
+                          {viewDetailsComp.gpuScore !== null && viewDetailsComp.gpuScore !== undefined && <div><span className="text-gray-500 block text-xs">GPU Score</span><span className="font-semibold">{viewDetailsComp.gpuScore}</span></div>}
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                        <h5 className="font-bold border-b border-white/10 pb-2 text-blue-400">คุณสมบัติ / รายละเอียด (Description)</h5>
-                        <div className="text-gray-300 text-sm whitespace-pre-line leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">
-                            {(viewDetailsComp as any).description || "ไม่มีรายละเอียดเพิ่มเติมระบุไว้"}
-                        </div>
+                      <h5 className="font-bold border-b border-white/10 pb-2 text-blue-400">คุณสมบัติ / รายละเอียด (Description)</h5>
+                      <div className="text-gray-300 text-sm whitespace-pre-line leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">
+                        {(viewDetailsComp as any).description || "ไม่มีรายละเอียดเพิ่มเติมระบุไว้"}
+                      </div>
                     </div>
                   </>
                 )}

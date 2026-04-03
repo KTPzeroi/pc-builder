@@ -16,6 +16,7 @@ export async function POST(req: Request) {
         const {
             name, type, brand, price, image, description,
             socket, ramType, formFactor, capacity,
+            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
             cpuSingleScore, cpuMultiScore, gpuScore,
             vramGb, ramSpeed, readWriteSpeed
         } = body;
@@ -38,6 +39,12 @@ export async function POST(req: Request) {
                 ramType: ramType || null,
                 formFactor: formFactor || null,
                 capacity: capacity ? parseInt(capacity.toString()) : null,
+                tdp: tdp ? parseInt(tdp.toString()) : null,
+                lengthMm: lengthMm ? parseInt(lengthMm.toString()) : null,
+                maxGpuLength: maxGpuLength ? parseInt(maxGpuLength.toString()) : null,
+                maxCoolerHeight: maxCoolerHeight ? parseInt(maxCoolerHeight.toString()) : null,
+                supportedMobo: supportedMobo || null,
+                psuFormFactor: psuFormFactor || null,
                 cpuSingleScore: cpuSingleScore ? parseInt(cpuSingleScore.toString()) : null,
                 cpuMultiScore: cpuMultiScore ? parseInt(cpuMultiScore.toString()) : null,
                 gpuScore: gpuScore ? parseInt(gpuScore.toString()) : null,
