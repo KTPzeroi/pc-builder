@@ -541,7 +541,7 @@ export default function InventoryCRUDPage() {
                 {/* === NEW: Compatibility Fields === */}
 
                 {/* Chipset (NVIDIA, AMD, Intel B650, Z790, etc.) */}
-                {["CPU", "GPU", "MB"].includes(type || "") && (
+                {["GPU", "MB"].includes(type || "") && (
                     <Input label="Chipset" placeholder="e.g. NVIDIA, AMD, B650, Z790" variant="bordered"
                         value={formData.chipset || ""} onChange={e => setFormData({ ...formData, chipset: e.target.value })} />
                 )}

@@ -2,7 +2,7 @@
   {
     "id": "TC001",
     "title": "Register a new account successfully",
-    "description": "Verifies a guest can complete registration from the homepage and sees a success confirmation.",
+    "description": "Verifies a user can open the registration form, submit valid details, and see a success confirmation.",
     "category": "User Registration",
     "priority": "High",
     "steps": [
@@ -12,7 +12,7 @@
       },
       {
         "type": "action",
-        "description": "Initiate account registration"
+        "description": "Click the sign up action in the navigation bar"
       },
       {
         "type": "action",
@@ -20,11 +20,11 @@
       },
       {
         "type": "action",
-        "description": "Fill testuser_unique_01 into the username field"
+        "description": "Fill testuser_unique into the username field"
       },
       {
         "type": "action",
-        "description": "Fill testuser_unique_01@example.com into the email field"
+        "description": "Fill testuser_unique@example.com into the email field"
       },
       {
         "type": "action",
@@ -42,8 +42,8 @@
   },
   {
     "id": "TC002",
-    "title": "Registration shows validation when a required field is missing",
-    "description": "Verifies the registration form prevents submission and shows a validation error when a required field is blank.",
+    "title": "Registration shows validation error for invalid email",
+    "description": "Verifies the registration form prevents submission with an invalid email and shows an error state.",
     "category": "User Registration",
     "priority": "High",
     "steps": [
@@ -53,7 +53,7 @@
       },
       {
         "type": "action",
-        "description": "Initiate account registration"
+        "description": "Click the sign up action in the navigation bar"
       },
       {
         "type": "action",
@@ -61,182 +61,7 @@
       },
       {
         "type": "action",
-        "description": "Fill testuser_missing_required_01 into the username field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a validation error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC003",
-    "title": "Registration rejects an already-used email",
-    "description": "Verifies registering with an existing email shows an error and does not create a new account.",
-    "category": "User Registration",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Initiate account registration"
-      },
-      {
-        "type": "action",
-        "description": "Fill Seed User into the name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seeduser_emaildupe_01 into the username field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seed_emaildupe_01@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a success confirmation is visible"
-      },
-      {
-        "type": "action",
-        "description": "Initiate account registration"
-      },
-      {
-        "type": "action",
-        "description": "Fill Another User into the name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seeduser_emaildupe_02 into the username field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seed_emaildupe_01@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an email already exists error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC004",
-    "title": "Registration rejects an already-taken username",
-    "description": "Verifies registering with an existing username shows an error and does not create a new account.",
-    "category": "User Registration",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Initiate account registration"
-      },
-      {
-        "type": "action",
-        "description": "Fill Seed User into the name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seeduser_namedupe_01 into the username field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seed_namedupe_01@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a success confirmation is visible"
-      },
-      {
-        "type": "action",
-        "description": "Initiate account registration"
-      },
-      {
-        "type": "action",
-        "description": "Fill Another User into the name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seeduser_namedupe_01 into the username field"
-      },
-      {
-        "type": "action",
-        "description": "Fill seed_namedupe_02@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a username already taken error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC005",
-    "title": "Registration handles invalid email format",
-    "description": "Verifies the registration form shows validation when the email format is invalid.",
-    "category": "User Registration",
-    "priority": "Low",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Initiate account registration"
-      },
-      {
-        "type": "action",
-        "description": "Fill Test User into the name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill testuser_invalid_email_01 into the username field"
+        "description": "Fill testuser_invalid_email into the username field"
       },
       {
         "type": "action",
@@ -257,9 +82,67 @@
     ]
   },
   {
-    "id": "TC006",
-    "title": "Login with email and password successfully",
-    "description": "Verifies a user can sign in with credentials and sees authenticated state in the navbar.",
+    "id": "TC003",
+    "title": "Registration blocks submission when required fields are missing",
+    "description": "Verifies required-field validation appears when attempting to register with missing required inputs.",
+    "category": "User Registration",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the sign up action in the navigation bar"
+      },
+      {
+        "type": "action",
+        "description": "Fill Test User into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill testuser_missing_fields into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify required field validation errors are visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Registration allows toggling between sign up and sign in views",
+    "description": "Verifies the user can switch between registration and login views from the auth entry points without leaving the page flow.",
+    "category": "User Registration",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the sign up action in the navigation bar"
+      },
+      {
+        "type": "action",
+        "description": "Click the action to switch to sign in"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login form is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Login successfully with email and password",
+    "description": "Verifies a user can log in with valid credentials and sees the navbar update to the signed-in state.",
     "category": "User Login",
     "priority": "High",
     "steps": [
@@ -269,7 +152,7 @@
       },
       {
         "type": "action",
-        "description": "Initiate Sign In"
+        "description": "Click the sign in action in the navigation bar"
       },
       {
         "type": "action",
@@ -285,14 +168,14 @@
       },
       {
         "type": "assertion",
-        "description": "Verify the navbar shows the user is signed in"
+        "description": "Verify the navigation bar shows a signed-in user state"
       }
     ]
   },
   {
-    "id": "TC007",
-    "title": "Login shows error on incorrect password",
-    "description": "Verifies invalid credentials are rejected with an error message.",
+    "id": "TC006",
+    "title": "Login shows authentication error with incorrect password",
+    "description": "Verifies incorrect credentials do not log the user in and an authentication error is shown.",
     "category": "User Login",
     "priority": "High",
     "steps": [
@@ -302,7 +185,7 @@
       },
       {
         "type": "action",
-        "description": "Initiate Sign In"
+        "description": "Click the sign in action in the navigation bar"
       },
       {
         "type": "action",
@@ -318,16 +201,16 @@
       },
       {
         "type": "assertion",
-        "description": "Verify an invalid credentials error is visible"
+        "description": "Verify an authentication error message is visible"
       }
     ]
   },
   {
-    "id": "TC008",
-    "title": "Logout returns the user to guest state",
-    "description": "Verifies a signed-in user can log out and the navbar returns to unauthenticated state.",
+    "id": "TC007",
+    "title": "Login form blocks submission when fields are empty",
+    "description": "Verifies client-side validation triggers when attempting to submit the login form without required fields.",
     "category": "User Login",
-    "priority": "High",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
@@ -335,7 +218,308 @@
       },
       {
         "type": "action",
-        "description": "Initiate Sign In"
+        "description": "Click the sign in action in the navigation bar"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify required field validation errors are visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "PC Build page loads primary component selection and scores",
+    "description": "Verifies the build page loads and shows the primary UI for selecting components and viewing benchmark scores.",
+    "category": "PC Build System",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /build"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify component categories are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify benchmark scores are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Select a component and see totals and scores update",
+    "description": "Verifies selecting a component updates the build totals and benchmark scores based on the selection.",
+    "category": "PC Build System",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /build"
+      },
+      {
+        "type": "action",
+        "description": "Click a component category"
+      },
+      {
+        "type": "action",
+        "description": "Select a component from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the total price reflects the selected component"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify benchmark scores update after the selection"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Attempt to save build without name shows validation error",
+    "description": "Verifies the build cannot be saved without a name and shows a validation error state for the missing name.",
+    "category": "PC Build System",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /build"
+      },
+      {
+        "type": "action",
+        "description": "Click a component category"
+      },
+      {
+        "type": "action",
+        "description": "Select a component from the list"
+      },
+      {
+        "type": "action",
+        "description": "Submit the save build action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a build name validation error is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Complete Build Wizard flow to recommended preset and start customization",
+    "description": "Verifies the wizard can collect usage and budget inputs, show a recommended preset, and transition into customization on the Build page.",
+    "category": "Build Wizard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /plan"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "action",
+        "description": "Click the option to customize the recommended build"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the Build page"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Change Build Wizard selections using back navigation",
+    "description": "Verifies the user can go back in the wizard, change selections, and see updated recommended results.",
+    "category": "Build Wizard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /plan"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "action",
+        "description": "Click the back button to change selections"
+      },
+      {
+        "type": "action",
+        "description": "Select a different budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recommended preset build details are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Recommended preset displays component details and reasons",
+    "description": "Verifies the wizard shows a recommended preset with component details and rationale after selections are made.",
+    "category": "Build Wizard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /plan"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recommended component details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recommendation reasons are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Build Wizard handles no matching preset with an empty state",
+    "description": "Verifies the wizard can show a no-results state when a selection combination yields no preset, without requiring environment setup.",
+    "category": "Build Wizard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /plan"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "action",
+        "description": "Click the back button to change selections"
+      },
+      {
+        "type": "action",
+        "description": "Select a different usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a different budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify either recommended preset build details are displayed or an empty state message is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Build Wizard results remain usable when switching choices repeatedly",
+    "description": "Verifies the wizard remains stable when the user changes selections multiple times and still can reach a valid results state.",
+    "category": "Build Wizard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /plan"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "action",
+        "description": "Click the back button to change selections"
+      },
+      {
+        "type": "action",
+        "description": "Select a different usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a different budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the recommended preset results to load"
+      },
+      {
+        "type": "action",
+        "description": "Click the option to customize the recommended build"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the Build page"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Report a forum post with a selected reason",
+    "description": "Verifies an authenticated user can submit a report for a forum post when a reason is selected.",
+    "category": "Report System",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
       },
       {
         "type": "action",
@@ -351,28 +535,44 @@
       },
       {
         "type": "action",
-        "description": "Request logout"
+        "description": "Navigate to /forum"
+      },
+      {
+        "type": "action",
+        "description": "Open a forum post"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the report flow for the post"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid reason from the reason dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill a short description into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the report"
       },
       {
         "type": "assertion",
-        "description": "Verify the navbar shows the user is signed out"
+        "description": "Verify a report submission confirmation is visible"
       }
     ]
   },
   {
-    "id": "TC009",
-    "title": "Login form validates missing required fields",
-    "description": "Verifies the sign-in form shows validation errors when required fields are blank.",
-    "category": "User Login",
-    "priority": "Medium",
+    "id": "TC017",
+    "title": "Report a forum comment with a selected reason",
+    "description": "Verifies an authenticated user can submit a report for a forum comment when a reason is selected.",
+    "category": "Report System",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Initiate Sign In"
+        "description": "Navigate to /login"
       },
       {
         "type": "action",
@@ -380,53 +580,499 @@
       },
       {
         "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
         "description": "Submit the login form"
       },
       {
+        "type": "action",
+        "description": "Navigate to /forum"
+      },
+      {
+        "type": "action",
+        "description": "Open a forum post that has comments visible"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the report flow for a comment"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid reason from the reason dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Submit the report"
+      },
+      {
         "type": "assertion",
-        "description": "Verify a validation error is visible"
+        "description": "Verify a report submission confirmation is visible"
       }
     ]
   },
   {
-    "id": "TC010",
-    "title": "Password reset request for unknown email shows generic success",
-    "description": "Verifies the password reset request flow does not reveal whether an email exists.",
-    "category": "Password Reset",
+    "id": "TC018",
+    "title": "Report validation: submit without selecting a reason",
+    "description": "Verifies the report form prevents submission when no reason is selected and shows a validation error.",
+    "category": "Report System",
     "priority": "High",
     "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /forum"
+      },
+      {
+        "type": "action",
+        "description": "Open a forum post"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the report flow for the post or a comment"
+      },
+      {
+        "type": "action",
+        "description": "Submit the report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a reason-required validation error is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Report form allows optional description to be left blank",
+    "description": "Verifies a report can be submitted with a selected reason even when the optional description is empty.",
+    "category": "Report System",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /forum"
+      },
+      {
+        "type": "action",
+        "description": "Open a forum post"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the report flow for the post"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid reason from the reason dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Ensure the description field is empty"
+      },
+      {
+        "type": "action",
+        "description": "Submit the report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a report submission confirmation is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Cancel/close report flow without submitting",
+    "description": "Verifies the user can dismiss the report UI without creating a report submission confirmation.",
+    "category": "Report System",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /forum"
+      },
+      {
+        "type": "action",
+        "description": "Open a forum post"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the report flow for the post or a comment"
+      },
+      {
+        "type": "action",
+        "description": "Close the report flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report form is no longer visible"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Notification dropdown opens from homepage navbar",
+    "description": "Verifies an authenticated user can open the notifications dropdown and see notifications or an empty state.",
+    "category": "Notification System",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
       {
         "type": "action",
         "description": "Navigate to /"
       },
       {
         "type": "action",
-        "description": "Initiate password reset request"
-      },
-      {
-        "type": "action",
-        "description": "Fill unknown_user_01@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the password reset request"
+        "description": "Open the notification dropdown from the navbar"
       },
       {
         "type": "assertion",
-        "description": "Verify a generic success confirmation is visible"
+        "description": "Verify notifications are displayed or an empty state is visible"
       }
     ]
   },
   {
-    "id": "TC011",
-    "title": "Reset password with invalid token shows token error",
-    "description": "Verifies submitting a new password with an invalid token results in a token error message.",
-    "category": "Password Reset",
+    "id": "TC022",
+    "title": "Navigate to a notification target by clicking a notification",
+    "description": "Verifies clicking a notification navigates the user to the notification target page.",
+    "category": "Notification System",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /reset-password?token=invalid"
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification dropdown from the navbar"
+      },
+      {
+        "type": "action",
+        "description": "Click a notification item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on a relevant target page for the notification"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Mark a notification as read from the dropdown",
+    "description": "Verifies an unread notification can be marked as read and the UI reflects the change.",
+    "category": "Notification System",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification dropdown from the navbar"
+      },
+      {
+        "type": "action",
+        "description": "Mark a notification as read"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the notification is shown as read in the dropdown"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Notification badge unread count changes after marking read",
+    "description": "Verifies the unread count indicator updates after marking a notification as read.",
+    "category": "Notification System",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification dropdown from the navbar"
+      },
+      {
+        "type": "action",
+        "description": "Mark a notification as read"
+      },
+      {
+        "type": "action",
+        "description": "Close the notification dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the unread notification badge count decreases or disappears"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Notification dropdown displays an empty state when there are no notifications",
+    "description": "Verifies the notifications UI handles an account with no notifications by showing an empty state.",
+    "category": "Notification System",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification dropdown from the navbar"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state is visible if no notifications are available"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Profile page loads saved builds and account settings for authenticated user",
+    "description": "Verifies an authenticated user can access the profile page and see saved builds and account settings sections.",
+    "category": "Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify saved builds are displayed or an empty state is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify account settings are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Edit a saved build and persist changes",
+    "description": "Verifies a user can open a saved build from the profile, edit it, save changes, and see the updated value persist.",
+    "category": "Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Open a saved build from the saved builds list"
+      },
+      {
+        "type": "action",
+        "description": "Edit the build name to Build Alpha 01"
+      },
+      {
+        "type": "action",
+        "description": "Save the build changes"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved builds list contains Build Alpha 01"
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "Unauthenticated access to profile is blocked",
+    "description": "Verifies attempting to access the protected profile page while unauthenticated results in an authentication prompt or access denied UI.",
+    "category": "Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication prompt or access denied message is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC029",
+    "title": "Reset password with valid token updates password",
+    "description": "Verifies a user can submit a valid reset token and new password and see a success confirmation.",
+    "category": "Reset Password",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /reset-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid reset token into the reset token field"
       },
       {
         "type": "action",
@@ -434,1134 +1080,183 @@
       },
       {
         "type": "action",
-        "description": "Submit the reset password form"
+        "description": "Fill the same valid new password into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify an invalid or expired token error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC012",
-    "title": "Homepage loads hero and component guide entry content",
-    "description": "Verifies the homepage renders its primary hero content and exposes the component guide browsing affordance.",
-    "category": "Homepage & Component Guide",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the hero banner section is displayed"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the component guide slider is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC013",
-    "title": "Browse components with the guide slider and open component details",
-    "description": "Verifies users can browse the component guide slider and open a component details view with core information.",
-    "category": "Homepage & Component Guide",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Scroll to the component guide slider section"
-      },
-      {
-        "type": "action",
-        "description": "Click the next control on the component guide slider"
-      },
-      {
-        "type": "action",
-        "description": "Open the currently focused component details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify component details are displayed with a title, description, and specs"
-      }
-    ]
-  },
-  {
-    "id": "TC014",
-    "title": "Navigate from Homepage to Build Wizard via plan affordance",
-    "description": "Verifies the primary entry point from the homepage leads to the Build Wizard start page.",
-    "category": "Homepage & Component Guide",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Click the affordance to plan a build"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user lands on the Build Wizard page"
-      }
-    ]
-  },
-  {
-    "id": "TC015",
-    "title": "Component details remain usable when an image fails to load",
-    "description": "Verifies that when a component image cannot be loaded, a placeholder appears and details remain visible.",
-    "category": "Homepage & Component Guide",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Scroll to the component guide slider section"
-      },
-      {
-        "type": "action",
-        "description": "Open the currently focused component details"
-      },
-      {
-        "type": "action",
-        "description": "Wait for the component image area to finish loading"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an image placeholder is shown if the image cannot be loaded"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify component title, description, and specs are still displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC016",
-    "title": "Build page updates total price and benchmark scores after selecting a component",
-    "description": "Verifies selecting a component updates the build totals and visible benchmark scores.",
-    "category": "PC Build System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /build"
-      },
-      {
-        "type": "action",
-        "description": "Click a component category"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the modal list"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the total price is updated from its initial state"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify Gaming, Working, and Creative benchmark scores are displayed and updated"
-      }
-    ]
-  },
-  {
-    "id": "TC017",
-    "title": "Save build requires a build name (validation)",
-    "description": "Verifies attempting to save a build without a name shows a validation error and blocks saving.",
-    "category": "PC Build System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /build"
-      },
-      {
-        "type": "action",
-        "description": "Click a component category"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the modal list"
-      },
-      {
-        "type": "action",
-        "description": "Click the save build action"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a validation error for a missing build name is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC018",
-    "title": "Save build while not authenticated prompts for login and blocks saving",
-    "description": "Verifies unauthenticated users are prevented from saving a build and are prompted to log in.",
-    "category": "PC Build System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /build"
-      },
-      {
-        "type": "action",
-        "description": "Click a component category"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the modal list"
-      },
-      {
-        "type": "action",
-        "description": "Fill a build name into the build name field"
-      },
-      {
-        "type": "action",
-        "description": "Click the save build action"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a login prompt is displayed and saving is blocked"
-      }
-    ]
-  },
-  {
-    "id": "TC019",
-    "title": "Select CPU and GPU and verify totals and benchmarks reflect multiple selections",
-    "description": "Verifies selecting components across multiple categories updates computed totals and scores accordingly.",
-    "category": "PC Build System",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /build"
-      },
-      {
-        "type": "action",
-        "description": "Click the CPU category"
-      },
-      {
-        "type": "action",
-        "description": "Select a CPU from the modal list"
-      },
-      {
-        "type": "action",
-        "description": "Click the GPU category"
-      },
-      {
-        "type": "action",
-        "description": "Select a GPU from the modal list"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the total price reflects selections across multiple categories"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify benchmark scores are displayed and updated after both selections"
-      }
-    ]
-  },
-  {
-    "id": "TC020",
-    "title": "Build Wizard produces a recommended preset and allows customizing in Build page",
-    "description": "Verifies the wizard flow loads a recommended preset and navigates to the Build page for customization with the preset applied.",
-    "category": "Build Wizard",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /plan"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Wait for the recommended preset build to load"
-      },
-      {
-        "type": "action",
-        "description": "Click the action to customize the recommended build"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user lands on the Build page"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the build has preset components applied"
-      }
-    ]
-  },
-  {
-    "id": "TC021",
-    "title": "Build Wizard shows empty-state message when no preset exists for the chosen budget",
-    "description": "Verifies the wizard handles missing presets by showing an empty-state message and alternative actions.",
-    "category": "Build Wizard",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /plan"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier that has no preset"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an empty state message is visible indicating no recommended spec is available"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify alternative actions are available to continue"
-      }
-    ]
-  },
-  {
-    "id": "TC022",
-    "title": "Build Wizard back navigation updates or clears selections appropriately",
-    "description": "Verifies changing selections by going back in the wizard updates the flow and displayed selections.",
-    "category": "Build Wizard",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /plan"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Click the back action to return to the previous step"
-      },
-      {
-        "type": "action",
-        "description": "Change the selection on the previous step"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the wizard reflects the updated selection and the next step content updates accordingly"
-      }
-    ]
-  },
-  {
-    "id": "TC023",
-    "title": "Build Wizard skip to manual build navigates directly to Build page",
-    "description": "Verifies users can bypass the wizard recommendations and go straight to manual building.",
-    "category": "Build Wizard",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /plan"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Click the action to skip to manual build"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user lands on the Build page"
-      }
-    ]
-  },
-  {
-    "id": "TC024",
-    "title": "Forum Posts — Create a text-only post and see it in the feed",
-    "description": "Verifies an authenticated user can create a new forum post with required fields and see it appear in the forum feed.",
-    "category": "Forum Posts",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Initiate a new post"
-      },
-      {
-        "type": "action",
-        "description": "Fill Sample Post Title 001 into the title field"
-      },
-      {
-        "type": "action",
-        "description": "Fill This is a test post content for Sample Post Title 001 into the content field"
-      },
-      {
-        "type": "action",
-        "description": "Select a category"
-      },
-      {
-        "type": "action",
-        "description": "Submit the post"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the new post with title Sample Post Title 001 appears in the forum feed"
-      }
-    ]
-  },
-  {
-    "id": "TC025",
-    "title": "Forum Posts — Open a post detail view from the feed",
-    "description": "Verifies a user can open a post from the forum feed and see its details view.",
-    "category": "Forum Posts",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the post detail view is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC026",
-    "title": "Forum Posts — Like and unlike a post",
-    "description": "Verifies an authenticated user can like and unlike a post and the UI updates accordingly.",
-    "category": "Forum Posts",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Like the post"
-      },
-      {
-        "type": "action",
-        "description": "Unlike the post"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the post is shown as not liked"
-      }
-    ]
-  },
-  {
-    "id": "TC027",
-    "title": "Forum Posts — Validation error when submitting with missing title",
-    "description": "Verifies the post creation form prevents submission when the title is missing.",
-    "category": "Forum Posts",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Initiate a new post"
-      },
-      {
-        "type": "action",
-        "description": "Fill This post is missing a title into the content field"
-      },
-      {
-        "type": "action",
-        "description": "Select a category"
-      },
-      {
-        "type": "action",
-        "description": "Submit the post"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a title validation error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC028",
-    "title": "Forum Posts — Attempt to create a post while unauthenticated shows login prompt",
-    "description": "Verifies unauthenticated users are prompted to log in when attempting to submit a new post.",
-    "category": "Forum Posts",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /forum"
-      },
-      {
-        "type": "action",
-        "description": "Initiate a new post"
-      },
-      {
-        "type": "action",
-        "description": "Fill Unauth Post Title 001 into the title field"
-      },
-      {
-        "type": "action",
-        "description": "Fill Unauthenticated attempt content into the content field"
-      },
-      {
-        "type": "action",
-        "description": "Select a category"
-      },
-      {
-        "type": "action",
-        "description": "Submit the post"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a login prompt is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC029",
-    "title": "Forum Posts — Create a post and attach a PC Build (if available)",
-    "description": "Verifies attaching an existing PC build to a new forum post works and is visible on the created post.",
-    "category": "Forum Posts",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Initiate a new post"
-      },
-      {
-        "type": "action",
-        "description": "Fill Build Attachment Post 001 into the title field"
-      },
-      {
-        "type": "action",
-        "description": "Fill This post attempts to attach a build into the content field"
-      },
-      {
-        "type": "action",
-        "description": "Select a category"
-      },
-      {
-        "type": "action",
-        "description": "Attach a PC Build to the post"
-      },
-      {
-        "type": "action",
-        "description": "Submit the post"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an attached PC build is displayed on the created post"
+        "description": "Verify a success confirmation is visible indicating the password was updated"
       }
     ]
   },
   {
     "id": "TC030",
-    "title": "Forum Posts — Create a post with images (skipped: file upload unsupported)",
-    "description": "Omitted because it requires file upload, which is unsupported for these automated UI tests.",
-    "category": "Forum Posts",
-    "priority": "Low",
+    "title": "Reset password rejects invalid or expired token",
+    "description": "Verifies submitting an invalid or expired token shows an error and does not complete the reset.",
+    "category": "Reset Password",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /forum"
+        "description": "Navigate to /reset-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill an invalid reset token into the reset token field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid new password into the new password field"
+      },
+      {
+        "type": "action",
+        "description": "Fill the same valid new password into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify the forum feed is displayed"
+        "description": "Verify a token invalid or expired error is visible"
       }
     ]
   },
   {
     "id": "TC031",
-    "title": "Forum Posts — Forum page loads primary content",
-    "description": "Verifies the forum page loads and shows a list of posts for browsing.",
-    "category": "Forum Posts",
+    "title": "Reset password prevents submit when passwords do not match",
+    "description": "Verifies the form blocks submission when the new password and confirmation do not match.",
+    "category": "Reset Password",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /forum"
+        "description": "Navigate to /reset-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid reset token into the reset token field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid new password into the new password field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a different valid password into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify forum posts are displayed"
+        "description": "Verify a password mismatch validation error is visible"
       }
     ]
   },
   {
     "id": "TC032",
-    "title": "Forum Comments — Add a comment to a post",
-    "description": "Verifies an authenticated user can submit a comment and see it appear under the post.",
-    "category": "Forum Comments",
-    "priority": "High",
+    "title": "Reset password requires new password before submission",
+    "description": "Verifies required-field validation prevents resetting when the new password is missing.",
+    "category": "Reset Password",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /reset-password"
       },
       {
         "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
+        "description": "Fill a valid reset token into the reset token field"
       },
       {
         "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+        "description": "Leave the new password field empty"
       },
       {
         "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Fill Comment text 001 into the comment field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the comment"
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify a comment with text Comment text 001 appears under the post"
+        "description": "Verify a required field validation error is visible"
       }
     ]
   },
   {
     "id": "TC033",
-    "title": "Forum Comments — Like a comment and see the count change",
-    "description": "Verifies an authenticated user can like a comment and the UI reflects the updated like state/count.",
-    "category": "Forum Comments",
+    "title": "Reset password requires token before submission",
+    "description": "Verifies required-field validation prevents resetting when the reset token is missing.",
+    "category": "Reset Password",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /reset-password"
       },
       {
         "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
+        "description": "Leave the reset token field empty"
       },
       {
         "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+        "description": "Fill a valid new password into the new password field"
       },
       {
         "type": "action",
-        "description": "Submit the login form"
+        "description": "Fill the same valid new password into the confirm password field"
       },
       {
         "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Like a comment"
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify the liked comment shows an increased like count or a liked state"
+        "description": "Verify a required field validation error is visible"
       }
     ]
   },
   {
     "id": "TC034",
-    "title": "Forum Comments — Attempt to submit a comment while unauthenticated shows login prompt",
-    "description": "Verifies unauthenticated users are prompted to log in when attempting to submit a comment.",
-    "category": "Forum Comments",
-    "priority": "High",
+    "title": "Reset password enforces basic password validity",
+    "description": "Verifies the form shows a validation error for an obviously invalid new password.",
+    "category": "Reset Password",
+    "priority": "Low",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /forum"
+        "description": "Navigate to /reset-password"
       },
       {
         "type": "action",
-        "description": "Click on a post to view details"
+        "description": "Fill a valid reset token into the reset token field"
       },
       {
         "type": "action",
-        "description": "Fill Unauthenticated comment attempt 001 into the comment field"
+        "description": "Fill an invalid new password into the new password field"
       },
       {
         "type": "action",
-        "description": "Submit the comment"
+        "description": "Fill the same invalid new password into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password reset form"
       },
       {
         "type": "assertion",
-        "description": "Verify a login prompt is displayed"
+        "description": "Verify a password validation error is visible"
       }
     ]
   },
   {
     "id": "TC035",
-    "title": "Forum Comments — Validation error on empty comment submission",
-    "description": "Verifies the comment form prevents submission of an empty comment.",
-    "category": "Forum Comments",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Submit the comment"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a comment validation error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC036",
-    "title": "Forum Comments — Open post detail and verify comments section is present",
-    "description": "Verifies the post detail view includes a comments section for engagement.",
-    "category": "Forum Comments",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the comments section is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC037",
-    "title": "Report System — Report a post with a reason and optional description",
-    "description": "Verifies an authenticated user can submit a report for a post and sees a confirmation.",
-    "category": "Report System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Initiate reporting the post"
-      },
-      {
-        "type": "action",
-        "description": "Select a report reason"
-      },
-      {
-        "type": "action",
-        "description": "Fill Report description 001 into the report description field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the report"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a report submission confirmation is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC038",
-    "title": "Report System — Attempt to report while unauthenticated shows login prompt",
-    "description": "Verifies unauthenticated users are prompted to log in when attempting to submit a report.",
-    "category": "Report System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Initiate reporting the post"
-      },
-      {
-        "type": "action",
-        "description": "Submit the report"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a login prompt is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC039",
-    "title": "Report System — Validation error when submitting report without a reason",
-    "description": "Verifies the report form requires selecting a reason before submission.",
-    "category": "Report System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Initiate reporting the post"
-      },
-      {
-        "type": "action",
-        "description": "Submit the report"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a report reason validation error is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC040",
-    "title": "Report System — Report a comment from post detail view",
-    "description": "Verifies an authenticated user can report a comment from within a post detail view and sees a confirmation.",
-    "category": "Report System",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to open the forum"
-      },
-      {
-        "type": "action",
-        "description": "Click on a post to view details"
-      },
-      {
-        "type": "action",
-        "description": "Initiate reporting a comment"
-      },
-      {
-        "type": "action",
-        "description": "Select a report reason"
-      },
-      {
-        "type": "action",
-        "description": "Submit the report"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a report submission confirmation is visible"
-      }
-    ]
-  },
-  {
-    "id": "TC041",
-    "title": "Notifications: open dropdown and navigate from a notification as authenticated user",
-    "description": "Verifies an authenticated user can open notifications, click one, and the unread state updates.",
-    "category": "Notification System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the notifications bell icon to open the notification dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Click a notification in the dropdown"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user is navigated away from the homepage to a notification target page"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the unread notifications badge count decreased or the clicked notification is shown as read"
-      }
-    ]
-  },
-  {
-    "id": "TC042",
-    "title": "Notifications: mark an individual notification as read from dropdown",
-    "description": "Verifies marking a single notification as read updates the unread badge count.",
-    "category": "Notification System",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the notifications bell icon to open the notification dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Mark a single notification as read"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the unread notifications badge count decreases by one"
-      }
-    ]
-  },
-  {
-    "id": "TC043",
-    "title": "Notifications: unauthenticated user does not see notification UI",
-    "description": "Verifies unauthenticated users are not shown a notifications badge or dropdown entry point.",
-    "category": "Notification System",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the notifications bell icon or notification badge is not visible"
-      }
-    ]
-  },
-  {
-    "id": "TC044",
-    "title": "Admin Dashboard: admin can view stats, chart, and latest reports",
-    "description": "Verifies an admin can access the dashboard and see core dashboard content rendered.",
+    "title": "Admin dashboard loads core stats, chart, and reports",
+    "description": "Verifies an administrator can access the admin dashboard and see key overview content.",
     "category": "Admin Dashboard",
     "priority": "High",
     "steps": [
@@ -1591,32 +1286,517 @@
       },
       {
         "type": "assertion",
-        "description": "Verify an activity chart and a latest reports list are displayed"
+        "description": "Verify an activity chart and latest reports are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC036",
+    "title": "Admin dashboard sidebar navigates to another admin page",
+    "description": "Verifies admin can use the sidebar navigation from the dashboard to reach another admin area.",
+    "category": "Admin Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "action",
+        "description": "Click the sidebar link to the inventory management page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin inventory management page is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC037",
+    "title": "Admin dashboard denies access when not authenticated",
+    "description": "Verifies an unauthenticated user attempting to access the admin dashboard is blocked or redirected to sign-in.",
+    "category": "Admin Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is redirected to sign-in or shown a permission error"
+      }
+    ]
+  },
+  {
+    "id": "TC038",
+    "title": "Admin inventory loads and allows filtering by component type",
+    "description": "Verifies the inventory page displays a list of components and filtering updates the list.",
+    "category": "Admin Hardware Inventory",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Select a component type filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a list of components matching the selected type is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC039",
+    "title": "Admin inventory can create a new component and see it in the list",
+    "description": "Verifies an administrator can add a component with required and type-specific fields and the new item appears in the inventory list.",
+    "category": "Admin Hardware Inventory",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open the add component form"
+      },
+      {
+        "type": "action",
+        "description": "Select a component type that enables type-specific fields"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"UI Test Component 001\" into the component name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"TestBrand\" into the brand field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Fill required type-specific fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create component form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify \"UI Test Component 001\" appears in the components list"
+      }
+    ]
+  },
+  {
+    "id": "TC040",
+    "title": "Admin inventory shows dynamic fields when component type changes",
+    "description": "Verifies the form updates to show different required spec fields based on the selected component type.",
+    "category": "Admin Hardware Inventory",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open the add component form"
+      },
+      {
+        "type": "action",
+        "description": "Select CPU as the component type"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify CPU-specific spec fields are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Select GPU as the component type"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify GPU-specific spec fields are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC041",
+    "title": "Admin inventory prevents creating a component with missing required fields",
+    "description": "Verifies validation errors appear and saving is prevented when required fields are not provided.",
+    "category": "Admin Hardware Inventory",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open the add component form"
+      },
+      {
+        "type": "action",
+        "description": "Select a component type"
+      },
+      {
+        "type": "action",
+        "description": "Leave required fields empty"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create component form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation errors are visible and the component is not saved"
+      }
+    ]
+  },
+  {
+    "id": "TC042",
+    "title": "Admin inventory can edit an existing component and see updated value",
+    "description": "Verifies an administrator can edit a component and the updated name is reflected in the list.",
+    "category": "Admin Hardware Inventory",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open the add component form"
+      },
+      {
+        "type": "action",
+        "description": "Select a component type"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"UI Test Component To Edit\" into the component name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"TestBrand\" into the brand field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Fill required type-specific fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create component form"
+      },
+      {
+        "type": "action",
+        "description": "Open the edit form for \"UI Test Component To Edit\""
+      },
+      {
+        "type": "action",
+        "description": "Fill \"UI Test Component Edited\" into the component name field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the save changes action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify \"UI Test Component Edited\" appears in the components list"
+      }
+    ]
+  },
+  {
+    "id": "TC043",
+    "title": "Admin inventory can delete a component and it no longer appears",
+    "description": "Verifies an administrator can delete a component and it is removed from the inventory list.",
+    "category": "Admin Hardware Inventory",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open the add component form"
+      },
+      {
+        "type": "action",
+        "description": "Select a component type"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"UI Test Component To Delete\" into the component name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"TestBrand\" into the brand field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Fill required type-specific fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create component form"
+      },
+      {
+        "type": "action",
+        "description": "Delete \"UI Test Component To Delete\" from the components list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify \"UI Test Component To Delete\" is not present in the components list"
+      }
+    ]
+  },
+  {
+    "id": "TC044",
+    "title": "Create and activate a new preset build",
+    "description": "Administrator can create a new preset with usage, budget, components, and reasons, and see it appear as active in the presets list.",
+    "category": "Admin Preset Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/presets"
+      },
+      {
+        "type": "action",
+        "description": "Open the add preset flow"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid component from the components dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill a reason for the selected component"
+      },
+      {
+        "type": "action",
+        "description": "Save the preset"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new preset is listed in the presets list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new preset is shown as active"
       }
     ]
   },
   {
     "id": "TC045",
-    "title": "Admin Dashboard: unauthenticated access is blocked",
-    "description": "Verifies unauthenticated users cannot access the admin dashboard.",
-    "category": "Admin Dashboard",
+    "title": "Prevent saving a preset without components",
+    "description": "Administrator cannot save a preset when no components are selected, and a validation error is shown.",
+    "category": "Admin Preset Management",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /admin"
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/presets"
+      },
+      {
+        "type": "action",
+        "description": "Open the add preset flow"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Submit the preset form without selecting any components"
       },
       {
         "type": "assertion",
-        "description": "Verify the user is redirected away from the admin dashboard to a login or public page"
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the preset is not added to the presets list"
       }
     ]
   },
   {
     "id": "TC046",
-    "title": "Admin Dashboard: non-admin user is redirected away from admin area",
-    "description": "Verifies a logged-in non-admin cannot access the admin dashboard.",
-    "category": "Admin Dashboard",
+    "title": "View presets list and basic details",
+    "description": "Administrator can load the presets page and see existing presets displayed.",
+    "category": "Admin Preset Management",
     "priority": "High",
     "steps": [
       {
@@ -1637,19 +1817,23 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /admin"
+        "description": "Navigate to /admin/presets"
       },
       {
         "type": "assertion",
-        "description": "Verify the user is redirected away from the admin dashboard to a non-admin page"
+        "description": "Verify the presets list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify preset usage and budget information is displayed for at least one preset"
       }
     ]
   },
   {
     "id": "TC047",
-    "title": "Admin Inventory: view components list and filter by type",
-    "description": "Verifies admins can load inventory and filter results by component type.",
-    "category": "Admin Hardware Inventory",
+    "title": "Toggle a preset active/inactive",
+    "description": "Administrator can toggle a preset's active state and see the state change reflected in the list.",
+    "category": "Admin Preset Management",
     "priority": "High",
     "steps": [
       {
@@ -1670,24 +1854,24 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /admin/inventory"
+        "description": "Navigate to /admin/presets"
       },
       {
         "type": "action",
-        "description": "Select a component type filter option"
+        "description": "Toggle the active state for the first preset in the list"
       },
       {
         "type": "assertion",
-        "description": "Verify the components list updates to show only results matching the selected type"
+        "description": "Verify the preset active status indicator changes state"
       }
     ]
   },
   {
     "id": "TC048",
-    "title": "Admin Inventory: add a new CPU with CPU-specific fields",
-    "description": "Verifies admins can create a CPU component using type-specific fields and see it in the list.",
-    "category": "Admin Hardware Inventory",
-    "priority": "High",
+    "title": "Edit an existing preset's component reason and save",
+    "description": "Administrator can edit a preset by updating a component reason and see the change persist in the UI.",
+    "category": "Admin Preset Management",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
@@ -1707,388 +1891,30 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /admin/inventory"
+        "description": "Navigate to /admin/presets"
       },
       {
         "type": "action",
-        "description": "Click the add component action to open the create form"
+        "description": "Open the edit flow for the first preset in the list"
       },
       {
         "type": "action",
-        "description": "Select CPU as the component type"
+        "description": "Update the reason text for an existing component to \"Updated reason for testing\""
       },
       {
         "type": "action",
-        "description": "Fill in the name field with CPU Test 001"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the brand field with TestBrand"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid price into the price field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid socket value into the socket field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid value into the single-core score field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid value into the multi-core score field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the component form"
+        "description": "Save the preset"
       },
       {
         "type": "assertion",
-        "description": "Verify the components list contains an entry with name CPU Test 001"
+        "description": "Verify the updated reason text \"Updated reason for testing\" is displayed for that preset"
       }
     ]
   },
   {
     "id": "TC049",
-    "title": "Admin Inventory: required field validation prevents saving",
-    "description": "Verifies the inventory form blocks submission when required fields are missing.",
-    "category": "Admin Hardware Inventory",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/inventory"
-      },
-      {
-        "type": "action",
-        "description": "Click the add component action to open the create form"
-      },
-      {
-        "type": "action",
-        "description": "Select CPU as the component type"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the name field with CPU Invalid 001"
-      },
-      {
-        "type": "action",
-        "description": "Submit the component form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a validation error is visible and the component is not saved"
-      }
-    ]
-  },
-  {
-    "id": "TC050",
-    "title": "Admin Inventory: delete a component from the list",
-    "description": "Verifies admins can delete an existing component and it no longer appears in the list.",
-    "category": "Admin Hardware Inventory",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/inventory"
-      },
-      {
-        "type": "action",
-        "description": "Click the add component action to open the create form"
-      },
-      {
-        "type": "action",
-        "description": "Select CPU as the component type"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the name field with CPU Delete 001"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the brand field with TestBrand"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid price into the price field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid socket value into the socket field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid value into the single-core score field"
-      },
-      {
-        "type": "action",
-        "description": "Fill in a valid value into the multi-core score field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the component form"
-      },
-      {
-        "type": "action",
-        "description": "Delete the component with name CPU Delete 001"
-      },
-      {
-        "type": "action",
-        "description": "Confirm the deletion"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the components list no longer contains an entry with name CPU Delete 001"
-      }
-    ]
-  },
-  {
-    "id": "TC051",
-    "title": "Create and save a new preset build (end-to-end)",
-    "description": "Verifies an admin can create a preset by selecting usage, budget, and at least one component, then save and see it listed.",
-    "category": "Admin Preset Management",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to add a new preset"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the components dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Fill a reason for the selected component"
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the new preset appears in the presets list"
-      }
-    ]
-  },
-  {
-    "id": "TC052",
-    "title": "Preset creation requires at least one component",
-    "description": "Verifies validation prevents saving a preset when no components are selected.",
-    "category": "Admin Preset Management",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to add a new preset"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a validation error is visible requiring at least one component"
-      }
-    ]
-  },
-  {
-    "id": "TC053",
-    "title": "Toggle a preset inactive and confirm it no longer appears in Build Wizard",
-    "description": "Verifies an admin can deactivate a preset and it disappears from the /plan preset recommendations.",
-    "category": "Admin Preset Management",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to add a new preset"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the components dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Fill a reason for the selected component"
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "action",
-        "description": "Toggle the newly created preset to inactive"
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /plan"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the deactivated preset is not shown among preset recommendations"
-      }
-    ]
-  },
-  {
-    "id": "TC054",
-    "title": "Presets page loads and displays preset list",
-    "description": "Verifies the admin presets page loads and shows the main presets listing UI.",
-    "category": "Admin Preset Management",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a list of presets is displayed"
-      }
-    ]
-  },
-  {
-    "id": "TC055",
-    "title": "Auto-filled component details and total price calculation update when selecting components",
-    "description": "Verifies selecting components populates details and updates the computed total price.",
+    "title": "Delete a preset from the list",
+    "description": "Administrator can delete an existing preset and see it removed from the presets list.",
     "category": "Admin Preset Management",
     "priority": "Medium",
     "steps": [
@@ -2114,7 +1940,7 @@
       },
       {
         "type": "action",
-        "description": "Click the control to add a new preset"
+        "description": "Open the add preset flow"
       },
       {
         "type": "action",
@@ -2126,133 +1952,7 @@
       },
       {
         "type": "action",
-        "description": "Select a component from the components dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Select another component from the components dropdown"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the selected components show auto-filled name and price details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the total price is displayed and reflects the selected components"
-      }
-    ]
-  },
-  {
-    "id": "TC056",
-    "title": "Edit an existing preset and save changes",
-    "description": "Verifies an admin can edit a preset (e.g., change a component reason) and persist the update.",
-    "category": "Admin Preset Management",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to add a new preset"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the components dropdown"
-      },
-      {
-        "type": "action",
-        "description": "Fill a reason for the selected component"
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "action",
-        "description": "Open the newly created preset for editing"
-      },
-      {
-        "type": "action",
-        "description": "Update the component reason to \"Updated reason\""
-      },
-      {
-        "type": "action",
-        "description": "Save the preset"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the preset shows the updated reason \"Updated reason\""
-      }
-    ]
-  },
-  {
-    "id": "TC057",
-    "title": "Delete a preset and verify it is removed from the list",
-    "description": "Verifies an admin can delete a preset and it no longer appears in the presets list.",
-    "category": "Admin Preset Management",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to /admin/presets"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to add a new preset"
-      },
-      {
-        "type": "action",
-        "description": "Select a usage type"
-      },
-      {
-        "type": "action",
-        "description": "Select a budget tier"
-      },
-      {
-        "type": "action",
-        "description": "Select a component from the components dropdown"
+        "description": "Select a valid component from the components dropdown"
       },
       {
         "type": "action",
@@ -2268,7 +1968,60 @@
       },
       {
         "type": "assertion",
-        "description": "Verify the deleted preset no longer appears in the presets list"
+        "description": "Verify the deleted preset is no longer listed in the presets list"
+      }
+    ]
+  },
+  {
+    "id": "TC050",
+    "title": "Auto-calculations update when selecting components",
+    "description": "Selecting components auto-fills component details and updates total price calculation.",
+    "category": "Admin Preset Management",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/presets"
+      },
+      {
+        "type": "action",
+        "description": "Open the add preset flow"
+      },
+      {
+        "type": "action",
+        "description": "Select a usage type"
+      },
+      {
+        "type": "action",
+        "description": "Select a budget tier"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid component from the components dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select an additional valid component from the components dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the total price is displayed and updates after component selection"
       }
     ]
   }

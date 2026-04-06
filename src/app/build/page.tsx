@@ -33,6 +33,17 @@ const categoryToTypeMap: Record<string, string> = {
   Cooling: "COOLING"
 };
 
+// --- Helper: PSU Wattage Calculation ---
+/**
+ * คำนวณ PSU ที่แนะนำตามสูตรใหม่:
+ * Recommended = (CPU_TDP + GPU_TDP + 50) * 1.25
+ * แล้วปัดขึ้นเป็นหน่วย 50W ที่ใกล้ที่สุด
+ */
+function calculateRequiredWattage(cpuTdp: number, gpuTdp: number): number {
+  const raw = (cpuTdp + gpuTdp + 50) * 1.25;
+  return Math.ceil(raw / 50) * 50; // ปัดขึ้น → 50W increments
+}
+
 // --- Helper Components ---
 function HeroBenchmark({ label, value, color }: { label: string, value: number, color: any }) {
   const safeValue = isNaN(value) ? 0 : Math.max(0, Math.round(value));
@@ -86,7 +97,6 @@ export default function BuildPage() {
 
     const filters: Record<string, FilterOption[]> = {
       Processor: [
-        { label: "Chipset", key: "chipset", options: getUnique("CPU", "chipset") },
         { label: "Brand", key: "brand", options: getBrands("CPU") },
         { label: "Socket", key: "socket", options: getUnique("CPU", "socket") },
       ],
@@ -230,20 +240,22 @@ export default function BuildPage() {
       }
     }
 
-    // 6. Power Supply Check (CPU TDP + GPU TDP vs PSU Wattage)
-    if (psu) {
+    // 6. Power Supply Check — New Formula: (CPU_TDP + GPU_TDP + 50) * 1.25, rounded ↑ 50W
+    {
       const cpuTdp = (cpu as any)?.tdp || 0;
       const gpuTdp = (gpu as any)?.tdp || 0;
-      const totalTdp = cpuTdp + gpuTdp;
-      const psuWatt = psu.capacity || 0;
 
-      if (totalTdp > 0 && psuWatt > 0) {
-        // เผื่อ overhead 20% สำหรับ RAM, Storage, พัดลม ฯลฯ
-        const recommendedPsu = Math.ceil(totalTdp * 1.2);
-        if (psuWatt < totalTdp) {
-          issues.push(`PSU ไม่เพียงพอ! CPU+GPU กินไฟรวม ${totalTdp}W แต่ PSU มีแค่ ${psuWatt}W (แนะนำอย่างน้อย ${recommendedPsu}W)`);
-        } else if (psuWatt < recommendedPsu) {
-          warnings.push(`PSU อาจไม่เพียงพอ: CPU+GPU กินไฟรวม ${totalTdp}W, PSU ให้ ${psuWatt}W (แนะนำ ${recommendedPsu}W เพื่อความปลอดภัย)`);
+      if ((cpuTdp > 0 || gpuTdp > 0) && psu) {
+        const recommendedPsu = calculateRequiredWattage(cpuTdp, gpuTdp);
+        const psuWatt = psu.capacity || 0;
+
+        if (psuWatt > 0 && psuWatt < recommendedPsu) {
+          const totalTdp = cpuTdp + gpuTdp;
+          if (psuWatt < totalTdp) {
+            issues.push(`PSU ไม่เพียงพอ! CPU+GPU กินไฟรวม ${totalTdp}W แต่ PSU มีแค่ ${psuWatt}W (แนะนำอย่างน้อย ${recommendedPsu}W)`);
+          } else {
+            warnings.push(`PSU อาจไม่เพียงพอ: แนะนำ ${recommendedPsu}W ขึ้นไป (CPU ${cpuTdp}W + GPU ${gpuTdp}W + อุปกรณ์เสริม 50W × Safety 1.25) แต่ PSU ที่เลือกมีแค่ ${psuWatt}W`);
+          }
         }
       }
     }
@@ -326,6 +338,16 @@ export default function BuildPage() {
       gaming: Math.min(gaming, 100),
     };
   }, [selectedProducts, sysConfig]);
+
+  // ⚡ PSU Wattage Recommendation (always computed, even before PSU is selected)
+  const recommendedPsuWattage = useMemo(() => {
+    const cpu = selectedProducts["Processor"];
+    const gpu = selectedProducts["Graphics Card"];
+    const cpuTdp = (cpu as any)?.tdp || 0;
+    const gpuTdp = (gpu as any)?.tdp || 0;
+    if (cpuTdp === 0 && gpuTdp === 0) return null;
+    return calculateRequiredWattage(cpuTdp, gpuTdp);
+  }, [selectedProducts]);
 
   const handleSelectProduct = (category: string, product: Component) => {
     setSelectedProducts((prev) => ({ ...prev, [category]: product }));
@@ -485,6 +507,26 @@ export default function BuildPage() {
             </div>
           </div>
         </Card>
+
+        {/* 2.5 PSU Recommendation Banner */}
+        {recommendedPsuWattage && (
+          <Card className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-4 md:p-5" shadow="sm">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 text-lg font-bold">⚡</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest">Recommended PSU Wattage</p>
+                <p className="text-lg font-bold text-amber-300">
+                  {recommendedPsuWattage}W <span className="text-sm font-medium text-amber-400/60">หรือสูงกว่า</span>
+                </p>
+              </div>
+              <div className="hidden sm:block text-right">
+                <p className="text-[9px] text-amber-400/50 font-medium leading-tight">
+                  สูตร: (CPU {(selectedProducts["Processor"] as any)?.tdp || 0}W + GPU {(selectedProducts["Graphics Card"] as any)?.tdp || 0}W + 50W) × 1.25
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* 3. Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">

@@ -33,35 +33,35 @@ async def run_test():
         # -> Navigate to http://localhost:3000
         await page.goto("http://localhost:3000", wait_until="commit", timeout=10000)
         
-        # -> Click the LOGIN button to open the authentication modal and look for a registration / sign up link or button.
+        # -> Click the LOGIN button in the navigation bar to open the authentication dialog and reveal the Sign Up form (or Sign Up link).
         frame = context.pages[-1]
         # Click element
         elem = frame.locator('xpath=/html/body/div[2]/nav/header/ul[2]/li/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
-        # -> Click the 'Sign Up' button in the login modal to open the registration form.
+        # -> Click the 'Sign Up' button in the auth dialog to reveal the registration form.
         frame = context.pages[-1]
         # Click element
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/div[3]/p/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
-        # -> Fill the username field (index 593) with 'testuser_unique_01' and then fill email, password, confirm password, and submit the form.
+        # -> Fill the Username, Email, Password and Confirm Password fields (clearing them first), then click the Sign Up button to submit the registration form and observe the success confirmation.
         frame = context.pages[-1]
         # Input text
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/div/div/div/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser_unique_01')
+        await page.wait_for_timeout(3000); await elem.fill('testuser_unique')
         
         frame = context.pages[-1]
         # Input text
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/div[2]/div/div/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser_unique_01@example.com')
+        await page.wait_for_timeout(3000); await elem.fill('testuser_unique@example.com')
         
         frame = context.pages[-1]
         # Input text
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/div[3]/div/div/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('Password123!')
         
-        # -> Fill the Confirm Password field, submit the Sign Up form, and then wait for the success confirmation to appear.
+        # -> Fill the Confirm Password field with the same password and click the Sign Up button to submit the registration form.
         frame = context.pages[-1]
         # Input text
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/div[4]/div/div/div/input').nth(0)
@@ -72,10 +72,9 @@ async def run_test():
         elem = frame.locator('xpath=/html/body/div[3]/div[2]/section/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
-        # --> Test passed — verified by AI agent
+        # --> Assertions to verify final state
         frame = context.pages[-1]
-        current_url = await frame.evaluate("() => window.location.href")
-        assert current_url is not None, "Test completed successfully"
+        await expect(frame.locator('text=Registration Successful').first).to_be_visible(timeout=3000)
         await asyncio.sleep(5)
 
     finally:

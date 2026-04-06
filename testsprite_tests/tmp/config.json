@@ -3,18 +3,16 @@
   "type": "frontend",
   "scope": "codebase",
   "localEndpoint": "http://localhost:3000",
-  "loginUser": "test",
-  "loginPassword": "1234",
   "executionArgs": {
     "projectName": "pc-builder",
-    "projectPath": "f:\\CODE\\FinalProj\\pc-builder",
+    "projectPath": "F:\\CODE\\FinalProj\\pc-builder",
     "testIds": [],
-    "additionalInstruction": "Focus on critical user flows: homepage navigation, build wizard flow, forum browsing, and admin access control. The app uses Thai language UI. Authentication uses NextAuth with credentials provider.",
-    "serverMode": "development",
+    "additionalInstruction": "Target failed areas from prior run with emphasis on Admin Dashboard, Inventory CRUD, User Management, Forum report/comment flows, Notification System, and Responsive behavior. For any required login always use username: admin and password: 1234. IMPORTANT: clear username/email and password inputs before typing to avoid concatenated values from previous attempts. If login form label says 'Username or Email', input exactly admin as identifier.",
+    "serverMode": "production",
     "envs": {
       "API_KEY": "sk-user-8k2s4DSKJc-2Yo4DA0NHcEEPdHFljjQ6yAhn0suGUqSS7bVxC6uhFBmhuAvnmDYf2y0vAvqypTd3HAXTLAwkCa1yxd2YpxNfPaVdu5R1B7mpv_egKuiIW7I-qwspEk9yle0"
     }
   },
-  "serverPort": 62086,
-  "proxy": "http://69bc0cd3-0681-4336-9096-b0bc5da2984d:G9OiIfxZiwo95UCuqVjxtNxntmwlLrtb@tun.testsprite.com:8080"
+  "serverPort": 55107,
+  "proxy": "http://942f65f2-7b5a-4795-9329-dd5d22c2c568:ZARjoxoUkMKJ79a3CDtBt28CHWQr7sKz@tun.testsprite.com:8080"
 }
