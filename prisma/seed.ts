@@ -34,7 +34,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmeneld2000156sdmltt884s",
@@ -59,7 +60,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmeneld7000256sdkaeuzf3r",
@@ -84,7 +86,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmeneldb000356sd5uoy6k1k",
@@ -109,7 +112,8 @@ async function main() {
         "gpuScore": 19800,
         "vramGb": 8,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmeneldh000456sdhfcox6z5",
@@ -134,32 +138,8 @@ async function main() {
         "gpuScore": 27500,
         "vramGb": 16,
         "ramSpeed": null,
-        "readWriteSpeed": null
-    },
-    {
-        "id": "cmmeneldo000556sdz168yy80",
-        "name": "NVIDIA GeForce RTX 4070 Ti SUPER",
-        "type": "GPU",
-        "brand": "Nvidia",
-        "price": 32900,
-        "image": "https://media-cdn.bnn.in.th/406456/Asus-VGA-TUF-RTX4070TIS-O16G-GAMING-16GB-GDDR6X-256-bit-1-square_medium.jpg",
-        "description": null,
-        "socket": null,
-        "ramType": null,
-        "formFactor": null,
-        "capacity": null,
-        "tdp": null,
-        "lengthMm": null,
-        "maxGpuLength": null,
-        "maxCoolerHeight": null,
-        "supportedMobo": null,
-        "psuFormFactor": null,
-        "cpuSingleScore": null,
-        "cpuMultiScore": null,
-        "gpuScore": 31500,
-        "vramGb": 16,
-        "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmenelds000656sdokqof8s1",
@@ -184,7 +164,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": 3200,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmenele1000756sdu8gd14yk",
@@ -209,7 +190,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": 5200,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmenele5000856sd47e27jwg",
@@ -234,7 +216,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": 7000
+        "readWriteSpeed": 7000,
+        "chipset": null
     },
     {
         "id": "cmmenelea000956sd6hmxk4tk",
@@ -259,7 +242,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": 4000
+        "readWriteSpeed": 4000,
+        "chipset": null
     },
     {
         "id": "cmmsywxty000060i0wf1y2kw5",
@@ -284,7 +268,8 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmucplp00001jqqs55y3w6ts",
@@ -309,7 +294,8 @@ async function main() {
         "gpuScore": 20839,
         "vramGb": 8,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmmvrn1710000964w3oqq0fkm",
@@ -334,7 +320,112 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
+    },
+    {
+        "id": "cmnmwbosi00001xttwsugt83b",
+        "name": "Core i3-14100F",
+        "type": "CPU",
+        "brand": "Intel",
+        "price": 4990,
+        "image": "https://res.cloudinary.com/dgavtp1tj/image/upload/v1775462163/pc-builder-forum/oqhqzfi31dao9iunmw3a.jpg",
+        "description": null,
+        "socket": "LGA-1700",
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 110,
+        "lengthMm": null,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": 3769,
+        "cpuMultiScore": 15401,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": null
+    },
+    {
+        "id": "cmnmwbosj00011xttqg8tk1qm",
+        "name": "Core i3-14100",
+        "type": "CPU",
+        "brand": "Intel",
+        "price": 5500,
+        "image": "https://res.cloudinary.com/dgavtp1tj/image/upload/v1775462178/pc-builder-forum/cqrcy4ggnf6in7q7mu3v.jpg",
+        "description": null,
+        "socket": "LGA-1700",
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 110,
+        "lengthMm": null,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": 3762,
+        "cpuMultiScore": 15131,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": null
+    },
+    {
+        "id": "cmnmx6ona00021xttrssu8yzg",
+        "name": "Core i5-14400",
+        "type": "CPU",
+        "brand": "Intel",
+        "price": 6390,
+        "image": "https://res.cloudinary.com/dgavtp1tj/image/upload/v1775463576/pc-builder-forum/vgfxvlzgsql6q8ygpdbf.jpg",
+        "description": null,
+        "socket": "LGA-1700",
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 148,
+        "lengthMm": null,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": 3742,
+        "cpuMultiScore": 25180,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": null
+    },
+    {
+        "id": "cmnmx6onb00031xttzw1wbpoz",
+        "name": "Core i5-14400F",
+        "type": "CPU",
+        "brand": "Intel",
+        "price": 5900,
+        "image": "https://res.cloudinary.com/dgavtp1tj/image/upload/v1775463587/pc-builder-forum/nsipax2cocvkzueuyiaq.jpg",
+        "description": null,
+        "socket": "LGA-1700",
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 148,
+        "lengthMm": null,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": 3707,
+        "cpuMultiScore": 25589,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": null
     },
     {
         "id": "cmnit4xgg0000ocrh7w8git1j",
@@ -344,7 +435,7 @@ async function main() {
         "price": 0,
         "image": null,
         "description": null,
-        "socket": "LGA1700",
+        "socket": "LGA-1700",
         "ramType": "DDR5",
         "formFactor": "ATX",
         "capacity": null,
@@ -359,7 +450,34 @@ async function main() {
         "gpuScore": null,
         "vramGb": null,
         "ramSpeed": null,
-        "readWriteSpeed": null
+        "readWriteSpeed": null,
+        "chipset": null
+    },
+    {
+        "id": "cmmeneldo000556sdz168yy80",
+        "name": "NVIDIA GeForce RTX 4070 Ti SUPER",
+        "type": "GPU",
+        "brand": "MSI",
+        "price": 32900,
+        "image": "https://media-cdn.bnn.in.th/406456/Asus-VGA-TUF-RTX4070TIS-O16G-GAMING-16GB-GDDR6X-256-bit-1-square_medium.jpg",
+        "description": null,
+        "socket": null,
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 285,
+        "lengthMm": 308,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": null,
+        "cpuMultiScore": null,
+        "gpuScore": 31500,
+        "vramGb": 16,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": "NVIDIA"
     }
 ];
 

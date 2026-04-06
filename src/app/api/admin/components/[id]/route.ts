@@ -27,7 +27,8 @@ export async function PUT(req: Request, context: any) {
             socket, ramType, formFactor, capacity,
             tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
             cpuSingleScore, cpuMultiScore, gpuScore,
-            vramGb, ramSpeed, readWriteSpeed
+            vramGb, ramSpeed, readWriteSpeed,
+            chipset
         } = body;
 
         // @ts-ignore : description will be valid after prisma client re-generates
@@ -56,6 +57,7 @@ export async function PUT(req: Request, context: any) {
                 vramGb: vramGb === undefined ? existingComponent.vramGb : (vramGb ? parseInt(vramGb.toString()) : null),
                 ramSpeed: ramSpeed === undefined ? existingComponent.ramSpeed : (ramSpeed ? parseInt(ramSpeed.toString()) : null),
                 readWriteSpeed: readWriteSpeed === undefined ? existingComponent.readWriteSpeed : (readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null),
+                chipset: chipset !== undefined ? (chipset || null) : (existingComponent as any).chipset,
             }
         });
 

@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Card, CardBody, CardHeader, Button, Input, Select, SelectItem,
     Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
     Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Spinner,
     Chip,
-    Tooltip
+    Tooltip, addToast, ScrollShadow
 } from "@heroui/react";
-import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch, IoCloudUploadOutline, IoImageOutline, IoLinkOutline, IoWarningOutline } from "react-icons/io5";
+import { IoCubeOutline, IoAddCircleOutline, IoPencil, IoTrash, IoSearch, IoCloudUploadOutline, IoImageOutline, IoLinkOutline, IoWarningOutline, IoDocumentTextOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
+import Papa from "papaparse";
 
 type ComponentData = {
     id: string;
@@ -35,6 +36,7 @@ type ComponentData = {
     psuFormFactor?: string | null;
     createdAt?: string;
     description?: string | null;
+    chipset?: string | null;
 };
 
 const TYPE_OPTIONS = [
@@ -56,7 +58,8 @@ export default function InventoryCRUDPage() {
 
     // Modal State
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const [modalMode, setModalMode] = useState<"ADD" | "EDIT">("ADD");
+    const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | "IMPORT_EDIT">("ADD");
+    const [importEditIndex, setImportEditIndex] = useState<number | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -67,6 +70,13 @@ export default function InventoryCRUDPage() {
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange } = useDisclosure();
     const [itemToDelete, setItemToDelete] = useState<{ id: string, name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // CSV Import State
+    const csvInputRef = useRef<HTMLInputElement>(null);
+    const [importType, setImportType] = useState<string>("");
+    const [importList, setImportList] = useState<(Partial<ComponentData> & { isReady: boolean })[]>([]);
+    const { isOpen: isStagingOpen, onOpen: onStagingOpen, onOpenChange: onStagingOpenChange } = useDisclosure();
+    const [isBulkSaving, setIsBulkSaving] = useState(false);
 
     // Form Data
     const [formData, setFormData] = useState<Partial<ComponentData>>({
@@ -81,7 +91,7 @@ export default function InventoryCRUDPage() {
         cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
         vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
         tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
-        maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: ""
+        maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: ""
     });
 
     useEffect(() => {
@@ -111,7 +121,7 @@ export default function InventoryCRUDPage() {
             cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
             vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
             tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
-            maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: ""
+            maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -131,7 +141,8 @@ export default function InventoryCRUDPage() {
             readWriteSpeed: comp.readWriteSpeed || undefined,
             tdp: comp.tdp || undefined, lengthMm: comp.lengthMm || undefined,
             maxGpuLength: comp.maxGpuLength || undefined, maxCoolerHeight: comp.maxCoolerHeight || undefined,
-            supportedMobo: comp.supportedMobo || "", psuFormFactor: comp.psuFormFactor || ""
+            supportedMobo: comp.supportedMobo || "", psuFormFactor: comp.psuFormFactor || "",
+            chipset: comp.chipset || ""
         });
         setImageFile(null);
         setImagePreview(comp.image || null);
@@ -165,9 +176,159 @@ export default function InventoryCRUDPage() {
         }
     };
 
+    // === CSV Import Handlers ===
+    const handleCsvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !importType) return;
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                const rows = results.data as Record<string, any>[];
+                const mapped = rows.map(row => ({
+                    ...row,
+                    type: importType, // force inject type
+                    price: row.price ? parseFloat(row.price) : 0,
+                    capacity: row.capacity ? parseInt(row.capacity) : undefined,
+                    cpuSingleScore: row.cpuSingleScore ? parseInt(row.cpuSingleScore) : undefined,
+                    cpuMultiScore: row.cpuMultiScore ? parseInt(row.cpuMultiScore) : undefined,
+                    gpuScore: row.gpuScore ? parseInt(row.gpuScore) : undefined,
+                    vramGb: row.vramGb ? parseInt(row.vramGb) : undefined,
+                    ramSpeed: row.ramSpeed ? parseInt(row.ramSpeed) : undefined,
+                    readWriteSpeed: row.readWriteSpeed ? parseInt(row.readWriteSpeed) : undefined,
+                    tdp: row.tdp ? parseInt(row.tdp) : undefined,
+                    lengthMm: row.lengthMm ? parseInt(row.lengthMm) : undefined,
+                    maxGpuLength: row.maxGpuLength ? parseInt(row.maxGpuLength) : undefined,
+                    maxCoolerHeight: row.maxCoolerHeight ? parseInt(row.maxCoolerHeight) : undefined,
+                    chipset: row.chipset || "",
+                    isReady: false,
+                }));
+                setImportList(mapped);
+                onStagingOpen();
+            },
+            error: (err) => {
+                addToast({ title: `CSV Error: ${err.message}`, color: "danger" });
+            }
+        });
+        // Reset file input so same file can be re-selected
+        e.target.value = "";
+    };
+
+    const validateImportRow = (row: Partial<ComponentData> & { isReady: boolean }): string[] => {
+        const missing: string[] = [];
+        if (!row.name) missing.push("name");
+        if (!row.brand) missing.push("brand");
+        if (!row.price || row.price <= 0) missing.push("price");
+        const t = row.type;
+        if (t === "CPU") {
+            if (!row.socket) missing.push("socket");
+            if (!row.cpuSingleScore) missing.push("cpuSingleScore");
+            if (!row.cpuMultiScore) missing.push("cpuMultiScore");
+        }
+        if (t === "GPU") {
+            if (!row.vramGb) missing.push("vramGb");
+            if (!row.gpuScore) missing.push("gpuScore");
+        }
+        if (t === "RAM") {
+            if (!row.ramType) missing.push("ramType");
+            if (!row.capacity) missing.push("capacity");
+            if (!row.ramSpeed) missing.push("ramSpeed");
+        }
+        if (t === "MB") {
+            if (!row.socket) missing.push("socket");
+            if (!row.ramType) missing.push("ramType");
+            if (!row.formFactor) missing.push("formFactor");
+        }
+        if (t === "STORAGE") {
+            if (!row.capacity) missing.push("capacity");
+            if (!row.readWriteSpeed) missing.push("readWriteSpeed");
+        }
+        return missing;
+    };
+
+    const handleVerifyRow = (idx: number) => {
+        const row = importList[idx];
+        const missing = validateImportRow(row);
+        if (missing.length > 0) {
+            addToast({ title: `ข้อมูลไม่ครบ: ${missing.join(", ")}`, color: "danger" });
+            return;
+        }
+        setImportList(prev => prev.map((r, i) => i === idx ? { ...r, isReady: true } : r));
+        addToast({ title: `"${row.name}" ผ่านการตรวจสอบแล้ว ✓`, color: "success" });
+    };
+
+    const handleEditImportRow = (idx: number) => {
+        const row = importList[idx];
+        setModalMode("IMPORT_EDIT");
+        setImportEditIndex(idx);
+        setFormData({ ...row });
+        setImageFile(null);
+        setImagePreview(row.image || null);
+        setImageMode(row.image ? "URL" : "FILE");
+        onOpen();
+    };
+
+    const handleBulkSubmit = async () => {
+        if (importList.some(r => !r.isReady)) {
+            addToast({ title: "กรุณา Verify ทุกรายการก่อน", color: "danger" });
+            return;
+        }
+        setIsBulkSaving(true);
+        try {
+            // Clean up isReady field before sending
+            const items = importList.map(({ isReady, ...rest }) => rest);
+            const res = await fetch("/api/admin/components", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bulk: true, items })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                addToast({ title: `นำเข้าสำเร็จ ${data.count} รายการ!`, color: "success" });
+                setImportList([]);
+                onStagingOpenChange();
+                fetchComponents();
+            } else {
+                const err = await res.json();
+                addToast({ title: err.error || "เกิดข้อผิดพลาด", color: "danger" });
+            }
+        } catch (e) {
+            addToast({ title: "เกิดข้อผิดพลาดในการนำเข้าข้อมูล", color: "danger" });
+        } finally {
+            setIsBulkSaving(false);
+        }
+    };
+
     const handleSave = async (onClose: () => void) => {
         if (!formData.name || !formData.brand || formData.price === undefined || formData.price < 0) {
             alert("กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วนและถูกต้อง (ชื่อ, แบรนด์, ราคาขั้นต่ำ 0)");
+            return;
+        }
+
+        // IMPORT_EDIT mode: update the importList state instead of calling API
+        if (modalMode === "IMPORT_EDIT" && importEditIndex !== null) {
+            // อัปโหลดรูปภาพไป Cloudinary ก่อน (ถ้ามีไฟล์ใหม่)
+            let importImageUrl = formData.image || null;
+            if (imageFile) {
+                const uploadFormData = new FormData();
+                uploadFormData.append("files", imageFile);
+                try {
+                    const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadFormData });
+                    if (uploadRes.ok) {
+                        const uploadData = await uploadRes.json();
+                        importImageUrl = uploadData.urls?.[0] || null;
+                    } else {
+                        addToast({ title: "อัปโหลดรูปไม่สำเร็จ", color: "danger" });
+                        return;
+                    }
+                } catch {
+                    addToast({ title: "เกิดข้อผิดพลาดในการอัปโหลดรูป", color: "danger" });
+                    return;
+                }
+            }
+            setImportList(prev => prev.map((r, i) => i === importEditIndex ? { ...formData, image: importImageUrl, isReady: false } : r));
+            addToast({ title: "อัปเดตข้อมูลในรายการนำเข้าแล้ว (ยังไม่ได้ Verify)", color: "warning" });
+            onClose();
             return;
         }
 
@@ -251,6 +412,7 @@ export default function InventoryCRUDPage() {
                 maxCoolerHeight: type === "CASE" ? pMaxCoolerH : null,
                 supportedMobo: type === "CASE" ? (formData.supportedMobo || null) : null,
                 psuFormFactor: type === "PSU" ? (formData.psuFormFactor || null) : null,
+                chipset: ["CPU", "GPU", "MB"].includes(type || "") ? (formData.chipset || null) : null,
             };
 
             const res = await fetch(url, {
@@ -296,6 +458,7 @@ export default function InventoryCRUDPage() {
             maxCoolerHeight: source.maxCoolerHeight || undefined,
             supportedMobo: source.supportedMobo || "",
             psuFormFactor: source.psuFormFactor || "",
+            chipset: source.chipset || "",
             description: prev.description || source.description || "",
         }));
     };
@@ -377,6 +540,12 @@ export default function InventoryCRUDPage() {
 
                 {/* === NEW: Compatibility Fields === */}
 
+                {/* Chipset (NVIDIA, AMD, Intel B650, Z790, etc.) */}
+                {["CPU", "GPU", "MB"].includes(type || "") && (
+                    <Input label="Chipset" placeholder="e.g. NVIDIA, AMD, B650, Z790" variant="bordered"
+                        value={formData.chipset || ""} onChange={e => setFormData({ ...formData, chipset: e.target.value })} />
+                )}
+
                 {/* TDP (Power Consumption) */}
                 {["CPU", "GPU"].includes(type || "") && (
                     <Input label="TDP / การกินไฟ (Watt)" placeholder="e.g. 65, 200, 285" type="number" variant="bordered"
@@ -428,9 +597,34 @@ export default function InventoryCRUDPage() {
                     </h1>
                     <p className="text-gray-500 text-xs md:text-sm mt-1">ระบบเพิ่ม ลบ แก้ไข ข้อมูลสเปกคอมแยกตามหมวดหมู่อุปกรณ์</p>
                 </div>
-                <Button color="primary" variant="shadow" className="font-bold tracking-wide w-full sm:w-auto" startContent={<IoAddCircleOutline size={20} />} onPress={handleOpenAddModal}>
-                    เพิ่มสินค้าใหม่
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-stretch sm:items-center">
+                    <Button color="primary" variant="shadow" className="font-bold tracking-wide w-full sm:w-auto" startContent={<IoAddCircleOutline size={20} />} onPress={handleOpenAddModal}>
+                        เพิ่มสินค้าใหม่
+                    </Button>
+                    <div className="flex gap-2 items-center">
+                        <Select
+                            placeholder="เลือกประเภท..."
+                            size="sm"
+                            className="w-40"
+                            variant="faded"
+                            selectedKeys={importType ? new Set([importType]) : new Set()}
+                            onSelectionChange={(keys) => setImportType(Array.from(keys)[0] as string || "")}
+                        >
+                            {TYPE_OPTIONS.map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
+                        </Select>
+                        <Button
+                            color="secondary"
+                            variant="flat"
+                            className="font-bold"
+                            startContent={<IoDocumentTextOutline size={18} />}
+                            isDisabled={!importType}
+                            onPress={() => csvInputRef.current?.click()}
+                        >
+                            Import CSV
+                        </Button>
+                        <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFileSelect} />
+                    </div>
+                </div>
             </header>
 
             {/* Filter & Search Bar */}
@@ -551,7 +745,7 @@ export default function InventoryCRUDPage() {
                             <ModalHeader className="flex flex-col gap-1">
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     {modalMode === "ADD" ? <IoAddCircleOutline className="text-blue-500" /> : <IoPencil className="text-warning-500" />}
-                                    {modalMode === "ADD" ? "เพิ่มสินค้าใหม่เข้าสู่คลัง" : "แก้ไขข้อมูลสินค้า"}
+                                    {modalMode === "IMPORT_EDIT" ? "แก้ไขข้อมูล (CSV Import)" : modalMode === "ADD" ? "เพิ่มสินค้าใหม่เข้าสู่คลัง" : "แก้ไขข้อมูลสินค้า"}
                                 </h2>
                                 <p className="text-sm font-normal text-gray-400">
                                     เลือกระบุหมวดหมู่อุปกรณ์ที่ถูกต้อง (Type) เพื่อให้กำหนด ค่า Parameter สำหรับการจัดสเปคได้อย่างแม่นยำ
@@ -775,6 +969,123 @@ export default function InventoryCRUDPage() {
                                     className="font-bold px-8 shadow-danger/30"
                                 >
                                     ยืนยันการลบ
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+            {/* === CSV Import Staging Modal === */}
+            <Modal isOpen={isStagingOpen} onOpenChange={onStagingOpenChange} size="full" scrollBehavior="inside" classNames={{
+                base: "bg-slate-900 border border-white/10 text-white max-h-[95vh]",
+                header: "border-b border-white/5 py-4 px-6",
+                body: "p-0",
+                footer: "border-t border-white/5 py-4 px-6",
+            }}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <IoDocumentTextOutline className="text-secondary" />
+                                    CSV Import Staging — {importType}
+                                </h2>
+                                <p className="text-sm font-normal text-gray-400">
+                                    ตรวจสอบและยืนยันข้อมูลก่อนนำเข้าสู่ระบบ ({importList.length} รายการ, {importList.filter(r => r.isReady).length} verified)
+                                </p>
+                            </ModalHeader>
+                            <ModalBody>
+                                <ScrollShadow className="w-full overflow-x-auto">
+                                    <Table aria-label="CSV Staging Table" classNames={{
+                                        wrapper: "bg-transparent shadow-none p-0 min-w-[800px]",
+                                        th: "bg-white/5 text-white font-bold tracking-wider text-xs",
+                                        td: "border-b border-white/5 py-3 whitespace-nowrap text-sm",
+                                    }}>
+                                        <TableHeader>
+                                            <TableColumn>#</TableColumn>
+                                            <TableColumn>IMAGE</TableColumn>
+                                            <TableColumn>NAME</TableColumn>
+                                            <TableColumn>BRAND</TableColumn>
+                                            <TableColumn>PRICE</TableColumn>
+                                            <TableColumn>KEY SPECS</TableColumn>
+                                            <TableColumn>STATUS</TableColumn>
+                                            <TableColumn align="center">ACTIONS</TableColumn>
+                                        </TableHeader>
+                                        <TableBody emptyContent="ไม่มีข้อมูลในไฟล์ CSV">
+                                            {importList.map((row, idx) => (
+                                                <TableRow key={idx} className={row.isReady ? "bg-success/5" : "hover:bg-white/5"}>
+                                                    <TableCell><span className="text-gray-500 font-mono">{idx + 1}</span></TableCell>
+                                                    <TableCell>
+                                                        <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center p-1 overflow-hidden">
+                                                            {row.image ? (
+                                                                <img src={row.image} alt={row.name || ""} className="max-w-full max-h-full object-contain" />
+                                                            ) : (
+                                                                <IoCubeOutline size={20} className="text-gray-500" />
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell><span className="font-bold text-white truncate max-w-[200px] inline-block">{row.name || "-"}</span></TableCell>
+                                                    <TableCell><span className="text-gray-300 uppercase text-xs tracking-wider">{row.brand || "-"}</span></TableCell>
+                                                    <TableCell><span className="font-mono text-green-400">฿{(row.price || 0).toLocaleString()}</span></TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col gap-0.5 text-xs text-gray-400">
+                                                            {row.socket && <span>Socket: {row.socket}</span>}
+                                                            {row.ramType && <span>RAM: {row.ramType}</span>}
+                                                            {row.capacity != null && <span>Cap: {row.capacity}</span>}
+                                                            {row.tdp != null && <span>TDP: {row.tdp}W</span>}
+                                                            {row.gpuScore != null && <span>GPU: {row.gpuScore}</span>}
+                                                            {row.cpuSingleScore != null && <span>CPU-S: {row.cpuSingleScore}</span>}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {row.isReady ? (
+                                                            <Chip color="success" variant="flat" size="sm" className="font-bold" startContent={<IoCheckmarkCircleOutline size={14} />}>VERIFIED</Chip>
+                                                        ) : (
+                                                            <Chip color="default" variant="flat" size="sm" className="font-bold text-gray-400">PENDING</Chip>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex justify-center gap-1">
+                                                            <Tooltip content="ตรวจสอบ (Verify)">
+                                                                <Button isIconOnly size="sm" variant="flat" color="success" onPress={() => handleVerifyRow(idx)} isDisabled={row.isReady}>
+                                                                    <IoCheckmarkCircleOutline size={16} />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip content="แก้ไข">
+                                                                <Button isIconOnly size="sm" variant="flat" color="warning" onPress={() => handleEditImportRow(idx)}>
+                                                                    <IoPencil size={16} />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip content="ลบ" color="danger">
+                                                                <Button isIconOnly size="sm" variant="flat" color="danger" onPress={() => {
+                                                                    if (window.confirm(`ยืนยันลบ "${row.name || `รายการที่ ${idx + 1}`}" ออกจากรายการนำเข้า?`)) {
+                                                                        setImportList(prev => prev.filter((_, i) => i !== idx));
+                                                                        addToast({ title: `ลบ "${row.name || `รายการที่ ${idx + 1}`}" ออกแล้ว`, color: "danger" });
+                                                                    }
+                                                                }}>
+                                                                    <IoTrash size={16} />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollShadow>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="danger" variant="light" onPress={onClose} className="font-bold">ยกเลิก</Button>
+                                <Button
+                                    color="primary"
+                                    variant="shadow"
+                                    className="font-bold px-8"
+                                    isLoading={isBulkSaving}
+                                    isDisabled={importList.length === 0 || importList.some(r => !r.isReady)}
+                                    onPress={handleBulkSubmit}
+                                    startContent={<IoCloudUploadOutline size={18} />}
+                                >
+                                    Add to Inventory ({importList.filter(r => r.isReady).length}/{importList.length})
                                 </Button>
                             </ModalFooter>
                         </>

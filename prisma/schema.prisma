@@ -141,6 +141,9 @@ model Component {
   ramSpeed       Int?     // MHz (Gaming Score)
   readWriteSpeed Int?     // MB/s สำหรับ Storage (Work Score)
 
+  // -- Classification --
+  chipset        String?  // AMD, NVIDIA, Intel, etc. (for GPU/CPU/Motherboard)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

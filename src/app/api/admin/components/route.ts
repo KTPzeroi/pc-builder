@@ -11,14 +11,48 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+
+        // === BULK INSERT MODE (CSV Import) ===
+        if (body.bulk === true && Array.isArray(body.items)) {
+            const items = body.items.map((item: any) => ({
+                name: item.name,
+                type: item.type,
+                brand: item.brand,
+                price: item.price ? parseFloat(item.price.toString()) : 0,
+                image: item.image || null,
+                description: item.description || null,
+                socket: item.socket || null,
+                ramType: item.ramType || null,
+                formFactor: item.formFactor || null,
+                capacity: item.capacity ? parseInt(item.capacity.toString()) : null,
+                tdp: item.tdp ? parseInt(item.tdp.toString()) : null,
+                lengthMm: item.lengthMm ? parseInt(item.lengthMm.toString()) : null,
+                maxGpuLength: item.maxGpuLength ? parseInt(item.maxGpuLength.toString()) : null,
+                maxCoolerHeight: item.maxCoolerHeight ? parseInt(item.maxCoolerHeight.toString()) : null,
+                supportedMobo: item.supportedMobo || null,
+                psuFormFactor: item.psuFormFactor || null,
+                cpuSingleScore: item.cpuSingleScore ? parseInt(item.cpuSingleScore.toString()) : null,
+                cpuMultiScore: item.cpuMultiScore ? parseInt(item.cpuMultiScore.toString()) : null,
+                gpuScore: item.gpuScore ? parseInt(item.gpuScore.toString()) : null,
+                vramGb: item.vramGb ? parseInt(item.vramGb.toString()) : null,
+                ramSpeed: item.ramSpeed ? parseInt(item.ramSpeed.toString()) : null,
+                readWriteSpeed: item.readWriteSpeed ? parseInt(item.readWriteSpeed.toString()) : null,
+                chipset: item.chipset || null,
+            }));
+
+            const result = await (prisma.component as any).createMany({ data: items });
+            syncSeedFile().catch(console.error);
+            return NextResponse.json({ count: result.count }, { status: 201 });
+        }
         
-        // Destructure only the necessary fields
+        // === SINGLE INSERT MODE (existing behavior) ===
         const {
             name, type, brand, price, image, description,
             socket, ramType, formFactor, capacity,
             tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
             cpuSingleScore, cpuMultiScore, gpuScore,
-            vramGb, ramSpeed, readWriteSpeed
+            vramGb, ramSpeed, readWriteSpeed,
+            chipset
         } = body;
 
         // Basic validation
@@ -51,12 +85,11 @@ export async function POST(req: Request) {
                 vramGb: vramGb ? parseInt(vramGb.toString()) : null,
                 ramSpeed: ramSpeed ? parseInt(ramSpeed.toString()) : null,
                 readWriteSpeed: readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null,
+                chipset: chipset || null,
             }
         });
 
-        // Sync to seed.ts asynchronously so it does not block the response
         syncSeedFile().catch(console.error);
-
         return NextResponse.json(component, { status: 201 });
     } catch (error) {
         console.error("Error creating component:", error);

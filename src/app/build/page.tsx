@@ -20,16 +20,7 @@ interface FilterOption {
   options: string[];
 }
 
-const categoryFilters: Record<string, FilterOption[]> = {
-  Processor: [{ label: "Brand", key: "brand", options: ["All", "Intel", "AMD"] }],
-  Motherboard: [{ label: "Brand", key: "brand", options: ["All", "ASUS", "MSI"] }],
-  "Graphics Card": [{ label: "Brand", key: "brand", options: ["All", "Nvidia", "AMD"] }],
-  Memory: [{ label: "Type", key: "type", options: ["DDR4", "DDR5"] }],
-  Storage: [{ label: "Type", key: "type", options: ["NVMe", "SATA"] }],
-  "Power Supply": [{ label: "Wattage", key: "wattage", options: ["650W", "750W", "850W"] }],
-  Case: [{ label: "Form", key: "form", options: ["Mid Tower", "ITX"] }],
-  Cooling: [{ label: "Type", key: "type", options: ["Air", "Liquid"] }]
-};
+// Dynamic filters จะถูกสร้างจากข้อมูลจริงใน useMemo ด้านล่าง
 
 const categoryToTypeMap: Record<string, string> = {
   Processor: "CPU",
@@ -75,11 +66,63 @@ export default function BuildPage() {
 
   // Filter state for selection modal
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Reset filters when category changes
+  // Reset filters AND search when category changes
   useEffect(() => {
     setActiveFilters({});
+    setSearchQuery("");
   }, [selectedCategory]);
+
+  // === Dynamic Category Filters (สร้างจากข้อมูลจริงใน DB) ===
+  const categoryFilters = useMemo(() => {
+    const getUnique = (type: string, field: keyof Component): string[] => {
+      const vals = components.filter(c => c.type === type).map(c => c[field]).filter(Boolean);
+      const unique = [...new Set(vals.map(v => String(v)))];
+      return ["All", ...unique.sort()];
+    };
+
+    const getBrands = (type: string): string[] => getUnique(type, "brand");
+
+    const filters: Record<string, FilterOption[]> = {
+      Processor: [
+        { label: "Chipset", key: "chipset", options: getUnique("CPU", "chipset") },
+        { label: "Brand", key: "brand", options: getBrands("CPU") },
+        { label: "Socket", key: "socket", options: getUnique("CPU", "socket") },
+      ],
+      Motherboard: [
+        { label: "Chipset", key: "chipset", options: getUnique("MB", "chipset") },
+        { label: "Brand", key: "brand", options: getBrands("MB") },
+        { label: "Socket", key: "socket", options: getUnique("MB", "socket") },
+        { label: "RAM Type", key: "ramType", options: getUnique("MB", "ramType") },
+      ],
+      "Graphics Card": [
+        { label: "Chipset", key: "chipset", options: getUnique("GPU", "chipset") },
+        { label: "Brand", key: "brand", options: getBrands("GPU") },
+        { label: "VRAM", key: "vramGb", options: getUnique("GPU", "vramGb") },
+      ],
+      Memory: [
+        { label: "Brand", key: "brand", options: getBrands("RAM") },
+        { label: "RAM Type", key: "ramType", options: getUnique("RAM", "ramType") },
+      ],
+      Storage: [
+        { label: "Brand", key: "brand", options: getBrands("STORAGE") },
+        { label: "Capacity (GB)", key: "capacity", options: getUnique("STORAGE", "capacity") },
+      ],
+      "Power Supply": [
+        { label: "Brand", key: "brand", options: getBrands("PSU") },
+        { label: "Wattage (W)", key: "capacity", options: getUnique("PSU", "capacity") },
+      ],
+      Case: [
+        { label: "Brand", key: "brand", options: getBrands("CASE") },
+        { label: "Form Factor", key: "formFactor", options: getUnique("CASE", "formFactor") },
+      ],
+      Cooling: [
+        { label: "Brand", key: "brand", options: getBrands("COOLING") },
+      ],
+    };
+    return filters;
+  }, [components]);
 
   useEffect(() => {
     Promise.all([
@@ -368,9 +411,9 @@ export default function BuildPage() {
                     {cat.substring(0, 3).toUpperCase()}
                   </div>
                 )}
-                <div className="flex flex-col truncate flex-1">
+                <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                   <span className="text-[9px] md:text-[11px] font-semibold uppercase text-gray-500 tracking-wider mb-1">{cat}</span>
-                  <h3 className={`text-base md:text-lg font-bold truncate ${selectedProducts[cat] ? 'text-white' : 'text-gray-400'}`}>
+                  <h3 className={`text-sm md:text-base font-bold leading-tight ${selectedProducts[cat] ? 'text-white' : 'text-gray-400'}`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {selectedProducts[cat]?.name || 'เพิ่มอุปกรณ์'}
                   </h3>
                   {selectedProducts[cat] && <span className="text-xs md:text-sm font-bold text-blue-500 mt-1">฿{selectedProducts[cat]?.price.toLocaleString()}</span>}
@@ -545,25 +588,40 @@ export default function BuildPage() {
               <ModalBody>
                 <div className="flex flex-col md:flex-row flex-1 h-full min-h-0">
                   <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-4 md:p-8 bg-black/20 shrink-0 overflow-hidden">
-                    <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-6 w-full items-start">
-                      {categoryFilters[selectedCategory || ""]?.map((f) => (
-                        <Select
-                          key={f.key}
-                          label={f.label}
-                          labelPlacement="outside"
-                          placeholder="ทั้งหมด"
-                          size="sm"
-                          className="w-[47%] md:w-full flex-grow"
-                          selectedKeys={activeFilters[f.key] ? new Set([activeFilters[f.key]]) : new Set(["All"])}
-                          onSelectionChange={(keys) => {
-                            const selected = Array.from(keys)[0] as string;
-                            setActiveFilters(prev => ({ ...prev, [f.key]: selected || "All" }));
-                          }}
-                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "bg-slate-800 text-white" }}
-                        >
-                          {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
-                        </Select>
-                      ))}
+                    <div className="flex flex-col gap-4 md:gap-5 w-full">
+                      {/* Search Bar */}
+                      <Input
+                        placeholder="ค้นหาชื่ออุปกรณ์..."
+                        size="sm"
+                        variant="bordered"
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                        isClearable
+                        onClear={() => setSearchQuery("")}
+                        classNames={{ input: "text-white", inputWrapper: "bg-white/5 border-white/10" }}
+                        startContent={<span className="text-gray-400 text-sm">🔍</span>}
+                      />
+                      {/* Dynamic Filters */}
+                      <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-4 w-full items-start">
+                        {categoryFilters[selectedCategory || ""]?.map((f) => (
+                          <Select
+                            key={f.key}
+                            label={f.label}
+                            labelPlacement="outside"
+                            placeholder="ทั้งหมด"
+                            size="sm"
+                            className="w-[47%] md:w-full flex-grow"
+                            selectedKeys={activeFilters[f.key] ? new Set([activeFilters[f.key]]) : new Set(["All"])}
+                            onSelectionChange={(keys) => {
+                              const selected = Array.from(keys)[0] as string;
+                              setActiveFilters(prev => ({ ...prev, [f.key]: selected || "All" }));
+                            }}
+                            classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "bg-slate-800 text-white" }}
+                          >
+                            {f.options.map(opt => <SelectItem key={opt}>{opt}</SelectItem>)}
+                          </Select>
+                        ))}
+                      </div>
                     </div>
                   </aside>
                   <ScrollShadow className="flex-1 p-3 md:p-8 bg-slate-950">
@@ -579,6 +637,7 @@ export default function BuildPage() {
                         onViewDetails={setViewDetailsComp}
                         categoryToType={categoryToTypeMap}
                         activeFilters={activeFilters}
+                        searchQuery={searchQuery}
                       />
                     )}
                   </ScrollShadow>
@@ -651,34 +710,31 @@ export default function BuildPage() {
   );
 }
 
-function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string> }) {
+function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters, searchQuery }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string>, searchQuery: string }) {
   const targetType = categoryToType[category];
 
-  // Filter by type, then by active filters (brand, type, etc.)
   const products = useMemo(() => {
     let filtered = allComponents.filter(c => c.type === targetType);
 
-    // Apply brand filter
-    const brandFilter = activeFilters["brand"];
-    if (brandFilter && brandFilter !== "All") {
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
-        c.brand.toLowerCase().includes(brandFilter.toLowerCase())
+        c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q)
       );
     }
 
-    // Apply type filter (for RAM, Storage, etc.)
-    const typeFilter = activeFilters["type"];
-    if (typeFilter && typeFilter !== "All") {
+    // Apply all active filters dynamically
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (!value || value === "All") return;
       filtered = filtered.filter(c => {
-        const name = c.name.toLowerCase();
-        const ramType = c.ramType?.toLowerCase() || "";
-        const filterLower = typeFilter.toLowerCase();
-        return name.includes(filterLower) || ramType.includes(filterLower);
+        const fieldValue = String((c as any)[key] || "");
+        return fieldValue.toLowerCase() === value.toLowerCase();
       });
-    }
+    });
 
     return filtered;
-  }, [allComponents, targetType, activeFilters]);
+  }, [allComponents, targetType, activeFilters, searchQuery]);
 
   if (products.length === 0) {
     return (
