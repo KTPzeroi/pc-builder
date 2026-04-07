@@ -25,9 +25,9 @@ export async function PUT(req: Request, context: any) {
         const {
             name, type, brand, price, image, description,
             socket, ramType, formFactor, capacity,
-            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
+            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor, coolingType,
             cpuSingleScore, cpuMultiScore, gpuScore,
-            vramGb, ramSpeed, readWriteSpeed,
+            vramGb, ramSpeed, readSpeed, writeSpeed,
             chipset
         } = body;
 
@@ -56,7 +56,9 @@ export async function PUT(req: Request, context: any) {
                 gpuScore: gpuScore === undefined ? existingComponent.gpuScore : (gpuScore ? parseInt(gpuScore.toString()) : null),
                 vramGb: vramGb === undefined ? existingComponent.vramGb : (vramGb ? parseInt(vramGb.toString()) : null),
                 ramSpeed: ramSpeed === undefined ? existingComponent.ramSpeed : (ramSpeed ? parseInt(ramSpeed.toString()) : null),
-                readWriteSpeed: readWriteSpeed === undefined ? existingComponent.readWriteSpeed : (readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null),
+                readSpeed: readSpeed === undefined ? (existingComponent as any).readSpeed : (readSpeed ? parseInt(readSpeed.toString()) : null),
+                writeSpeed: writeSpeed === undefined ? (existingComponent as any).writeSpeed : (writeSpeed ? parseInt(writeSpeed.toString()) : null),
+                coolingType: coolingType !== undefined ? (coolingType || null) : (existingComponent as any).coolingType,
                 chipset: chipset !== undefined ? (chipset || null) : (existingComponent as any).chipset,
             }
         });

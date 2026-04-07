@@ -478,6 +478,32 @@ async function main() {
         "ramSpeed": null,
         "readWriteSpeed": null,
         "chipset": "NVIDIA"
+    },
+    {
+        "id": "cmno9j0e00000qtr5oh8g3smj",
+        "name": "Core Ultra 9 285K",
+        "type": "CPU",
+        "brand": "Intel",
+        "price": 20400,
+        "image": "https://res.cloudinary.com/dgavtp1tj/image/upload/v1775544778/pc-builder-forum/k5wan09podsvhfiz14gx.jpg",
+        "description": null,
+        "socket": "LGA-1851",
+        "ramType": null,
+        "formFactor": null,
+        "capacity": null,
+        "tdp": 250,
+        "lengthMm": null,
+        "maxGpuLength": null,
+        "maxCoolerHeight": null,
+        "supportedMobo": null,
+        "psuFormFactor": null,
+        "cpuSingleScore": 5090,
+        "cpuMultiScore": 67325,
+        "gpuScore": null,
+        "vramGb": null,
+        "ramSpeed": null,
+        "readWriteSpeed": null,
+        "chipset": null
     }
 ];
 

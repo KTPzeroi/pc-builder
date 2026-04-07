@@ -27,7 +27,8 @@ type ComponentData = {
     gpuScore?: number | null;
     vramGb?: number | null;
     ramSpeed?: number | null;
-    readWriteSpeed?: number | null;
+    readSpeed?: number | null;
+    writeSpeed?: number | null;
     tdp?: number | null;
     lengthMm?: number | null;
     maxGpuLength?: number | null;
@@ -37,6 +38,7 @@ type ComponentData = {
     createdAt?: string;
     description?: string | null;
     chipset?: string | null;
+    coolingType?: string | null;
 };
 
 const TYPE_OPTIONS = [
@@ -89,9 +91,9 @@ export default function InventoryCRUDPage() {
         // optional fields
         socket: "", ramType: "", formFactor: "", capacity: undefined,
         cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
-        vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
+        vramGb: undefined, ramSpeed: undefined, readSpeed: undefined, writeSpeed: undefined,
         tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
-        maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: ""
+        maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: "", coolingType: ""
     });
 
     useEffect(() => {
@@ -119,9 +121,9 @@ export default function InventoryCRUDPage() {
             name: "", type: "CPU", brand: "", price: 0, image: "", description: "",
             socket: "", ramType: "", formFactor: "", capacity: undefined,
             cpuSingleScore: undefined, cpuMultiScore: undefined, gpuScore: undefined,
-            vramGb: undefined, ramSpeed: undefined, readWriteSpeed: undefined,
+            vramGb: undefined, ramSpeed: undefined, readSpeed: undefined, writeSpeed: undefined,
             tdp: undefined, lengthMm: undefined, maxGpuLength: undefined,
-            maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: ""
+            maxCoolerHeight: undefined, supportedMobo: "", psuFormFactor: "", chipset: "", coolingType: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -138,11 +140,11 @@ export default function InventoryCRUDPage() {
             capacity: comp.capacity || undefined, cpuSingleScore: comp.cpuSingleScore || undefined,
             cpuMultiScore: comp.cpuMultiScore || undefined, gpuScore: comp.gpuScore || undefined,
             vramGb: comp.vramGb || undefined, ramSpeed: comp.ramSpeed || undefined,
-            readWriteSpeed: comp.readWriteSpeed || undefined,
+            readSpeed: comp.readSpeed || undefined, writeSpeed: comp.writeSpeed || undefined,
             tdp: comp.tdp || undefined, lengthMm: comp.lengthMm || undefined,
             maxGpuLength: comp.maxGpuLength || undefined, maxCoolerHeight: comp.maxCoolerHeight || undefined,
             supportedMobo: comp.supportedMobo || "", psuFormFactor: comp.psuFormFactor || "",
-            chipset: comp.chipset || ""
+            chipset: comp.chipset || "", coolingType: comp.coolingType || ""
         });
         setImageFile(null);
         setImagePreview(comp.image || null);
@@ -195,12 +197,14 @@ export default function InventoryCRUDPage() {
                     gpuScore: row.gpuScore ? parseInt(row.gpuScore) : undefined,
                     vramGb: row.vramGb ? parseInt(row.vramGb) : undefined,
                     ramSpeed: row.ramSpeed ? parseInt(row.ramSpeed) : undefined,
-                    readWriteSpeed: row.readWriteSpeed ? parseInt(row.readWriteSpeed) : undefined,
+                    readSpeed: row.readSpeed ? parseInt(row.readSpeed) : undefined,
+                    writeSpeed: row.writeSpeed ? parseInt(row.writeSpeed) : undefined,
                     tdp: row.tdp ? parseInt(row.tdp) : undefined,
                     lengthMm: row.lengthMm ? parseInt(row.lengthMm) : undefined,
                     maxGpuLength: row.maxGpuLength ? parseInt(row.maxGpuLength) : undefined,
                     maxCoolerHeight: row.maxCoolerHeight ? parseInt(row.maxCoolerHeight) : undefined,
                     chipset: row.chipset || "",
+                    coolingType: row.coolingType || "",
                     isReady: false,
                 }));
                 setImportList(mapped);
@@ -241,7 +245,11 @@ export default function InventoryCRUDPage() {
         }
         if (t === "STORAGE") {
             if (!row.capacity) missing.push("capacity");
-            if (!row.readWriteSpeed) missing.push("readWriteSpeed");
+            if (!row.readSpeed) missing.push("readSpeed");
+            if (!row.writeSpeed) missing.push("writeSpeed");
+        }
+        if (t === "COOLING") {
+            if (!row.coolingType) missing.push("coolingType");
         }
         return missing;
     };
@@ -362,7 +370,8 @@ export default function InventoryCRUDPage() {
             let pGpu = formData.gpuScore ? parseInt(String(formData.gpuScore)) : null;
             let pVram = formData.vramGb ? parseInt(String(formData.vramGb)) : null;
             let pRamSpd = formData.ramSpeed ? parseInt(String(formData.ramSpeed)) : null;
-            let pRw = formData.readWriteSpeed ? parseInt(String(formData.readWriteSpeed)) : null;
+            let pReadSpd = formData.readSpeed ? parseInt(String(formData.readSpeed)) : null;
+            let pWriteSpd = formData.writeSpeed ? parseInt(String(formData.writeSpeed)) : null;
             let pTdp = formData.tdp ? parseInt(String(formData.tdp)) : null;
             let pLengthMm = formData.lengthMm ? parseInt(String(formData.lengthMm)) : null;
             let pMaxGpuLen = formData.maxGpuLength ? parseInt(String(formData.maxGpuLength)) : null;
@@ -381,7 +390,7 @@ export default function InventoryCRUDPage() {
             if (formData.type === "MB" && (!formData.socket || !formData.ramType || !formData.formFactor)) {
                 return alert("กรุณากรอก Socket, RAM Type และ Form Factor ให้ครบถ้วน");
             }
-            if (formData.type === "STORAGE" && (!pCapacity || !pRw)) {
+            if (formData.type === "STORAGE" && (!pCapacity || !pReadSpd || !pWriteSpd)) {
                 return alert("กรุณากรอกความจุ (Capacity) และ Read/Write Speed ให้ครบถ้วน");
             }
 
@@ -405,7 +414,8 @@ export default function InventoryCRUDPage() {
                 gpuScore: type === "GPU" ? pGpu : null,
                 vramGb: type === "GPU" ? pVram : null,
                 ramSpeed: type === "RAM" ? pRamSpd : null,
-                readWriteSpeed: type === "STORAGE" ? pRw : null,
+                readSpeed: type === "STORAGE" ? pReadSpd : null,
+                writeSpeed: type === "STORAGE" ? pWriteSpd : null,
                 tdp: ["CPU", "GPU"].includes(type || "") ? pTdp : null,
                 lengthMm: ["GPU", "COOLING"].includes(type || "") ? pLengthMm : null,
                 maxGpuLength: type === "CASE" ? pMaxGpuLen : null,
@@ -413,6 +423,7 @@ export default function InventoryCRUDPage() {
                 supportedMobo: type === "CASE" ? (formData.supportedMobo || null) : null,
                 psuFormFactor: type === "PSU" ? (formData.psuFormFactor || null) : null,
                 chipset: ["CPU", "GPU", "MB"].includes(type || "") ? (formData.chipset || null) : null,
+                coolingType: type === "COOLING" ? (formData.coolingType || null) : null,
             };
 
             const res = await fetch(url, {
@@ -451,7 +462,8 @@ export default function InventoryCRUDPage() {
             gpuScore: source.gpuScore || undefined,
             vramGb: source.vramGb || undefined,
             ramSpeed: source.ramSpeed || undefined,
-            readWriteSpeed: source.readWriteSpeed || undefined,
+            readSpeed: source.readSpeed || undefined,
+            writeSpeed: source.writeSpeed || undefined,
             tdp: source.tdp || undefined,
             lengthMm: source.lengthMm || undefined,
             maxGpuLength: source.maxGpuLength || undefined,
@@ -459,6 +471,7 @@ export default function InventoryCRUDPage() {
             supportedMobo: source.supportedMobo || "",
             psuFormFactor: source.psuFormFactor || "",
             chipset: source.chipset || "",
+            coolingType: source.coolingType || "",
             description: prev.description || source.description || "",
         }));
     };
@@ -534,8 +547,12 @@ export default function InventoryCRUDPage() {
 
                 {/* Performance: Storage */}
                 {type === "STORAGE" && (
-                    <Input label="Read/Write Speed (MB/s)" type="number" variant="bordered"
-                        value={formData.readWriteSpeed?.toString() || ""} onChange={e => setFormData({ ...formData, readWriteSpeed: Number(e.target.value) })} />
+                    <>
+                        <Input label="Read Speed (MB/s)" type="number" variant="bordered"
+                            value={formData.readSpeed?.toString() || ""} onChange={e => setFormData({ ...formData, readSpeed: Number(e.target.value) })} />
+                        <Input label="Write Speed (MB/s)" type="number" variant="bordered"
+                            value={formData.writeSpeed?.toString() || ""} onChange={e => setFormData({ ...formData, writeSpeed: Number(e.target.value) })} />
+                    </>
                 )}
 
                 {/* === NEW: Compatibility Fields === */}
@@ -581,6 +598,16 @@ export default function InventoryCRUDPage() {
                     <Input label="PSU Form Factor" placeholder="e.g. ATX, SFX" variant="bordered"
                         description="รูปแบบขนาดของ PSU"
                         value={formData.psuFormFactor || ""} onChange={e => setFormData({ ...formData, psuFormFactor: e.target.value })} />
+                )}
+
+                {/* Cooling Type */}
+                {type === "COOLING" && (
+                    <Select label="Cooling Type" placeholder="เลือกประเภทชุดระบายความร้อน" variant="bordered"
+                        selectedKeys={formData.coolingType ? new Set([formData.coolingType]) : new Set()}
+                        onSelectionChange={(k) => setFormData({ ...formData, coolingType: Array.from(k)[0] as string })}>
+                        <SelectItem key="Air Cooler" value="Air Cooler">Air Cooler (ซิงค์ลม)</SelectItem>
+                        <SelectItem key="Liquid Cooler" value="Liquid Cooler">Liquid Cooler (ชุดน้ำ)</SelectItem>
+                    </Select>
                 )}
             </div>
         );

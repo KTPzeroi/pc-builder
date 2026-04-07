@@ -130,6 +130,7 @@ model Component {
   maxCoolerHeight Int?    // เฉพาะ CASE: ความสูง CPU Cooler สูงสุดที่รองรับ (mm)
   supportedMobo  String?  // เฉพาะ CASE: ไซส์บอร์ดที่รองรับ เช่น "ATX, Micro-ATX, Mini-ITX"
   psuFormFactor  String?  // เฉพาะ PSU: รูปแบบ เช่น "ATX", "SFX"
+  coolingType    String?  // เฉพาะ COOLING: "Air Cooler" หรือ "Liquid Cooler"
 
   // -- Performance Scores (PassMark Based) --
   cpuSingleScore Int?     // Single Thread Rating
@@ -139,7 +140,8 @@ model Component {
   // -- Additional Metrics for Weighting --
   vramGb         Int?     // สำหรับ GPU (3D Score)
   ramSpeed       Int?     // MHz (Gaming Score)
-  readWriteSpeed Int?     // MB/s สำหรับ Storage (Work Score)
+  readSpeed      Int?     // MB/s สำหรับ Storage
+  writeSpeed     Int?     // MB/s สำหรับ Storage
 
   // -- Classification --
   chipset        String?  // AMD, NVIDIA, Intel, etc. (for GPU/CPU/Motherboard)

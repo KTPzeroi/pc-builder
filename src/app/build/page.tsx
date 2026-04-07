@@ -97,6 +97,7 @@ export default function BuildPage() {
 
     const filters: Record<string, FilterOption[]> = {
       Processor: [
+        { label: "Chipset", key: "chipset", options: getUnique("CPU", "chipset") },
         { label: "Brand", key: "brand", options: getBrands("CPU") },
         { label: "Socket", key: "socket", options: getUnique("CPU", "socket") },
       ],
@@ -128,6 +129,7 @@ export default function BuildPage() {
         { label: "Form Factor", key: "formFactor", options: getUnique("CASE", "formFactor") },
       ],
       Cooling: [
+        { label: "Cooler Type", key: "coolingType", options: getUnique("COOLING", "coolingType") },
         { label: "Brand", key: "brand", options: getBrands("COOLING") },
       ],
     };
@@ -233,10 +235,18 @@ export default function BuildPage() {
 
     // 5. Cooler Height Check (Cooling ↔ Case)
     if (cooling && pcCase) {
-      const coolerHeight = (cooling as any).lengthMm; // ใช้ lengthMm เป็นความสูง/ความยาวของ Cooler
-      const maxCoolerH = (pcCase as any).maxCoolerHeight;
-      if (coolerHeight && maxCoolerH && coolerHeight > maxCoolerH) {
-        issues.push(`พัดลม CPU สูงเกินไป: Cooler สูง ${coolerHeight}mm แต่ Case รองรับสูงสุด ${maxCoolerH}mm`);
+      const coolingType = (cooling as any).coolingType;
+      const coolerLength = (cooling as any).lengthMm; // ใช้ lengthMm เป็นความสูง/ความยาวของ Cooler
+      
+      if (coolingType === "Liquid Cooler") {
+        // ชุดน้ำ (AIO) ติดตั้งเป็นหม้อน้ำแผงยาวติดพัดลม (เช่น 240mm, 360mm) จึงไม่ต้องเช็คความกว้าง/ความสูงกับฝาเคส
+        // *TODO: ในอนาคตอาจเพิ่มฟิลด์เช็ก Radator Support ในเคสแยกต่างหากได้
+      } else {
+        // ซิงค์ลม (Air Cooler) ต้องเช็คความสูงไม่ให้ชนฝาข้างเคส
+        const maxCoolerH = (pcCase as any).maxCoolerHeight;
+        if (coolerLength && maxCoolerH && coolerLength > maxCoolerH) {
+          issues.push(`ซิงก์พัดลม CPU สูงเกินไป: Cooler สูง ${coolerLength}mm แต่ Case รองรับสูงสุด ${maxCoolerH}mm`);
+        }
       }
     }
 

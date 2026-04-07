@@ -36,7 +36,9 @@ export async function POST(req: Request) {
                 gpuScore: item.gpuScore ? parseInt(item.gpuScore.toString()) : null,
                 vramGb: item.vramGb ? parseInt(item.vramGb.toString()) : null,
                 ramSpeed: item.ramSpeed ? parseInt(item.ramSpeed.toString()) : null,
-                readWriteSpeed: item.readWriteSpeed ? parseInt(item.readWriteSpeed.toString()) : null,
+                readSpeed: item.readSpeed ? parseInt(item.readSpeed.toString()) : null,
+                writeSpeed: item.writeSpeed ? parseInt(item.writeSpeed.toString()) : null,
+                coolingType: item.coolingType || null,
                 chipset: item.chipset || null,
             }));
 
@@ -49,9 +51,9 @@ export async function POST(req: Request) {
         const {
             name, type, brand, price, image, description,
             socket, ramType, formFactor, capacity,
-            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor,
+            tdp, lengthMm, maxGpuLength, maxCoolerHeight, supportedMobo, psuFormFactor, coolingType,
             cpuSingleScore, cpuMultiScore, gpuScore,
-            vramGb, ramSpeed, readWriteSpeed,
+            vramGb, ramSpeed, readSpeed, writeSpeed,
             chipset
         } = body;
 
@@ -84,7 +86,9 @@ export async function POST(req: Request) {
                 gpuScore: gpuScore ? parseInt(gpuScore.toString()) : null,
                 vramGb: vramGb ? parseInt(vramGb.toString()) : null,
                 ramSpeed: ramSpeed ? parseInt(ramSpeed.toString()) : null,
-                readWriteSpeed: readWriteSpeed ? parseInt(readWriteSpeed.toString()) : null,
+                readSpeed: readSpeed ? parseInt(readSpeed.toString()) : null,
+                writeSpeed: writeSpeed ? parseInt(writeSpeed.toString()) : null,
+                coolingType: coolingType || null,
                 chipset: chipset || null,
             }
         });
