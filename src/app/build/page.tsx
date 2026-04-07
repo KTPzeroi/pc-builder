@@ -97,7 +97,6 @@ export default function BuildPage() {
 
     const filters: Record<string, FilterOption[]> = {
       Processor: [
-        { label: "Chipset", key: "chipset", options: getUnique("CPU", "chipset") },
         { label: "Brand", key: "brand", options: getBrands("CPU") },
         { label: "Socket", key: "socket", options: getUnique("CPU", "socket") },
       ],
@@ -237,7 +236,7 @@ export default function BuildPage() {
     if (cooling && pcCase) {
       const coolingType = (cooling as any).coolingType;
       const coolerLength = (cooling as any).lengthMm; // ใช้ lengthMm เป็นความสูง/ความยาวของ Cooler
-      
+
       if (coolingType === "Liquid Cooler") {
         // ชุดน้ำ (AIO) ติดตั้งเป็นหม้อน้ำแผงยาวติดพัดลม (เช่น 240mm, 360mm) จึงไม่ต้องเช็คความกว้าง/ความสูงกับฝาเคส
         // *TODO: ในอนาคตอาจเพิ่มฟิลด์เช็ก Radator Support ในเคสแยกต่างหากได้
@@ -432,7 +431,7 @@ export default function BuildPage() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {Object.keys(selectedProducts).map((cat) => (
             <Card isPressable key={cat} onPress={() => setSelectedCategory(cat)}
-              className={`bg-black/40 border border-white/10 hover:border-blue-500/50 transition-all h-28 md:h-32 ${selectedProducts[cat] ? 'ring-1 ring-blue-500/30' : ''}`}>
+              className={`bg-black/40 border border-white/10 hover:border-blue-500/50 transition-all h-28 md:h-32 overflow-hidden no-scrollbar ${selectedProducts[cat] ? 'ring-1 ring-blue-500/30' : ''}`}>
               <CardBody className="flex-row items-center gap-4 md:gap-6 p-4 md:p-6 text-left">
                 {selectedProducts[cat]?.image ? (
                   <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 shadow-inner p-1">
@@ -529,11 +528,13 @@ export default function BuildPage() {
                   {recommendedPsuWattage}W <span className="text-sm font-medium text-amber-400/60">หรือสูงกว่า</span>
                 </p>
               </div>
+              {/* 
               <div className="hidden sm:block text-right">
                 <p className="text-[9px] text-amber-400/50 font-medium leading-tight">
                   สูตร: (CPU {(selectedProducts["Processor"] as any)?.tdp || 0}W + GPU {(selectedProducts["Graphics Card"] as any)?.tdp || 0}W + 50W) × 1.25
                 </p>
               </div>
+              */}
             </div>
           </Card>
         )}

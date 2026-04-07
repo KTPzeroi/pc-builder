@@ -11,9 +11,23 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Force HeroUI Input labels to not truncate and show full text */
-.truncate {
+/* Force HeroUI Input/Select labels to not truncate and show full text */
+[data-slot="label"].truncate,
+label .truncate {
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
+}
+
+/* Hide scrollbar on component selection cards (targets HeroUI Card internals too) */
+.no-scrollbar,
+.no-scrollbar * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
