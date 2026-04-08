@@ -560,6 +560,13 @@ export default function BuildPage() {
             Save Build
           </Button>
         </div>
+
+        {/* Disclaimer */}
+        <p className="text-center text-[11px] text-gray-600 leading-relaxed pt-2">
+          ℹ️ คะแนน Benchmark และราคาที่แสดงเป็นข้อมูลโดยประมาณ อ้างอิงจากฐานข้อมูลของระบบ
+          ซึ่งอาจมีการเปลี่ยนแปลงตามเวอร์ชันของฮาร์ดแวร์และสภาวะตลาด
+          ควรตรวจสอบข้อมูลจากผู้จำหน่ายก่อนตัดสินใจซื้อ
+        </p>
       </main>
 
       {/* 4. Modal: Save Build */}
