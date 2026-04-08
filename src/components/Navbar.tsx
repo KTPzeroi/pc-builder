@@ -8,10 +8,10 @@ import {
 } from "@heroui/react";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion"; // เก็บไว้ใช้กับ Navbar Active Tab เท่านั้น
+import { motion, AnimatePresence } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 import { signIn, signOut, useSession, getSession } from "next-auth/react";
-import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline, IoNotificationsOutline, IoChatbubbleEllipsesOutline, IoWarning, IoHeart } from "react-icons/io5";
+import { IoWarningOutline, IoEyeOutline, IoEyeOffOutline, IoNotificationsOutline, IoChatbubbleEllipsesOutline, IoWarning, IoHeart, IoHomeOutline, IoBuildOutline, IoChatbubblesOutline, IoPersonOutline, IoLogOutOutline, IoLogInOutline, IoMenuOutline, IoCloseOutline, IoChevronForwardOutline, IoShieldHalfOutline } from "react-icons/io5";
 
 export default function AppNavbar() {
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export default function AppNavbar() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -190,12 +191,27 @@ export default function AppNavbar() {
     }
   };
 
+  // ปิด mobile menu เมื่อเปลี่ยนหน้า
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  // ป้องกัน scroll เมื่อ mobile menu เปิดอยู่
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileMenuOpen]);
+
   if (!mounted) return <div className="h-16 bg-black/40 border-b border-white/10" />;
 
   const menuItems = [
-    { name: "HOME", href: "/" },
-    { name: "BUILD", href: "/build" },
-    { name: "FORUM", href: "/forum" },
+    { name: "หน้าแรก", nameEn: "HOME", href: "/", icon: IoHomeOutline },
+    { name: "จัดสเปค", nameEn: "BUILD", href: "/build", icon: IoBuildOutline },
+    { name: "ชุมชน", nameEn: "FORUM", href: "/forum", icon: IoChatbubblesOutline },
   ];
 
   return (
@@ -207,11 +223,12 @@ export default function AppNavbar() {
           </NextLink>
         </NavbarBrand>
 
+        {/* Desktop nav links */}
         <NavbarContent className="hidden sm:flex gap-4" justify="center">
           {menuItems.map((item) => (
-            <NavbarItem key={item.name} className="relative h-full flex items-center">
+            <NavbarItem key={item.nameEn} className="relative h-full flex items-center">
               <Link as={NextLink} href={item.href} className={`relative z-10 px-4 py-2 text-sm font-semibold transition-colors ${pathname === item.href ? "text-white" : "text-gray-400"}`}>
-                {item.name}
+                {item.nameEn}
               </Link>
               {pathname === item.href && (
                 <motion.div layoutId="navbar-active" className="absolute inset-0 bg-blue-500/20 rounded-lg border-b-2 border-blue-500" transition={{ type: "spring", stiffness: 380, damping: 30 }} />
@@ -225,15 +242,18 @@ export default function AppNavbar() {
             {status === "loading" ? (
               <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse" />
             ) : !session ? (
-              <Button 
-                onPress={() => { setAuthMode("login"); onOpen(); }}
-                variant="flat" 
-                className="bg-blue-600/20 text-blue-400 border border-blue-500/50 hover:bg-blue-600 hover:text-white transition-all px-8 text-xs font-bold"
-              >
-                LOGIN
-              </Button>
+              <>
+                {/* Desktop LOGIN button */}
+                <Button 
+                  onPress={() => { setAuthMode("login"); onOpen(); }}
+                  variant="flat" 
+                  className="hidden sm:flex bg-blue-600/20 text-blue-400 border border-blue-500/50 hover:bg-blue-600 hover:text-white transition-all px-8 text-xs font-bold"
+                >
+                  LOGIN
+                </Button>
+              </>
             ) : (
-              <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-4">
                 {/* 🔴 Notification Bell */}
                 <Dropdown placement="bottom-end" className="bg-black/95 border border-white/10 text-white shadow-2xl min-w-[300px]">
                   <DropdownTrigger>
@@ -261,7 +281,7 @@ export default function AppNavbar() {
                             if (!notif.isRead) {
                               try {
                                 setUnreadCount(prev => Math.max(0, prev - 1));
-                                setNotifications(prev => prev.filter(n => n.id !== notif.id)); // 🔴 ลบข้อความออกจากรายการทันที
+                                setNotifications(prev => prev.filter(n => n.id !== notif.id));
                                 await fetch("/api/notifications", {
                                   method: "PATCH",
                                   headers: { "Content-Type": "application/json" },
@@ -276,7 +296,6 @@ export default function AppNavbar() {
                         >
                           <div className="flex gap-3 items-start">
                             <div className="mt-1">
-                              {/* 🔴 ถ้ายังไม่ได้อ่านให้มีจุดแดงเล็กๆกำกับด้วย */}
                               {!notif.isRead && <div className="absolute top-4 left-2 w-2 h-2 bg-danger rounded-full shadow-[0_0_8px_rgba(255,0,0,0.8)] animate-pulse" />}
                               {notif.type === 'REPORT' || notif.type === 'WARNING' ? (
                                 <IoWarning className="text-danger text-xl ml-2" />
@@ -296,7 +315,6 @@ export default function AppNavbar() {
                         </DropdownItem>
                       )))
                     ]}
-                    
                   </DropdownMenu>
                 </Dropdown>
 
@@ -335,8 +353,189 @@ export default function AppNavbar() {
               </div>
             )}
           </NavbarItem>
+
+          {/* 🍔 Hamburger Button — mobile only */}
+          <NavbarItem className="sm:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="relative z-[110] flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {isMobileMenuOpen ? (
+                  <motion.span key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <IoCloseOutline className="text-2xl text-white" />
+                  </motion.span>
+                ) : (
+                  <motion.span key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <IoMenuOutline className="text-2xl text-white" />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {/* unread dot on hamburger */}
+              {unreadCount > 0 && !isMobileMenuOpen && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse" />
+              )}
+            </button>
+          </NavbarItem>
         </NavbarContent>
       </Navbar>
+
+      {/* ===== MOBILE DRAWER ===== */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm sm:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer Panel */}
+            <motion.div
+              key="drawer"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 right-0 z-[105] h-full w-[80vw] max-w-xs bg-slate-950 border-l border-white/10 shadow-2xl sm:hidden flex flex-col"
+            >
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+                <p className="font-bold text-xl text-white tracking-widest">LOGO</p>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <IoCloseOutline className="text-xl text-white" />
+                </button>
+              </div>
+
+              {/* User Card (if logged in) */}
+              {session && (
+                <div className="mx-4 mt-4 mb-2 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center overflow-hidden shrink-0">
+                    {session.user?.image ? (
+                      <img src={session.user.image} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white font-bold text-sm">{(session.user?.name || "U").charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold text-sm truncate">{session.user?.name || "User"}</p>
+                    <p className="text-gray-400 text-xs truncate">{session.user?.email || ""}</p>
+                    {(session.user as any)?.role === "ADMIN" && (
+                      <span className="text-[10px] font-bold text-danger-400 uppercase tracking-widest">Admin</span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <div className="ml-auto shrink-0 bg-danger rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="text-white text-[10px] font-bold">{unreadCount}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Nav Links */}
+              <nav className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 mb-3">เมนูหลัก</p>
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.href;
+                  return (
+                    <NextLink
+                      key={item.nameEn}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group ${
+                        active
+                          ? "bg-blue-500/20 border border-blue-500/40 text-white"
+                          : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
+                      }`}
+                    >
+                      <Icon className={`text-xl shrink-0 ${active ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-sm">{item.name}</span>
+                        <span className={`text-[10px] font-medium tracking-widest ${active ? 'text-blue-400' : 'text-gray-600'}`}>{item.nameEn}</span>
+                      </div>
+                      {active && <IoChevronForwardOutline className="ml-auto text-blue-400 shrink-0" />}
+                    </NextLink>
+                  );
+                })}
+
+                {/* Admin link */}
+                {(session?.user as any)?.role === "ADMIN" && (
+                  <NextLink
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group ${
+                      pathname.startsWith("/admin")
+                        ? "bg-danger/10 border border-danger/30 text-white"
+                        : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <IoShieldHalfOutline className={`text-xl shrink-0 ${pathname.startsWith("/admin") ? 'text-danger' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm">แดชบอร์ด</span>
+                      <span className={`text-[10px] font-medium tracking-widest ${pathname.startsWith("/admin") ? 'text-danger-400' : 'text-gray-600'}`}>ADMIN</span>
+                    </div>
+                    {pathname.startsWith("/admin") && <IoChevronForwardOutline className="ml-auto text-danger shrink-0" />}
+                  </NextLink>
+                )}
+
+                {/* Profile link (if logged in) */}
+                {session && (
+                  <NextLink
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group ${
+                      pathname === "/profile"
+                        ? "bg-blue-500/20 border border-blue-500/40 text-white"
+                        : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <IoPersonOutline className={`text-xl shrink-0 ${pathname === '/profile' ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm">โปรไฟล์</span>
+                      <span className={`text-[10px] font-medium tracking-widest ${pathname === '/profile' ? 'text-blue-400' : 'text-gray-600'}`}>PROFILE</span>
+                    </div>
+                    {pathname === "/profile" && <IoChevronForwardOutline className="ml-auto text-blue-400 shrink-0" />}
+                  </NextLink>
+                )}
+              </nav>
+
+              {/* Drawer Footer */}
+              <div className="px-4 pb-8 pt-3 border-t border-white/10 space-y-2">
+                {!session ? (
+                  <Button
+                    color="primary"
+                    className="w-full font-bold"
+                    startContent={<IoLogInOutline />}
+                    onPress={() => { setIsMobileMenuOpen(false); setAuthMode("login"); onOpen(); }}
+                  >
+                    เข้าสู่ระบบ / LOGIN
+                  </Button>
+                ) : (
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    className="w-full font-bold border border-danger/30"
+                    startContent={<IoLogOutOutline />}
+                    onPress={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                  >
+                    ออกจากระบบ
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <Modal 
         isOpen={isOpen} 

@@ -141,7 +141,7 @@ export default function BuildPage() {
       fetch("/api/admin/settings").then(res => res.json())
     ])
       .then(([compsData, settingsData]) => {
-        setComponents(compsData);
+        setComponents(Array.isArray(compsData) ? compsData : []);
         setSysConfig(settingsData);
         setLoading(false);
       })
@@ -181,6 +181,7 @@ export default function BuildPage() {
   const checkCompatibility = useMemo(() => {
     const issues: string[] = [];
     const warnings: string[] = [];
+    const issueCategories = new Set<string>(); // track which cards to highlight
     const cpu = selectedProducts["Processor"];
     const mb = selectedProducts["Motherboard"];
     const ram = selectedProducts["Memory"];
@@ -192,6 +193,8 @@ export default function BuildPage() {
     // 1. Socket Check (CPU ↔ Motherboard)
     if (cpu && mb && cpu.socket && mb.socket && cpu.socket !== mb.socket) {
       issues.push(`Socket ไม่ตรงกัน: CPU ใช้ ${cpu.socket} แต่ Motherboard ใช้ ${mb.socket}`);
+      issueCategories.add("Processor");
+      issueCategories.add("Motherboard");
     }
 
     // 2. RAM Type Check (Motherboard ↔ RAM) หรือ (CPU ↔ RAM)
@@ -200,12 +203,16 @@ export default function BuildPage() {
       const ramDdr = ram.ramType || "";
       if (mbDdr && ramDdr && !mbDdr.includes(ramDdr) && !ramDdr.includes(mbDdr)) {
         issues.push(`RAM ไม่รองรับ: Motherboard รองรับ ${mbDdr} แต่ RAM เป็น ${ramDdr}`);
+        issueCategories.add("Motherboard");
+        issueCategories.add("Memory");
       }
     } else if (cpu && ram && !mb) {
       const cpuDdr = cpu.ramType || "";
       const ramDdr = ram.ramType || "";
       if (cpuDdr && ramDdr && !cpuDdr.includes(ramDdr) && !ramDdr.includes(cpuDdr)) {
         issues.push(`RAM ไม่รองรับ: CPU รองรับ ${cpuDdr} แต่ RAM เป็น ${ramDdr}`);
+        issueCategories.add("Processor");
+        issueCategories.add("Memory");
       }
     }
 
@@ -215,10 +222,11 @@ export default function BuildPage() {
       const supportedMobo = (pcCase as any).supportedMobo || "";
       if (mbForm && supportedMobo) {
         const supportedList = supportedMobo.toUpperCase().split(",").map((s: string) => s.trim());
-        // เช็คว่า formFactor ของ MB ตรงกับรายการที่ Case รองรับไหม
         const isSupported = supportedList.some((s: string) => s.includes(mbForm) || mbForm.includes(s));
         if (!isSupported) {
           issues.push(`ขนาด Motherboard ไม่พอดีกับ Case: บอร์ด ${mbForm} ไม่อยู่ในรายการที่ Case รองรับ (${supportedMobo})`);
+          issueCategories.add("Motherboard");
+          issueCategories.add("Case");
         }
       }
     }
@@ -229,27 +237,29 @@ export default function BuildPage() {
       const maxGpuLen = (pcCase as any).maxGpuLength;
       if (gpuLength && maxGpuLen && gpuLength > maxGpuLen) {
         issues.push(`การ์ดจอยาวเกินไป: GPU ยาว ${gpuLength}mm แต่ Case รองรับสูงสุด ${maxGpuLen}mm`);
+        issueCategories.add("Graphics Card");
+        issueCategories.add("Case");
       }
     }
 
     // 5. Cooler Height Check (Cooling ↔ Case)
     if (cooling && pcCase) {
       const coolingType = (cooling as any).coolingType;
-      const coolerLength = (cooling as any).lengthMm; // ใช้ lengthMm เป็นความสูง/ความยาวของ Cooler
+      const coolerLength = (cooling as any).lengthMm;
 
       if (coolingType === "Liquid Cooler") {
-        // ชุดน้ำ (AIO) ติดตั้งเป็นหม้อน้ำแผงยาวติดพัดลม (เช่น 240mm, 360mm) จึงไม่ต้องเช็คความกว้าง/ความสูงกับฝาเคส
-        // *TODO: ในอนาคตอาจเพิ่มฟิลด์เช็ก Radator Support ในเคสแยกต่างหากได้
+        // ชุดน้ำ (AIO) ไม่ต้องเช็คความสูง
       } else {
-        // ซิงค์ลม (Air Cooler) ต้องเช็คความสูงไม่ให้ชนฝาข้างเคส
         const maxCoolerH = (pcCase as any).maxCoolerHeight;
         if (coolerLength && maxCoolerH && coolerLength > maxCoolerH) {
           issues.push(`ซิงก์พัดลม CPU สูงเกินไป: Cooler สูง ${coolerLength}mm แต่ Case รองรับสูงสุด ${maxCoolerH}mm`);
+          issueCategories.add("Cooling");
+          issueCategories.add("Case");
         }
       }
     }
 
-    // 6. Power Supply Check — New Formula: (CPU_TDP + GPU_TDP + 50) * 1.25, rounded ↑ 50W
+    // 6. Power Supply Check
     {
       const cpuTdp = (cpu as any)?.tdp || 0;
       const gpuTdp = (gpu as any)?.tdp || 0;
@@ -262,6 +272,7 @@ export default function BuildPage() {
           const totalTdp = cpuTdp + gpuTdp;
           if (psuWatt < totalTdp) {
             issues.push(`PSU ไม่เพียงพอ! CPU+GPU กินไฟรวม ${totalTdp}W แต่ PSU มีแค่ ${psuWatt}W (แนะนำอย่างน้อย ${recommendedPsu}W)`);
+            issueCategories.add("Power Supply");
           } else {
             warnings.push(`PSU อาจไม่เพียงพอ: แนะนำ ${recommendedPsu}W ขึ้นไป (CPU ${cpuTdp}W + GPU ${gpuTdp}W + อุปกรณ์เสริม 50W × Safety 1.25) แต่ PSU ที่เลือกมีแค่ ${psuWatt}W`);
           }
@@ -272,7 +283,8 @@ export default function BuildPage() {
     return {
       isOk: issues.length === 0,
       issues,
-      warnings
+      warnings,
+      issueCategories,
     };
   }, [selectedProducts]);
 
@@ -429,9 +441,17 @@ export default function BuildPage() {
 
         {/* 1. Component Selection Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {Object.keys(selectedProducts).map((cat) => (
+          {Object.keys(selectedProducts).map((cat) => {
+            const hasIssue = checkCompatibility.issueCategories.has(cat);
+            return (
             <Card isPressable key={cat} onPress={() => setSelectedCategory(cat)}
-              className={`bg-black/40 border border-white/10 hover:border-blue-500/50 transition-all h-28 md:h-32 overflow-hidden no-scrollbar ${selectedProducts[cat] ? 'ring-1 ring-blue-500/30' : ''}`}>
+              className={`bg-black/40 border transition-all h-28 md:h-32 overflow-hidden no-scrollbar
+                ${hasIssue
+                  ? 'border-danger/70 ring-2 ring-danger/40 hover:border-danger shadow-[0_0_16px_-4px_rgba(239,68,68,0.4)] animate-pulse-border'
+                  : selectedProducts[cat]
+                    ? 'border-white/10 ring-1 ring-blue-500/30 hover:border-blue-500/50'
+                    : 'border-white/10 hover:border-blue-500/50'
+                }`}>
               <CardBody className="flex-row items-center gap-4 md:gap-6 p-4 md:p-6 text-left">
                 {selectedProducts[cat]?.image ? (
                   <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 shadow-inner p-1">
@@ -467,7 +487,8 @@ export default function BuildPage() {
                 </div>
               </CardBody>
             </Card>
-          ))}
+            );
+          })}
         </section>
 
         {/* 2. Total Summary Card */}
