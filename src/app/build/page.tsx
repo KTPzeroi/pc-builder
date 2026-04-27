@@ -44,16 +44,75 @@ function calculateRequiredWattage(cpuTdp: number, gpuTdp: number): number {
   return Math.ceil(raw / 50) * 50; // ปัดขึ้น → 50W increments
 }
 
+// --- Performance Tier Helper ---
+function getPerformanceTier(value: number): {
+  label: string; icon: string;
+  badgeBg: string; badgeText: string; badgeBorder: string; glowColor: string;
+} {
+  if (value >= 86) return {
+    label: "Top-of-the-Line", icon: "🏆",
+    badgeBg: "bg-violet-500/15", badgeText: "text-violet-300", badgeBorder: "border-violet-500/40", glowColor: "shadow-violet-500/20"
+  };
+  if (value >= 71) return {
+    label: "Very High Performance", icon: "🔥",
+    badgeBg: "bg-orange-500/15", badgeText: "text-orange-300", badgeBorder: "border-orange-500/40", glowColor: "shadow-orange-500/20"
+  };
+  if (value >= 51) return {
+    label: "High Performance", icon: "⭐",
+    badgeBg: "bg-emerald-500/15", badgeText: "text-emerald-300", badgeBorder: "border-emerald-500/40", glowColor: "shadow-emerald-500/20"
+  };
+  if (value >= 31) return {
+    label: "Mid-Range", icon: "💡",
+    badgeBg: "bg-blue-500/15", badgeText: "text-blue-300", badgeBorder: "border-blue-500/40", glowColor: "shadow-blue-500/20"
+  };
+  return {
+    label: "Entry Level", icon: "🔹",
+    badgeBg: "bg-slate-500/15", badgeText: "text-slate-400", badgeBorder: "border-slate-500/40", glowColor: "shadow-slate-500/10"
+  };
+}
+
 // --- Helper Components ---
-function HeroBenchmark({ label, value, color }: { label: string, value: number, color: any }) {
+function HeroBenchmark({ label, value, color, description }: {
+  label: string; value: number; color: any; description?: string;
+}) {
   const safeValue = isNaN(value) ? 0 : Math.max(0, Math.round(value));
+  const hasScore = safeValue > 0;
+  const tier = getPerformanceTier(safeValue);
+
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-end">
+      {/* Label row */}
+      <div className="flex justify-between items-center">
         <span className="text-[10px] font-bold uppercase tracking-widest text-default-500">{label}</span>
         <span className={`text-sm font-bold text-${color}`}>{safeValue}%</span>
       </div>
+
+      {/* Progress bar */}
       <Progress size="sm" value={safeValue} color={color} aria-label={label} />
+
+      {/* Tier Badge */}
+      {hasScore ? (
+        <div className={`
+          inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold tracking-wide
+          ${tier.badgeBg} ${tier.badgeText} ${tier.badgeBorder}
+          shadow-sm ${tier.glowColor}
+          transition-all duration-300
+        `}>
+          <span>{tier.icon}</span>
+          <span>{tier.label}</span>
+        </div>
+      ) : (
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold tracking-wide bg-white/5 text-gray-600 border-white/10">
+          — ยังไม่มีข้อมูล
+        </div>
+      )}
+
+      {/* Score Rationale */}
+      {description && (
+        <p className="text-[9px] leading-relaxed text-gray-500 pt-0.5">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
@@ -73,7 +132,11 @@ export default function BuildPage() {
   // เก็บข้อมูลสินค้าทั้งหมดจาก Database
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sysConfig, setSysConfig] = useState<any>(null);
+  // Dynamic baselines fetched from DB (Max CPU/GPU scores in the system)
+  const [baselines, setBaselines] = useState<{ maxCpuScore: number; maxGpuScore: number }>({
+    maxCpuScore: 30000,
+    maxGpuScore: 30000,
+  });
 
   // Filter state for selection modal
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
@@ -138,11 +201,16 @@ export default function BuildPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/components").then(res => res.json()),
-      fetch("/api/admin/settings").then(res => res.json())
+      fetch("/api/performance").then(res => res.json()),
     ])
-      .then(([compsData, settingsData]) => {
+      .then(([compsData, baselineData]) => {
         setComponents(Array.isArray(compsData) ? compsData : []);
-        setSysConfig(settingsData);
+        if (baselineData?.maxCpuScore && baselineData?.maxGpuScore) {
+          setBaselines({
+            maxCpuScore: baselineData.maxCpuScore > 0 ? baselineData.maxCpuScore : 30000,
+            maxGpuScore: baselineData.maxGpuScore > 0 ? baselineData.maxGpuScore : 30000,
+          });
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -288,77 +356,57 @@ export default function BuildPage() {
     };
   }, [selectedProducts]);
 
-  // 🧮 คำนวณ % จาก Database + Dynamic Settings
+  // 🧮 คำนวณ % ด้วย Dynamic Baseline (Min-Max Normalization) + Static Weights + RAM Bottleneck Penalty
   const totals = useMemo(() => {
     const values = Object.values(selectedProducts).filter(p => p !== null) as Component[];
     const cpu = selectedProducts["Processor"];
     const gpu = selectedProducts["Graphics Card"];
     const ram = selectedProducts["Memory"];
 
-    const cpuSingle = cpu?.cpuSingleScore || 0;
     const cpuMulti = cpu?.cpuMultiScore || 0;
     const gpuScore = gpu?.gpuScore || 0;
     const ramCapacity = ram?.capacity || 0;
 
-    // Dynamic Baselines
-    const G_BASE = Number(sysConfig?.gaming_gpu_baseline || 25000);
-    const W_BASE = Number(sysConfig?.working_cpu_baseline || 4500);
-    const C_CPU = Number(sysConfig?.creative_cpu_baseline || 40000);
-    const C_GPU = Number(sysConfig?.creative_gpu_baseline || 35000);
+    // --- Step 1: Dynamic Baselines (queried from DB) ---
+    const MAX_CPU = baselines.maxCpuScore;
+    const MAX_GPU = baselines.maxGpuScore;
 
-    // Dynamic Weights
-    const w_gaming_gpu = Number(sysConfig?.w_gaming_gpu ?? 60) / 100;
-    const w_gaming_cpu = Number(sysConfig?.w_gaming_cpu ?? 30) / 100;
-    const w_gaming_ram = Number(sysConfig?.w_gaming_ram ?? 10) / 100;
+    // --- Step 2: Normalize component scores (0–100%) ---
+    const cpuPct = cpu ? Math.min((cpuMulti / MAX_CPU) * 100, 100) : 0;
+    const gpuPct = gpu ? Math.min((gpuScore / MAX_GPU) * 100, 100) : 0;
 
-    const w_working_cpu = Number(sysConfig?.w_working_cpu ?? 50) / 100;
-    const w_working_ram = Number(sysConfig?.w_working_ram ?? 40) / 100;
-    const w_working_gpu = Number(sysConfig?.w_working_gpu ?? 10) / 100;
+    // --- Step 3: Category Weighting Formulas ---
+    const rawGaming = (gpuPct * 0.85) + (cpuPct * 0.15);
+    const rawWorking = (cpuPct * 1.00) + (gpuPct * 0.00);
+    const rawCreative = (cpuPct * 0.50) + (gpuPct * 0.50);
 
-    const w_creative_cpu = Number(sysConfig?.w_creative_cpu ?? 40) / 100;
-    const w_creative_gpu = Number(sysConfig?.w_creative_gpu ?? 35) / 100;
-    const w_creative_ram = Number(sysConfig?.w_creative_ram ?? 15) / 100;
-    const w_creative_vram = Number(sysConfig?.w_creative_vram ?? 10) / 100;
+    // --- Step 4: RAM Bottleneck Penalty Multipliers ---
+    // Gaming
+    const gamingRamMult = ramCapacity >= 16 ? 1.0
+      : ramCapacity >= 8 ? 0.85
+        : 0.70;
 
-    // 🎮 Gaming
-    let gaming = 0;
-    if (gpu || cpu) {
-      gaming += Math.min((gpuScore / G_BASE) * 100, 100) * w_gaming_gpu;
-      gaming += Math.min((cpuSingle / W_BASE) * 100, 100) * w_gaming_cpu;
-      const ramScoreG = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 50 : 20);
-      gaming += ramScoreG * w_gaming_ram;
-    }
+    // Working
+    const workingRamMult = ramCapacity >= 8 ? 1.0 : 0.80;
 
-    // 🎨 Creative/3D
-    let creative = 0;
-    if (gpu || cpu) {
-      creative += Math.min((cpuMulti / C_CPU) * 100, 100) * w_creative_cpu;
-      creative += Math.min((gpuScore / C_GPU) * 100, 100) * w_creative_gpu;
+    // Creative
+    const creativeRamMult = ramCapacity >= 32 ? 1.0
+      : ramCapacity >= 16 ? 0.90
+        : 0.70;
 
-      const vram = gpu?.vramGb || 0;
-      const vramScore = vram >= 16 ? 100 : (vram >= 12 ? 80 : (vram >= 8 ? 50 : 20));
-      creative += vramScore * w_creative_vram;
-
-      const ramScore3D = ramCapacity >= 64 ? 100 : (ramCapacity >= 32 ? 80 : (ramCapacity >= 16 ? 50 : 20));
-      creative += ramScore3D * w_creative_ram;
-    }
-
-    // 💼 Work/Office
-    let office = 0;
-    if (cpu || gpu) {
-      if (cpu) office += Math.min((cpuSingle / W_BASE) * 100, 100) * w_working_cpu;
-      const ramScoreW = ramCapacity >= 16 ? 100 : (ramCapacity >= 8 ? 80 : 50);
-      office += ramScoreW * w_working_ram;
-      if (gpu) office += Math.min((gpuScore / (G_BASE * 0.6)) * 100, 100) * w_working_gpu; // simplified baseline for office GPU
-    }
+    // --- Final scores (only show if at least one component is selected) ---
+    const hasAny = cpu || gpu;
+    const gaming = hasAny ? Math.min(rawGaming * gamingRamMult, 100) : 0;
+    const office = hasAny ? Math.min(rawWorking * workingRamMult, 100) : 0;
+    const creative = hasAny ? Math.min(rawCreative * creativeRamMult, 100) : 0;
 
     return {
       price: values.reduce((sum, p) => sum + p.price, 0),
-      office: Math.min(office, 100),
-      creative: Math.min(creative, 100),
-      gaming: Math.min(gaming, 100),
+      gaming: Math.round(gaming),
+      office: Math.round(office),
+      creative: Math.round(creative),
     };
-  }, [selectedProducts, sysConfig]);
+  }, [selectedProducts, baselines]);
 
   // ⚡ PSU Wattage Recommendation (always computed, even before PSU is selected)
   const recommendedPsuWattage = useMemo(() => {
@@ -444,49 +492,49 @@ export default function BuildPage() {
           {Object.keys(selectedProducts).map((cat) => {
             const hasIssue = checkCompatibility.issueCategories.has(cat);
             return (
-            <Card isPressable key={cat} onPress={() => setSelectedCategory(cat)}
-              className={`bg-black/40 border transition-all h-28 md:h-32 overflow-hidden no-scrollbar
+              <Card isPressable key={cat} onPress={() => setSelectedCategory(cat)}
+                className={`bg-black/40 border transition-all h-28 md:h-32 overflow-hidden no-scrollbar
                 ${hasIssue
-                  ? 'border-danger/70 ring-2 ring-danger/40 hover:border-danger shadow-[0_0_16px_-4px_rgba(239,68,68,0.4)] animate-pulse-border'
-                  : selectedProducts[cat]
-                    ? 'border-white/10 ring-1 ring-blue-500/30 hover:border-blue-500/50'
-                    : 'border-white/10 hover:border-blue-500/50'
-                }`}>
-              <CardBody className="flex-row items-center gap-4 md:gap-6 p-4 md:p-6 text-left">
-                {selectedProducts[cat]?.image ? (
-                  <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 shadow-inner p-1">
-                    <img src={selectedProducts[cat]!.image!} alt={selectedProducts[cat]!.name} className="max-w-full max-h-full object-contain" />
-                  </div>
-                ) : (
-                  <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[10px] md:text-[12px] font-bold text-gray-500 border border-white/5 shadow-inner">
-                    {cat.substring(0, 3).toUpperCase()}
-                  </div>
-                )}
-                <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                  <span className="text-[9px] md:text-[11px] font-semibold uppercase text-gray-500 tracking-wider mb-1">{cat}</span>
-                  <h3 className={`text-sm md:text-base font-bold leading-tight ${selectedProducts[cat] ? 'text-white' : 'text-gray-400'}`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {selectedProducts[cat]?.name || 'เพิ่มอุปกรณ์'}
-                  </h3>
-                  {selectedProducts[cat] && <span className="text-xs md:text-sm font-bold text-blue-500 mt-1">฿{selectedProducts[cat]?.price.toLocaleString()}</span>}
-                </div>
-                <div className="ml-auto shrink-0">
-                  {selectedProducts[cat] ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProducts(prev => ({ ...prev, [cat]: null }));
-                      }}
-                      className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
-                      title={`ลบ ${cat}`}
-                    >
-                      ✕
-                    </button>
+                    ? 'border-danger/70 ring-2 ring-danger/40 hover:border-danger shadow-[0_0_16px_-4px_rgba(239,68,68,0.4)] animate-pulse-border'
+                    : selectedProducts[cat]
+                      ? 'border-white/10 ring-1 ring-blue-500/30 hover:border-blue-500/50'
+                      : 'border-white/10 hover:border-blue-500/50'
+                  }`}>
+                <CardBody className="flex-row items-center gap-4 md:gap-6 p-4 md:p-6 text-left">
+                  {selectedProducts[cat]?.image ? (
+                    <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 shadow-inner p-1">
+                      <img src={selectedProducts[cat]!.image!} alt={selectedProducts[cat]!.name} className="max-w-full max-h-full object-contain" />
+                    </div>
                   ) : (
-                    <span className="text-gray-500 font-light text-xl md:text-2xl">+</span>
+                    <div className="flex h-12 w-12 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[10px] md:text-[12px] font-bold text-gray-500 border border-white/5 shadow-inner">
+                      {cat.substring(0, 3).toUpperCase()}
+                    </div>
                   )}
-                </div>
-              </CardBody>
-            </Card>
+                  <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                    <span className="text-[9px] md:text-[11px] font-semibold uppercase text-gray-500 tracking-wider mb-1">{cat}</span>
+                    <h3 className={`text-sm md:text-base font-bold leading-tight ${selectedProducts[cat] ? 'text-white' : 'text-gray-400'}`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {selectedProducts[cat]?.name || 'เพิ่มอุปกรณ์'}
+                    </h3>
+                    {selectedProducts[cat] && <span className="text-xs md:text-sm font-bold text-blue-500 mt-1">฿{selectedProducts[cat]?.price.toLocaleString()}</span>}
+                  </div>
+                  <div className="ml-auto shrink-0">
+                    {selectedProducts[cat] ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedProducts(prev => ({ ...prev, [cat]: null }));
+                        }}
+                        className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
+                        title={`ลบ ${cat}`}
+                      >
+                        ✕
+                      </button>
+                    ) : (
+                      <span className="text-gray-500 font-light text-xl md:text-2xl">+</span>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
             );
           })}
         </section>
@@ -531,9 +579,24 @@ export default function BuildPage() {
               )}
             </div>
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
-              <HeroBenchmark label="Work & Office" value={totals.office} color="success" />
-              <HeroBenchmark label="Creative / 3D" value={totals.creative} color="primary" />
-              <HeroBenchmark label="Gaming Power" value={totals.gaming} color="secondary" />
+              <HeroBenchmark
+                label="Work & Office"
+                value={totals.office}
+                color="success"
+                description="คำนวณจากประสิทธิภาพ CPU Multi-Thread (100%) ซึ่งสะท้อนความสามารถในการรันหลายโปรแกรมพร้อมกัน RAM ที่น้อยเกินไปจะลดคะแนนลง"
+              />
+              <HeroBenchmark
+                label="Creative / 3D"
+                value={totals.creative}
+                color="primary"
+                description="คำนวณจาก CPU Multi-Thread (50%) และ GPU (50%) เหมาะสำหรับงาน Render, ตัดต่อวิดีโอ และ 3D Modeling ที่ต้องการทั้งสองส่วน"
+              />
+              <HeroBenchmark
+                label="Gaming Power"
+                value={totals.gaming}
+                color="secondary"
+                description="คำนวณจาก GPU (85%) และ CPU (15%) เน้นการ์ดจอเป็นตัวชี้วัดหลัก เนื่องจากเกม AAA สมัยใหม่ต้องการ GPU มากที่สุด"
+              />
             </div>
           </div>
         </Card>

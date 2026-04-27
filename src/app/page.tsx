@@ -235,7 +235,7 @@ export default function Page() {
         </div> */}
 
         <div className="banner-content">
-          <h1 data-content="PC BUILDER">PC <br></br>BUILDER</h1>
+          <h1 data-content="SNAP BUILD">SNAP <br></br>BUILD</h1>
           <div className="cta-container">
             <a href="/plan" style={{ textDecoration: 'none' }}>
               <Button

@@ -6,6 +6,7 @@ import {
   useDisclosure, Input, Divider,
   Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User as HeroUser, Badge, ScrollShadow
 } from "@heroui/react";
+import Image from "next/image";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -219,7 +220,14 @@ export default function AppNavbar() {
       <Navbar maxWidth="xl" className="bg-black/40 backdrop-blur-md border-b border-white/10 fixed top-0">
         <NavbarBrand>
           <NextLink href={(session?.user as any)?.role === "ADMIN" ? "/admin" : "/"}>
-            <p className="font-bold text-2xl text-white tracking-widest cursor-pointer">LOGO</p>
+            <Image
+              src="/logo.png"
+              alt="SnapBuild Logo"
+              width={140}
+              height={40}
+              className="object-contain cursor-pointer"
+              priority
+            />
           </NextLink>
         </NavbarBrand>
 
@@ -407,7 +415,13 @@ export default function AppNavbar() {
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-                <p className="font-bold text-xl text-white tracking-widest">LOGO</p>
+                <Image
+                  src="/logo.png"
+                  alt="SnapBuild Logo"
+                  width={120}
+                  height={36}
+                  className="object-contain"
+                />
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors"

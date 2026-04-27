@@ -2,10 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Divider } from "@heroui/react";
 import { usePathname } from "next/navigation";
 import {
-    IoDesktopOutline,
     IoChatbubblesOutline,
     IoHammerOutline,
     IoBookOutline,
@@ -28,11 +28,14 @@ export default function AppFooter() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-16">
                     {/* Col 1: Brand + คำอธิบายเว็บ */}
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2">
-                            <IoDesktopOutline className="text-blue-500 text-2xl" />
-                            <h3 className="text-xl font-bold text-white tracking-tight">
-                                PC <span className="text-blue-500">Builder</span>
-                            </h3>
+                        <div>
+                            <Image
+                                src="/logo.png"
+                                alt="SnapBuild Logo"
+                                width={150}
+                                height={44}
+                                className="object-contain"
+                            />
                         </div>
                         <p className="text-gray-500 text-sm leading-relaxed">
                             แพลตฟอร์มจัดสเปกคอมพิวเตอร์ พร้อมระบบ Benchmark
@@ -99,7 +102,7 @@ export default function AppFooter() {
             <Divider className="bg-white/5" />
             <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <p className="text-gray-600 text-xs text-center sm:text-left">
-                    © {new Date().getFullYear()} PC Builder — All rights reserved.
+                    © {new Date().getFullYear()} SnapBuild — All rights reserved.
                 </p>
                 <div className="flex items-center gap-1.5 text-gray-600 text-xs">
                     <span>Developed with</span>
