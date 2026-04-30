@@ -51,14 +51,7 @@ model User {
   likedComments Comment[]      @relation("UserCommentLikes")
 }
 
-model PasswordResetToken {
-  id      String   @id @default(cuid())
-  email   String
-  token   String   @unique
-  expires DateTime
 
-  @@unique([email, token])
-}
 
 model Post {
   id        Int      @id @default(autoincrement())
@@ -204,16 +197,7 @@ model Report {
   updatedAt   DateTime @updatedAt
 }
 
-// ----------------------------------------------------
-// ส่วนสำหรับตัังค่าระบบโดยผู้ดูแล (System Configuration)
-// ----------------------------------------------------
 
-model SystemSetting {
-  key         String   @id
-  value       String   @db.Text // เก็บข้อมูลเป็น JSON string หรือ Plain text
-  description String?
-  updatedAt   DateTime @updatedAt
-}
 
 // ----------------------------------------------------
 // ส่วนสำหรับสเปกแนะนำ (Preset Builds / Build Wizard)

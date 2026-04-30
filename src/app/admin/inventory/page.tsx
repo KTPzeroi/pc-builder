@@ -605,8 +605,8 @@ export default function InventoryCRUDPage() {
                     <Select label="Cooling Type" placeholder="เลือกประเภทชุดระบายความร้อน" variant="bordered"
                         selectedKeys={formData.coolingType ? new Set([formData.coolingType]) : new Set()}
                         onSelectionChange={(k) => setFormData({ ...formData, coolingType: Array.from(k)[0] as string })}>
-                        <SelectItem key="Air Cooler" value="Air Cooler">Air Cooler (ซิงค์ลม)</SelectItem>
-                        <SelectItem key="Liquid Cooler" value="Liquid Cooler">Liquid Cooler (ชุดน้ำ)</SelectItem>
+                        <SelectItem key="Air Cooler">Air Cooler (ซิงค์ลม)</SelectItem>
+                        <SelectItem key="Liquid Cooler">Liquid Cooler (ชุดน้ำ)</SelectItem>
                     </Select>
                 )}
             </div>
