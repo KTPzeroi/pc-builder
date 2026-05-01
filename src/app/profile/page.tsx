@@ -169,7 +169,7 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  
+
   const { isOpen: isPwdOpen, onOpen: onPwdOpen, onOpenChange: onPwdChange } = useDisclosure();
   const [pwdData, setPwdData] = useState({ current: "", new: "", confirm: "" });
   const [isPwdVisible, setIsPwdVisible] = useState(false);
@@ -182,6 +182,7 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState({
     id: "",
     username: "",
+    name: "",
     bio: "",
     avatar: "",
     posts: [] as any[],
@@ -190,7 +191,7 @@ export default function ProfilePage() {
 
   // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
   const [tempData, setTempData] = useState({ ...userData });
-  
+
   // State สำหรับเก็บไฟล์รูปภาพที่ผู้ใช้เลือกใหม่
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -218,6 +219,7 @@ export default function ProfilePage() {
             const newUserData = {
               id: data.id,
               username: data.username || session.user.name || "User",
+              name: data.name || data.username || session.user.name || "User",
               bio: data.bio || "ยังไม่มีคำอธิบาย...",
               avatar: data.image || session.user.image || "",
               posts: data.posts || [],
@@ -229,6 +231,7 @@ export default function ProfilePage() {
             const fallbackData = {
               id: userId,
               username: session.user.name || "User",
+              name: session.user.name || "User",
               bio: "ยังไม่มีคำอธิบาย...",
               avatar: session.user.image || "",
               posts: [],
@@ -269,7 +272,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: userData.id,
-          username: tempData.username,
+          name: tempData.name,
           bio: tempData.bio,
         }),
       });
@@ -283,7 +286,7 @@ export default function ProfilePage() {
       const updatedUser = await res.json();
 
       let avatarUrl = userData.avatar;
-      
+
       // 2. Upload Avatar to Cloudinary first if there's a file
       if (selectedFile) {
         const formData = new FormData();
@@ -303,7 +306,7 @@ export default function ProfilePage() {
         const uploadData = await uploadRes.json();
         if (uploadData.urls && uploadData.urls.length > 0) {
           avatarUrl = uploadData.urls[0];
-          
+
           // 3. Save the new Cloudinary URL to the user profile
           const resAvatar = await fetch("/api/user/profile", {
             method: "PATCH",
@@ -313,7 +316,7 @@ export default function ProfilePage() {
               image: avatarUrl,
             }),
           });
-          
+
           if (!resAvatar.ok) {
             alert("เกิดข้อผิดพลาดในการบันทึก URL รูปภาพไปยังโปรไฟล์");
             setIsUpdating(false);
@@ -324,17 +327,17 @@ export default function ProfilePage() {
 
       const finalData = {
         ...userData,
-        username: updatedUser.username,
+        name: updatedUser.name || updatedUser.username,
         bio: updatedUser.bio,
         avatar: avatarUrl || ""
       };
-      
+
       setUserData(finalData);
       setTempData(finalData);
 
       // 🟢 อัปเดต Session ของ NextAuth เพื่อให้ Navbar เปลี่ยนรูปตามทันที
       await update({
-        name: finalData.username,
+        name: finalData.name,
         image: finalData.avatar
       });
 
@@ -358,7 +361,7 @@ export default function ProfilePage() {
       alert("รหัสผ่านใหม่ไม่ตรงกัน");
       return;
     }
-    
+
     setIsChangingPwd(true);
     try {
       const res = await fetch("/api/user/change-password", {
@@ -367,11 +370,11 @@ export default function ProfilePage() {
         body: JSON.stringify({ currentPassword: pwdData.current, newPassword: pwdData.new }),
       });
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.message || "เกิดข้อผิดพลาด");
       }
-      
+
       alert(data.message || "เปลี่ยนรหัสผ่านเรียบร้อย!");
       setPwdData({ current: "", new: "", confirm: "" });
       onClose();
@@ -412,8 +415,9 @@ export default function ProfilePage() {
               />
               <div className="flex flex-col gap-2 text-center md:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                  <h1 className="text-3xl font-bold text-white">{userData.username}</h1>
-                  {/* 🟢 Chip ถูกเอาออกแล้ว */}
+                  <div className="flex flex-col">
+                    <h1 className="text-3xl font-bold text-white">{userData.name}</h1>
+                  </div>
                 </div>
                 <p className="text-gray-400 font-medium italic">"{userData.bio}"</p>
                 <div className="flex justify-center md:justify-start gap-6 mt-2 text-sm text-gray-500 font-bold uppercase tracking-tighter">
@@ -491,7 +495,7 @@ export default function ProfilePage() {
                       {/* 🟢 Avatar ใน Modal พร้อม Fallback */}
                       <Avatar
                         src={previewUrl || tempData.avatar}
-                        name={tempData.username.charAt(0).toUpperCase()}
+                        name={tempData.name.charAt(0).toUpperCase()}
                         showFallback
                         className="w-40 h-40 border-4 border-white/5 shadow-2xl object-cover"
                         classNames={{
@@ -500,7 +504,7 @@ export default function ProfilePage() {
                         }}
                       />
                       <p className="text-[10px] text-gray-500 text-center font-medium leading-relaxed">เลือกรูปภาพจากเครื่องของคุณ</p>
-                      
+
                       {/* 🟢 เปลี่ยนเป็นปุ่มเลือกไฟล์ */}
                       <div className="relative w-full">
                         <input
@@ -522,10 +526,21 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="lg:col-span-2 p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">
-                      <Input
-                        label="Username"
+                      {/* <Input
+                        label="Username (Login ID)"
                         value={tempData.username}
-                        onValueChange={(val) => setTempData({ ...tempData, username: val })}
+                        isReadOnly
+                        variant="bordered"
+                        labelPlacement="outside"
+                        classNames={{
+                          label: "text-gray-300 font-bold uppercase tracking-wider text-[10px] mb-2",
+                          inputWrapper: "border-white/10 opacity-50 cursor-not-allowed h-12"
+                        }}
+                      /> */}
+                      <Input
+                        label="Display Name"
+                        value={tempData.name}
+                        onValueChange={(val) => setTempData({ ...tempData, name: val })}
                         variant="bordered"
                         labelPlacement="outside"
                         classNames={{
@@ -575,22 +590,22 @@ export default function ProfilePage() {
                   <p className="text-[10px] text-gray-500 font-normal tracking-widest uppercase">เปลี่ยนรหัสผ่านของคุณ</p>
                 </ModalHeader>
                 <ModalBody className="py-6 flex flex-col gap-4">
-                  <Input 
-                    label="Current Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านปัจจุบัน" 
-                    value={pwdData.current} onChange={(e) => setPwdData({...pwdData, current: e.target.value})}
+                  <Input
+                    label="Current Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านปัจจุบัน"
+                    value={pwdData.current} onChange={(e) => setPwdData({ ...pwdData, current: e.target.value })}
                   />
-                  <Input 
-                    label="New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านใหม่" 
-                    value={pwdData.new} onChange={(e) => setPwdData({...pwdData, new: e.target.value})}
+                  <Input
+                    label="New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านใหม่"
+                    value={pwdData.new} onChange={(e) => setPwdData({ ...pwdData, new: e.target.value })}
                     endContent={
                       <button className="focus:outline-none" type="button" onClick={() => setIsPwdVisible(!isPwdVisible)}>
                         {isPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
                       </button>
                     }
                   />
-                  <Input 
-                    label="Confirm New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="ยืนยันรหัสผ่านใหม่" 
-                    value={pwdData.confirm} onChange={(e) => setPwdData({...pwdData, confirm: e.target.value})}
+                  <Input
+                    label="Confirm New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="ยืนยันรหัสผ่านใหม่"
+                    value={pwdData.confirm} onChange={(e) => setPwdData({ ...pwdData, confirm: e.target.value })}
                   />
                 </ModalBody>
                 <ModalFooter className="border-t border-white/5">

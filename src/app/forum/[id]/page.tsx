@@ -405,31 +405,52 @@ export default function PostDetailPage() {
           Comments <span className="text-gray-500 text-sm font-normal">({post._count.comments})</span>
         </h3>
 
-        {session ? (
-          <Card className="bg-black/40 border border-white/10 p-4">
-            <div className="flex flex-col gap-4">
-              <Textarea
-                placeholder="เขียนความคิดเห็นของคุณที่นี่..."
-                variant="bordered"
-                value={commentInput}
-                onValueChange={setCommentInput}
-                classNames={{ input: "text-white" }}
-              />
-              <div className="flex justify-end">
-                {/* เชื่อมต่อฟังก์ชันและสถานะ Loading */}
-                <Button
-                  color="primary"
-                  className="font-bold px-6"
-                  onPress={handleSubmitComment}
-                  isLoading={isSubmitting}
-                  isDisabled={!commentInput.trim()}
-                >
-                  Comment
-                </Button>
+        {session ? (() => {
+          const user = session.user as any;
+          const isBanned = user?.status === "BANNED" && user?.bannedUntil && new Date() < new Date(user.bannedUntil);
+          const banDate = user?.bannedUntil
+            ? new Date(user.bannedUntil).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })
+            : "";
+
+          if (isBanned) {
+            return (
+              <Card className="bg-red-950/30 border border-red-500/30 p-4">
+                <div className="flex flex-col gap-1">
+                  <p className="text-danger font-bold text-sm">⛔ บัญชีถูกระงับการแสดงความคิดเห็น</p>
+                  <p className="text-red-400/80 text-xs">ระงับถึงวันที่: <span className="font-bold text-red-300">{banDate}</span></p>
+                  {user?.banReason && (
+                    <p className="text-red-400/70 text-xs">เหตุผล: {user.banReason}</p>
+                  )}
+                </div>
+              </Card>
+            );
+          }
+
+          return (
+            <Card className="bg-black/40 border border-white/10 p-4">
+              <div className="flex flex-col gap-4">
+                <Textarea
+                  placeholder="เขียนความคิดเห็นของคุณที่นี่..."
+                  variant="bordered"
+                  value={commentInput}
+                  onValueChange={setCommentInput}
+                  classNames={{ input: "text-white" }}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    color="primary"
+                    className="font-bold px-6"
+                    onPress={handleSubmitComment}
+                    isLoading={isSubmitting}
+                    isDisabled={!commentInput.trim()}
+                  >
+                    Comment
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Card>
-        ) : (
+            </Card>
+          );
+        })() : (
           <Card className="bg-blue-600/5 border border-dashed border-blue-500/20 p-6 text-center">
             <p className="text-gray-400 text-sm">กรุณาเข้าสู่ระบบเพื่อร่วมแสดงความคิดเห็น</p>
           </Card>

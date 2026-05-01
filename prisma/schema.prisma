@@ -42,7 +42,9 @@ model User {
   comments      Comment[]
   pcBuilds      PCBuild[] 
   role          String    @default("USER")
-  status        String    @default("ACTIVE") // "ACTIVE", "SUSPENDED", "BANNED"
+  status        String    @default("ACTIVE") // "ACTIVE", "BANNED"
+  bannedUntil   DateTime? // null = ไม่ได้แบน | DateTime = แบนถึงวันนี้ (ถ้าเป็นอดีต = หมดแล้ว)
+  banReason     String?   // เหตุผลที่ Admin ระบุตอนแบน
   reportCount   Int       @default(0)
   reports       Report[]
   

@@ -78,11 +78,17 @@ export const authOptions: NextAuthOptions = {
             }
             // @ts-ignore
             session.user.id = dbUser.id;
-            session.user.name = dbUser.username || dbUser.name || "";
+            session.user.name = dbUser.name || dbUser.username || "";
             session.user.image = dbUser.image || "";
             session.user.email = dbUser.email || "";
             // @ts-ignore
             session.user.role = dbUser.role || token.role || "USER";
+            // @ts-ignore
+            session.user.status = dbUser.status || "ACTIVE";
+            // @ts-ignore
+            session.user.bannedUntil = dbUser.bannedUntil?.toISOString() || null;
+            // @ts-ignore
+            session.user.banReason = dbUser.banReason || null;
           }
         } catch (error) {
           console.error("Session fetch error:", error);

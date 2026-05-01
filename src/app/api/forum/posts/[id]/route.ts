@@ -107,6 +107,15 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // เช็คสถานะแบน
+    const dbUser = await prisma.user.findUnique({ where: { email: session.user.email }, select: { status: true, bannedUntil: true } });
+    if (dbUser?.status === "BANNED" && dbUser.bannedUntil && new Date() < dbUser.bannedUntil) {
+      return NextResponse.json(
+        { error: "BANNED", bannedUntil: dbUser.bannedUntil },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const { content } = await request.json();
 

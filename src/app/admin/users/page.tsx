@@ -13,6 +13,7 @@ type UserData = {
     image: string | null;
     role: string;
     status: string;
+    bannedUntil: string | null;
     reportCount: number;
     _count: {
         posts: number;
@@ -20,13 +21,23 @@ type UserData = {
     }
 };
 
+const BAN_DURATIONS = [
+    { label: "1 วัน", days: 1 },
+    { label: "3 วัน", days: 3 },
+    { label: "7 วัน", days: 7 },
+    { label: "30 วัน", days: 30 },
+    { label: "ถาวร (10 ปี)", days: 3650 },
+];
+
 export default function UsersModerationPage() {
     const [users, setUsers] = useState<UserData[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const [actionUser, setActionUser] = useState<UserData | null>(null);
-    const [actionType, setActionType] = useState<"MAKE_ADMIN" | "DEMOTE" | "BAN" | "UNBAN" | "DELETE" | "">("");
+    const [actionType, setActionType] = useState<"MAKE_ADMIN" | "DEMOTE" | "BAN" | "UNBAN" | "DELETE" | "">("")
+    const [banDays, setBanDays] = useState<number>(7); // default 7 วัน
+    const [banReason, setBanReason] = useState<string>("");;
 
     const fetchUsers = async () => {
         try {
@@ -69,18 +80,25 @@ export default function UsersModerationPage() {
                 toast.error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
             }
         } else {
-            let updateField = "";
-            let updateValue = "";
-            if (actionType === "BAN") { updateField = "status"; updateValue = "BANNED"; }
-            else if (actionType === "UNBAN") { updateField = "status"; updateValue = "ACTIVE"; }
-            else if (actionType === "MAKE_ADMIN") { updateField = "role"; updateValue = "ADMIN"; }
-            else if (actionType === "DEMOTE") { updateField = "role"; updateValue = "USER"; }
+            let payload: Record<string, any> = {};
+            if (actionType === "BAN") {
+                const until = new Date();
+                until.setDate(until.getDate() + banDays);
+                payload.bannedUntil = until.toISOString();
+                payload.banReason = banReason.trim() || "ละเมิดกฎชุมชน";
+            } else if (actionType === "UNBAN") {
+                payload.bannedUntil = null;
+            } else if (actionType === "MAKE_ADMIN") {
+                payload.role = "ADMIN";
+            } else if (actionType === "DEMOTE") {
+                payload.role = "USER";
+            }
 
             try {
                 const res = await fetch(`/api/admin/users/${actionUser.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ [updateField]: updateValue })
+                    body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     toast.success("อัปเดตข้อมูลสำเร็จ");
@@ -154,7 +172,11 @@ export default function UsersModerationPage() {
                                                 <div>
                                                     <p className="text-white font-bold text-sm">
                                                         {user.username || user.name || "Unknown"}
-                                                        {user.status !== "ACTIVE" && <span className="text-danger ml-2 text-xs italic">({user.status})</span>}
+                                                        {user.status === "BANNED" && user.bannedUntil && (
+                                                            <span className="text-danger ml-2 text-xs italic">
+                                                                (แบนถึง {new Date(user.bannedUntil).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })})
+                                                            </span>
+                                                        )}
                                                     </p>
                                                     <p className="text-gray-500 text-xs">{user.email || ""}</p>
                                                 </div>
@@ -210,6 +232,42 @@ export default function UsersModerationPage() {
                                 <p className="text-sm text-gray-400 mt-2">
                                     บัญชีผู้ใช้: <span className="text-white font-bold">{actionUser?.username || actionUser?.name || actionUser?.email}</span>
                                 </p>
+                                {/* Duration Picker — แสดงเฉพาะตอน BAN */}
+                                {actionType === "BAN" && (
+                                    <div className="mt-4 flex flex-col gap-3">
+                                        <div>
+                                            <p className="text-sm text-gray-400 mb-2">เหตุผลที่แบน:</p>
+                                            <input
+                                                type="text"
+                                                placeholder="ระบุเหตุผล... เช่น โพสต์เนื้อหาไม่เหมาะสม"
+                                                value={banReason}
+                                                onChange={(e) => setBanReason(e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 outline-none focus:border-danger/50 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-400 mb-2">เลือกระยะเวลาแบน:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {BAN_DURATIONS.map((d) => (
+                                                    <button
+                                                        key={d.days}
+                                                        onClick={() => setBanDays(d.days)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                            banDays === d.days
+                                                                ? "bg-danger text-white border-danger"
+                                                                : "bg-white/5 text-gray-400 border-white/10 hover:border-danger/50"
+                                                        }`}
+                                                    >
+                                                        {d.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-danger/70 mt-2">
+                                                แบนถึง: {(() => { const d = new Date(); d.setDate(d.getDate() + banDays); return d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" }); })()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </ModalBody>
                             <ModalFooter>
                                 <Button color="default" variant="light" onPress={onClose}>

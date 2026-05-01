@@ -40,6 +40,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // เช็คสถานะแบน
+    const userId = (session.user as any).id;
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { status: true, bannedUntil: true } });
+    if (dbUser?.status === "BANNED" && dbUser.bannedUntil && new Date() < dbUser.bannedUntil) {
+      return NextResponse.json(
+        { error: "BANNED", bannedUntil: dbUser.bannedUntil },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { title, content, category, images, pcBuildId } = body;
 
@@ -54,7 +64,7 @@ export async function POST(request: Request) {
         category,
         // @ts-ignore
         images: images || [],
-        authorId: (session.user as any).id,
+        authorId: userId,
         pcBuildId: pcBuildId || null,
       },
     });

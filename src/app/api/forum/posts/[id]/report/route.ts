@@ -17,7 +17,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ error: "Invalid Post ID" }, { status: 400 });
         }
 
-        // Parse Request Body
         const { reason, description } = await req.json();
 
         if (!reason) {
@@ -28,6 +27,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         let severity = "LOW";
         if (reason === "spam") severity = "MEDIUM";
         if (reason === "harassment" || reason === "sexual") severity = "URGENT";
+
+        // ดึง authorId ของโพสต์เพื่อ increment reportCount
+        const post = await prisma.post.findUnique({
+            where: { id: postId },
+            select: { authorId: true }
+        });
 
         // สร้าง Report ลงในฐานข้อมูล
         const newReport = await prisma.report.create({
@@ -43,6 +48,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 targetUrl: `/forum/${postId}`
             }
         });
+
+        // Increment reportCount ของเจ้าของโพสต์
+        if (post?.authorId) {
+            await prisma.user.update({
+                where: { id: post.authorId },
+                data: { reportCount: { increment: 1 } }
+            });
+        }
 
         // ดึงรายชื่อ Admin ทั้งหมดเพื่อส่งแจ้งเตือน
         const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });

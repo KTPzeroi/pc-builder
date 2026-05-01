@@ -47,29 +47,18 @@ export async function POST(req: Request) {
   }
 }
 
-// 🟢 ส่วนที่ 2: PATCH สำหรับ Update Profile (เพิ่มการดัก Error และตรวจสอบ Username)
+// 🟢 ส่วนที่ 2: PATCH สำหรับ Update Profile
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, username, bio } = body;
+    const { id, name, bio } = body;
 
     if (!id) return NextResponse.json({ message: "ไม่พบ User ID" }, { status: 400 });
-
-    // ตรวจสอบ Username ซ้ำ (ถ้ามีการส่ง username มา)
-    if (username) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          username: username,
-          NOT: { id: id }, // ต้องไม่ใช่ของตัวเอง
-        },
-      });
-      if (existingUser) return NextResponse.json({ message: "Username นี้ถูกใช้งานแล้ว" }, { status: 400 });
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id: id },
       data: {
-        username: username,
+        name: name,
         bio: bio,
       },
     });
@@ -77,6 +66,7 @@ export async function PATCH(req: Request) {
     // ส่งข้อมูลที่อัปเดตแล้วกลับไปเพื่อให้หน้า Profile อัปเดต UI ทันที
     return NextResponse.json({
       id: updatedUser.id,
+      name: updatedUser.name,
       username: updatedUser.username,
       bio: updatedUser.bio,
       image: updatedUser.image,

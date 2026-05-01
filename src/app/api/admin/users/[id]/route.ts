@@ -19,7 +19,21 @@ export async function PATCH(
 
         const validFields: any = {};
         if (body.role && ["USER", "ADMIN"].includes(body.role)) validFields.role = body.role;
-        if (body.status && ["ACTIVE", "SUSPENDED", "BANNED"].includes(body.status)) validFields.status = body.status;
+
+        // BAN: รับ bannedUntil + banReason
+        if (body.bannedUntil !== undefined) {
+            if (body.bannedUntil === null) {
+                // UNBAN: ล้างค่าทั้งหมด
+                validFields.bannedUntil = null;
+                validFields.banReason = null;
+                validFields.status = "ACTIVE";
+            } else {
+                // BAN: set วันหมดแบน, status และ reason
+                validFields.bannedUntil = new Date(body.bannedUntil);
+                validFields.status = "BANNED";
+                validFields.banReason = body.banReason || "ละเมิดกฎชุมชน";
+            }
+        }
 
         if (Object.keys(validFields).length === 0) {
             return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -29,6 +43,21 @@ export async function PATCH(
             where: { id },
             data: validFields
         });
+
+        // ส่ง Notification ถึง user ที่ถูกแบน
+        if (validFields.status === "BANNED" && validFields.bannedUntil) {
+            const dateStr = new Date(validFields.bannedUntil).toLocaleDateString("th-TH", {
+                day: "numeric", month: "long", year: "numeric"
+            });
+            await prisma.notification.create({
+                data: {
+                    userId: id,
+                    type: "WARNING",
+                    message: `บัญชีของคุณถูกระงับการใช้งาน Forum ถึงวันที่ ${dateStr} เหตุผล: ${validFields.banReason}`,
+                    link: "/profile"
+                }
+            });
+        }
 
         return NextResponse.json(updatedUser);
     } catch (error) {
