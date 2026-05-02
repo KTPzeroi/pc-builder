@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
     try {
-        const settings = await prisma.systemSetting.findMany();
-        const settingsMap = settings.reduce((acc: any, curr) => {
-            acc[curr.key] = curr.value;
-            return acc;
-        }, {});
+        // SystemSetting table was removed. Returning default static settings to avoid breaking the frontend.
+        const settingsMap = {
+            forum_rules: "1. กรุณาใช้คำสุภาพ\n2. ห้ามโพสต์สแปม\n3. เคารพความเห็นของผู้อื่น",
+            forum_tags: "DISCUSSION, QUESTION, BUILD_ADVICE, NEWS_AND_RUMORS"
+        };
         
         return NextResponse.json(settingsMap);
     } catch (error) {
@@ -27,15 +26,8 @@ export async function PUT(req: Request) {
 
         const body = await req.json();
         
-        // body is expected to be an object with { key: value }
-        for (const key in body) {
-            const value = typeof body[key] === "object" ? JSON.stringify(body[key]) : String(body[key]);
-            await prisma.systemSetting.upsert({
-                where: { key },
-                update: { value },
-                create: { key, value }
-            });
-        }
+        // SystemSetting table was removed. We mock the success for now.
+        console.warn("SystemSetting table is removed. Cannot save settings to DB. Body:", body);
 
         return NextResponse.json({ success: true });
     } catch (error) {

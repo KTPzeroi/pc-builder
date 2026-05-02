@@ -10,6 +10,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
+    // Mock behavior since PasswordResetToken was removed
+    console.warn("PasswordResetToken table is removed. Cannot verify token.");
+    return NextResponse.json({ message: "ฟีเจอร์รีเซ็ตรหัสผ่านถูกปิดใช้งานชั่วคราว" }, { status: 400 });
+
+    /*
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token }
     });
@@ -38,6 +43,7 @@ export async function POST(req: Request) {
     await prisma.passwordResetToken.delete({
       where: { token }
     });
+    */
 
     return NextResponse.json({ message: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" }, { status: 200 });
   } catch (error) {

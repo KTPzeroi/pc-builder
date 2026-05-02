@@ -379,9 +379,6 @@ export default function PostDetailPage() {
                   </div>
                   <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-lg text-white">ราคารวมโดยประมาณ: <span className="text-blue-500 font-bold">฿{post.price || "0"}</span></p>
-                    <Button color="primary" size="sm" className="font-bold px-8 shadow-lg shadow-blue-500/20" onPress={handleShare}>
-                      Copy this Build
-                    </Button>
                   </div>
                 </CardBody>
               </Card>

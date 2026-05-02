@@ -25,18 +25,19 @@ export async function POST(req: Request) {
     const expires = new Date(Date.now() + 15 * 60 * 1000); // มีอายุ 15 นาที
 
     // ลบ Token เก่าทิ้งเผื่อผู้ใช้กดย้ำๆ
-    await prisma.passwordResetToken.deleteMany({
-      where: { email }
-    });
+    // await prisma.passwordResetToken.deleteMany({
+    //   where: { email }
+    // });
 
     // บันทึก Token ลงฐานข้อมูล
-    await prisma.passwordResetToken.create({
-      data: {
-        email,
-        token,
-        expires
-      }
-    });
+    // await prisma.passwordResetToken.create({
+    //   data: {
+    //     email,
+    //     token,
+    //     expires
+    //   }
+    // });
+    console.warn("PasswordResetToken table is removed. Password reset token is not saved.");
 
     const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 

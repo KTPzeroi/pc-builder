@@ -30,6 +30,18 @@ export async function GET(req: Request) {
             post: true
           },
           orderBy: { createdAt: 'desc' }
+        },
+        likedPosts: {
+          where: { status: { not: "Hidden" } },
+          include: {
+            author: {
+              select: {
+                name: true,
+                username: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
         }
       }
     });

@@ -9,7 +9,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { IoEyeOutline, IoEyeOffOutline, IoHeart } from "react-icons/io5";
 
 // --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
 function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
@@ -163,6 +163,35 @@ function MyActivity({ comments }: { comments: any[] }) {
   );
 }
 
+function MyFavorite({ posts }: { posts: any[] }) {
+  if (!posts || posts.length === 0) {
+    return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณกดถูกใจ</div>;
+  }
+  return (
+    <div className="flex flex-col gap-4 text-left mt-4">
+      {posts.map((post) => (
+        <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-pink-500/50 transition-colors">
+          <CardBody>
+            <Link href={`/forum/${post.id}`}>
+              <h3 className="text-lg font-bold text-white hover:text-pink-400 flex items-center gap-2">
+                 <IoHeart className="text-pink-500" /> {post.title}
+              </h3>
+            </Link>
+            <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
+            <div className="flex gap-4 text-xs text-gray-500 items-center">
+              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+              <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
+              {post.author && (
+                 <span>โดย <span className="font-semibold">{post.author.name || post.author.username}</span></span>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 // --- 🔵 หน้าหลัก (Main Page) ---
 
 export default function ProfilePage() {
@@ -186,7 +215,8 @@ export default function ProfilePage() {
     bio: "",
     avatar: "",
     posts: [] as any[],
-    comments: [] as any[]
+    comments: [] as any[],
+    likedPosts: [] as any[]
   });
 
   // 2. State สำหรับเก็บค่าชั่วขณะที่พิมพ์ใน Modal
@@ -223,7 +253,8 @@ export default function ProfilePage() {
               bio: data.bio || "ยังไม่มีคำอธิบาย...",
               avatar: data.image || session.user.image || "",
               posts: data.posts || [],
-              comments: data.comments || []
+              comments: data.comments || [],
+              likedPosts: data.likedPosts || []
             };
             setUserData(newUserData);
             setTempData(newUserData);
@@ -235,7 +266,8 @@ export default function ProfilePage() {
               bio: "ยังไม่มีคำอธิบาย...",
               avatar: session.user.image || "",
               posts: [],
-              comments: []
+              comments: [],
+              likedPosts: []
             };
             setUserData(fallbackData);
             setTempData(fallbackData);
@@ -455,7 +487,7 @@ export default function ProfilePage() {
             color="primary"
             variant="underlined"
             classNames={{
-              tabList: "gap-8 border-b border-white/5 w-full",
+              tabList: "gap-4 md:gap-8 border-b border-white/5 w-full overflow-x-auto",
               tab: "h-12 font-bold px-0",
               cursor: "bg-blue-500",
               panel: "pt-8 text-center"
@@ -464,6 +496,7 @@ export default function ProfilePage() {
             <Tab key="builds" title="MY BUILDS"><MyBuilds onLoadedCount={setBuildsCount} /></Tab>
             <Tab key="forum" title="MY FORUM"><MyForum posts={userData.posts} /></Tab>
             <Tab key="activity" title="MY ACTIVITY"><MyActivity comments={userData.comments} /></Tab>
+            <Tab key="favorite" title="MY FAVORITE"><MyFavorite posts={userData.likedPosts} /></Tab>
           </Tabs>
         </section>
 

@@ -24,6 +24,7 @@ export default function AppNavbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -35,6 +36,7 @@ export default function AppNavbar() {
     if (!isOpen) {
       setErrorMessage("");
       setIsVisible(false);
+      setIsConfirmVisible(false);
     }
   }, [isOpen]);
 
@@ -76,6 +78,7 @@ export default function AppNavbar() {
   }, [onOpen]);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
+  const toggleConfirmVisibility = () => setIsConfirmVisible(!isConfirmVisible);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -623,10 +626,21 @@ export default function AppNavbar() {
                 
                 {authMode === "register" && (
                   <Input 
-                    label="Confirm Password" type="password" variant="bordered" labelPlacement="outside" placeholder="Confirm your password" 
+                    label="Confirm Password" 
+                    type={isConfirmVisible ? "text" : "password"} 
+                    variant="bordered" labelPlacement="outside" placeholder="Confirm your password" 
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                     isRequired
                     classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
+                    endContent={
+                      <button className="focus:outline-none" type="button" onClick={toggleConfirmVisibility}>
+                        {isConfirmVisible ? (
+                          <IoEyeOffOutline className="text-2xl text-default-400" />
+                        ) : (
+                          <IoEyeOutline className="text-2xl text-default-400" />
+                        )}
+                      </button>
+                    }
                   />
                 )}
 
