@@ -612,6 +612,7 @@ export default function AppNavbar() {
                     variant="bordered" labelPlacement="outside" placeholder="Enter your password" 
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     isRequired
+                    autoComplete={authMode === "register" ? "new-password" : "current-password"}
                     endContent={
                       <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                         {isVisible ? (
@@ -631,6 +632,7 @@ export default function AppNavbar() {
                     variant="bordered" labelPlacement="outside" placeholder="Confirm your password" 
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                     isRequired
+                    autoComplete="new-password"
                     classNames={{ label: "w-full max-w-full text-[15px] whitespace-normal overflow-visible text-clip" }}
                     endContent={
                       <button className="focus:outline-none" type="button" onClick={toggleConfirmVisibility}>

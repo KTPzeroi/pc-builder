@@ -201,7 +201,9 @@ export default function ProfilePage() {
 
   const { isOpen: isPwdOpen, onOpen: onPwdOpen, onOpenChange: onPwdChange } = useDisclosure();
   const [pwdData, setPwdData] = useState({ current: "", new: "", confirm: "" });
-  const [isPwdVisible, setIsPwdVisible] = useState(false);
+  const [isCurrentPwdVisible, setIsCurrentPwdVisible] = useState(false);
+  const [isNewPwdVisible, setIsNewPwdVisible] = useState(false);
+  const [isConfirmPwdVisible, setIsConfirmPwdVisible] = useState(false);
   const [isChangingPwd, setIsChangingPwd] = useState(false);
 
   const [isUpdating, setIsUpdating] = useState(false);
@@ -624,21 +626,31 @@ export default function ProfilePage() {
                 </ModalHeader>
                 <ModalBody className="py-6 flex flex-col gap-4">
                   <Input
-                    label="Current Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านปัจจุบัน"
+                    label="Current Password" type={isCurrentPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านปัจจุบัน"
                     value={pwdData.current} onChange={(e) => setPwdData({ ...pwdData, current: e.target.value })}
-                  />
-                  <Input
-                    label="New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านใหม่"
-                    value={pwdData.new} onChange={(e) => setPwdData({ ...pwdData, new: e.target.value })}
                     endContent={
-                      <button className="focus:outline-none" type="button" onClick={() => setIsPwdVisible(!isPwdVisible)}>
-                        {isPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
+                      <button className="focus:outline-none" type="button" onClick={() => setIsCurrentPwdVisible(!isCurrentPwdVisible)}>
+                        {isCurrentPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
                       </button>
                     }
                   />
                   <Input
-                    label="Confirm New Password" type={isPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="ยืนยันรหัสผ่านใหม่"
+                    label="New Password" type={isNewPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="รหัสผ่านใหม่"
+                    value={pwdData.new} onChange={(e) => setPwdData({ ...pwdData, new: e.target.value })}
+                    endContent={
+                      <button className="focus:outline-none" type="button" onClick={() => setIsNewPwdVisible(!isNewPwdVisible)}>
+                        {isNewPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
+                      </button>
+                    }
+                  />
+                  <Input
+                    label="Confirm New Password" type={isConfirmPwdVisible ? "text" : "password"} variant="bordered" labelPlacement="outside" placeholder="ยืนยันรหัสผ่านใหม่"
                     value={pwdData.confirm} onChange={(e) => setPwdData({ ...pwdData, confirm: e.target.value })}
+                    endContent={
+                      <button className="focus:outline-none" type="button" onClick={() => setIsConfirmPwdVisible(!isConfirmPwdVisible)}>
+                        {isConfirmPwdVisible ? <IoEyeOffOutline className="text-xl text-default-400" /> : <IoEyeOutline className="text-xl text-default-400" />}
+                      </button>
+                    }
                   />
                 </ModalBody>
                 <ModalFooter className="border-t border-white/5">
