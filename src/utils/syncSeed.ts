@@ -14,13 +14,43 @@ export async function syncSeedFile() {
     }
 
     try {
-        const components = await prisma.component.findMany();
+        // ใช้ `as any` เพื่อให้ได้ทุก field จาก DB จริงๆ
+        // รวมถึง field ใหม่อย่าง `description` ที่อาจยังไม่อยู่ใน Prisma TypeScript type
+        // (กรณีที่ยังไม่ได้ run `prisma generate` หลัง migrate)
+        const components: any[] = await (prisma.component as any).findMany({
+            orderBy: { createdAt: "asc" }
+        });
 
         // เอา createdAt, updatedAt ออกเพื่อให้ seed ใหม่ไม่รก
-        const cleanComponents = components.map(c => {
-            const { createdAt, updatedAt, ...rest } = c;
-            return rest;
-        });
+        // และ reorder fields ให้ตรงกับ schema เสมอ
+        const cleanComponents = components.map((c: any) => ({
+            id:              c.id,
+            name:            c.name,
+            type:            c.type,
+            brand:           c.brand,
+            price:           c.price,
+            image:           c.image ?? null,
+            description:     c.description ?? null,
+            socket:          c.socket ?? null,
+            ramType:         c.ramType ?? null,
+            formFactor:      c.formFactor ?? null,
+            capacity:        c.capacity ?? null,
+            tdp:             c.tdp ?? null,
+            lengthMm:        c.lengthMm ?? null,
+            maxGpuLength:    c.maxGpuLength ?? null,
+            maxCoolerHeight: c.maxCoolerHeight ?? null,
+            supportedMobo:   c.supportedMobo ?? null,
+            psuFormFactor:   c.psuFormFactor ?? null,
+            coolingType:     c.coolingType ?? null,
+            cpuSingleScore:  c.cpuSingleScore ?? null,
+            cpuMultiScore:   c.cpuMultiScore ?? null,
+            gpuScore:        c.gpuScore ?? null,
+            vramGb:          c.vramGb ?? null,
+            ramSpeed:        c.ramSpeed ?? null,
+            readSpeed:       c.readSpeed ?? null,
+            writeSpeed:      c.writeSpeed ?? null,
+            chipset:         c.chipset ?? null,
+        }));
 
         const fileContent = `import { PrismaClient } from "@prisma/client";
 
