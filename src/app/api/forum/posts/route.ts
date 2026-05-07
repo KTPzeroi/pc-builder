@@ -9,9 +9,28 @@ const prisma = new PrismaClient();
 // GET: ดึงรายการกระทู้ทั้งหมด
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+    const userRole = (session?.user as any)?.role;
+
+    const orConditions: any[] = [
+      { status: { not: "Private" } }
+    ];
+
+    if (userId) {
+      orConditions.push({ authorId: userId });
+    }
+
+    if (userRole === "ADMIN") {
+      orConditions.push({ status: "Private" });
+    }
+
     const posts = await prisma.post.findMany({
       where: {
-        status: { not: "Hidden" }
+        AND: [
+          { status: { not: "Hidden" } },
+          { OR: orConditions }
+        ]
       },
       include: {
         author: {

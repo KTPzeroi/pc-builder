@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
     request: Request,
@@ -7,6 +9,13 @@ export async function GET(
 ) {
     try {
         const { id: userId } = await params;
+        const session = await getServerSession(authOptions);
+        const userRole = (session?.user as any)?.role;
+
+        const postWhereClause: any = { status: { not: "Hidden" } };
+        if (userRole !== "ADMIN") {
+            postWhereClause.status = { notIn: ["Hidden", "Private"] };
+        }
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -23,7 +32,7 @@ export async function GET(
                     }
                 },
                 posts: {
-                    where: { status: { not: "Hidden" } },
+                    where: postWhereClause,
                     orderBy: { createdAt: 'desc' },
                     take: 5,
                     select: {

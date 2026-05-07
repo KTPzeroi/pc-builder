@@ -58,6 +58,10 @@ export default function InventoryCRUDPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState<string>("ALL");
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
+
     // Modal State
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | "IMPORT_EDIT">("ADD");
@@ -79,6 +83,12 @@ export default function InventoryCRUDPage() {
     const [importList, setImportList] = useState<(Partial<ComponentData> & { isReady: boolean })[]>([]);
     const { isOpen: isStagingOpen, onOpen: onStagingOpen, onOpenChange: onStagingOpenChange } = useDisclosure();
     const [isBulkSaving, setIsBulkSaving] = useState(false);
+
+    // CSV Type-picker modal
+    const { isOpen: isCsvTypeOpen, onOpen: onCsvTypeOpen, onOpenChange: onCsvTypeOpenChange, onClose: onCsvTypeClose } = useDisclosure();
+    const [pendingImportType, setPendingImportType] = useState<string>("");
+    // ref เก็บ type ที่ confirm แล้ว เพื่อหลีกเลี่ยง stale closure ใน handleCsvFileSelect
+    const importTypeRef = useRef<string>("");
 
     // Form Data
     const [formData, setFormData] = useState<Partial<ComponentData>>({
@@ -181,7 +191,8 @@ export default function InventoryCRUDPage() {
     // === CSV Import Handlers ===
     const handleCsvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !importType) return;
+        const activeType = importTypeRef.current || importType;
+        if (!file || !activeType) return;
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
@@ -189,7 +200,7 @@ export default function InventoryCRUDPage() {
                 const rows = results.data as Record<string, any>[];
                 const mapped = rows.map(row => ({
                     ...row,
-                    type: importType, // force inject type
+                    type: activeType, // use ref value to avoid stale closure
                     price: row.price ? parseFloat(row.price) : 0,
                     capacity: row.capacity ? parseInt(row.capacity) : undefined,
                     cpuSingleScore: row.cpuSingleScore ? parseInt(row.cpuSingleScore) : undefined,
@@ -483,6 +494,23 @@ export default function InventoryCRUDPage() {
         return matchSearch && matchType;
     });
 
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredComponents.length / ITEMS_PER_PAGE);
+    const paginatedComponents = filteredComponents.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    // Reset page when filter/search changes
+    const handleSearchChange = (val: string) => {
+        setSearchQuery(val);
+        setCurrentPage(1);
+    };
+    const handleFilterTypeChange = (val: string) => {
+        setFilterType(val);
+        setCurrentPage(1);
+    };
+
     const renderDynamicFields = () => {
         const type = formData.type;
         return (
@@ -628,51 +656,40 @@ export default function InventoryCRUDPage() {
                     <Button color="primary" variant="shadow" className="font-bold tracking-wide w-full sm:w-auto" startContent={<IoAddCircleOutline size={20} />} onPress={handleOpenAddModal}>
                         เพิ่มสินค้าใหม่
                     </Button>
-                    <div className="flex gap-2 items-center">
-                        <Select
-                            placeholder="เลือกประเภท..."
-                            size="sm"
-                            className="w-40"
-                            variant="faded"
-                            selectedKeys={importType ? new Set([importType]) : new Set()}
-                            onSelectionChange={(keys) => setImportType(Array.from(keys)[0] as string || "")}
-                        >
-                            {TYPE_OPTIONS.map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
-                        </Select>
-                        <Button
-                            color="secondary"
-                            variant="flat"
-                            className="font-bold"
-                            startContent={<IoDocumentTextOutline size={18} />}
-                            isDisabled={!importType}
-                            onPress={() => csvInputRef.current?.click()}
-                        >
-                            Import CSV
-                        </Button>
-                        <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFileSelect} />
-                    </div>
+                    <Button
+                        variant="bordered"
+                        className="font-bold border-violet-500/60 text-violet-300 hover:bg-violet-500/15 transition-all w-full sm:w-auto"
+                        startContent={<IoDocumentTextOutline size={18} className="text-violet-400" />}
+                        onPress={() => { setPendingImportType(""); onCsvTypeOpen(); }}
+                    >
+                        Import CSV
+                    </Button>
+                    <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFileSelect} />
                 </div>
             </header>
 
             {/* Filter & Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="flex flex-col sm:flex-row gap-4 w-full items-center">
                 <Input
                     placeholder="ค้นหาชื่อ หรือ แบรนด์สินค้า..."
                     startContent={<IoSearch className="text-gray-400" />}
                     variant="faded"
                     className="w-full sm:max-w-xs"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                 />
                 <Select
                     placeholder="แยกตามประเภท (Type)"
                     className="w-full sm:max-w-xs"
                     variant="faded"
                     selectedKeys={new Set([filterType])}
-                    onSelectionChange={(keys) => setFilterType(Array.from(keys)[0] as string)}
+                    onSelectionChange={(keys) => handleFilterTypeChange(Array.from(keys)[0] as string)}
                 >
                     {[{ label: "ดูทุกประเภท", value: "ALL" }, ...TYPE_OPTIONS].map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
                 </Select>
+                <span className="text-xs text-gray-500 ml-auto shrink-0">
+                    แสดง {filteredComponents.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredComponents.length)} จาก {filteredComponents.length} รายการ
+                </span>
             </div>
 
             {/* Main Table Area */}
@@ -698,7 +715,7 @@ export default function InventoryCRUDPage() {
                                 <TableColumn align="center">ACTIONS</TableColumn>
                             </TableHeader>
                             <TableBody emptyContent="ไม่พบสินค้าในระบบ หรือไม่ตรงกับคำค้นหา">
-                                {filteredComponents.map((item) => (
+                                {paginatedComponents.map((item) => (
                                     <TableRow key={item.id} className="hover:bg-white/5 transition-colors">
                                         <TableCell>
                                             <div className="w-16 h-16 bg-white/10 rounded-lg flex items-center justify-center p-1 overflow-hidden">
@@ -758,6 +775,58 @@ export default function InventoryCRUDPage() {
                     )}
                 </CardBody>
             </Card>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 pt-2">
+                    <Button
+                        size="sm"
+                        variant="bordered"
+                        className="border-white/10 text-gray-400 font-bold"
+                        isDisabled={currentPage === 1}
+                        onPress={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    >
+                        ← ก่อนหน้า
+                    </Button>
+                    <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                            .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                                if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                                acc.push(p);
+                                return acc;
+                            }, [])
+                            .map((p, idx) =>
+                                p === "..." ? (
+                                    <span key={`ellipsis-${idx}`} className="px-2 py-1 text-gray-500">…</span>
+                                ) : (
+                                    <Button
+                                        key={p}
+                                        size="sm"
+                                        variant={currentPage === p ? "solid" : "bordered"}
+                                        color={currentPage === p ? "primary" : "default"}
+                                        className={`min-w-[36px] font-bold ${
+                                            currentPage === p ? "" : "border-white/10 text-gray-400"
+                                        }`}
+                                        onPress={() => setCurrentPage(p as number)}
+                                    >
+                                        {p}
+                                    </Button>
+                                )
+                            )
+                        }
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="bordered"
+                        className="border-white/10 text-gray-400 font-bold"
+                        isDisabled={currentPage === totalPages}
+                        onPress={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    >
+                        ถัดไป →
+                    </Button>
+                </div>
+            )}
 
             {/* Modal ADD / EDIT */}
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" scrollBehavior="inside" classNames={{
@@ -1113,6 +1182,70 @@ export default function InventoryCRUDPage() {
                                     startContent={<IoCloudUploadOutline size={18} />}
                                 >
                                     Add to Inventory ({importList.filter(r => r.isReady).length}/{importList.length})
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+
+            {/* === CSV Type-Picker Modal === */}
+            <Modal
+                isOpen={isCsvTypeOpen}
+                onOpenChange={onCsvTypeOpenChange}
+                size="sm"
+                classNames={{
+                    base: "bg-slate-900 border border-white/10 text-white",
+                    header: "border-b border-white/5 py-4 px-6",
+                    body: "py-6 px-6",
+                    footer: "border-t border-white/5 py-4 px-6",
+                }}
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex items-center gap-2">
+                                <IoDocumentTextOutline className="text-violet-400" size={20} />
+                                <span className="text-lg font-bold">Import CSV</span>
+                            </ModalHeader>
+                            <ModalBody className="flex flex-col gap-4">
+                                <p className="text-sm text-gray-400">
+                                    เลือกประเภทอุปกรณ์ที่ต้องการนำเข้าข้อมูลจากไฟล์ CSV
+                                </p>
+                                <Select
+                                    label="ประเภทอุปกรณ์"
+                                    placeholder="เลือกประเภท..."
+                                    variant="bordered"
+                                    isRequired
+                                    selectedKeys={pendingImportType ? new Set([pendingImportType]) : new Set()}
+                                    onSelectionChange={(keys) => setPendingImportType(Array.from(keys)[0] as string || "")}
+                                    classNames={{
+                                        label: "text-gray-400 font-bold",
+                                        trigger: "bg-white/5 border-violet-500/40 hover:border-violet-400/60",
+                                        popoverContent: "bg-slate-800 text-white",
+                                    }}
+                                >
+                                    {TYPE_OPTIONS.map(opt => <SelectItem key={opt.value}>{opt.label}</SelectItem>)}
+                                </Select>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" color="danger" onPress={onClose} className="font-bold">
+                                    ยกเลิก
+                                </Button>
+                                <Button
+                                    variant="shadow"
+                                    className="font-bold bg-violet-600 text-white shadow-violet-500/30"
+                                    isDisabled={!pendingImportType}
+                                    startContent={<IoDocumentTextOutline size={16} />}
+                                    onPress={() => {
+                                        importTypeRef.current = pendingImportType;
+                                        setImportType(pendingImportType);
+                                        onClose();
+                                        // หน่วง 100ms เพื่อให้ modal ปิดก่อนแล้วค่อยเปิด file picker
+                                        setTimeout(() => csvInputRef.current?.click(), 100);
+                                    }}
+                                >
+                                    เลือกไฟล์ CSV
                                 </Button>
                             </ModalFooter>
                         </>

@@ -423,7 +423,17 @@ export default function BuildPage() {
     setSelectedCategory(null);
   };
 
+  // ตรวจสอบว่าเลือกอุปกรณ์อย่างน้อย 1 ชิ้น
+  const hasAnySelected = Object.values(selectedProducts).some((p) => p !== null);
+
   const handleSaveBuildClick = () => {
+    if (!hasAnySelected) {
+      addToast({
+        title: "กรุณาเลือกอุปกรณ์อย่างน้อย 1 ชิ้นก่อนบันทึก",
+        color: "warning",
+      });
+      return;
+    }
     if (status === "unauthenticated") {
       window.dispatchEvent(new Event("open-login-modal"));
     } else {
@@ -637,9 +647,12 @@ export default function BuildPage() {
           <Button
             color="primary"
             variant="ghost"
-            className="w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase"
+            className={`w-full sm:w-auto sm:px-16 h-14 font-bold text-xl uppercase transition-opacity ${
+              !hasAnySelected ? "opacity-40 cursor-not-allowed" : ""
+            }`}
             radius="lg"
             onPress={handleSaveBuildClick}
+            isDisabled={!hasAnySelected}
           >
             Save Build
           </Button>

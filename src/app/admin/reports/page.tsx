@@ -180,7 +180,7 @@ export default function AdminReportsPage() {
                                         isLoading={isProcessing}
                                         onPress={() => handleAction("hide_target", onClose)}
                                     >
-                                        ❌ ลบหรือซ่อนโพสต์
+                                        ❌ ลบโพสต์และคอมเมนต์
                                     </Button>
                                     <Button 
                                         color="warning" 
