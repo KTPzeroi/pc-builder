@@ -9,7 +9,7 @@ import {
 import {
     IoLayersOutline, IoAddCircleOutline, IoTrashOutline, IoCreateOutline,
     IoGameControllerOutline, IoBriefcaseOutline, IoColorPaletteOutline,
-    IoCubeOutline, IoPricetagOutline, IoListOutline
+    IoCubeOutline, IoPricetagOutline, IoListOutline, IoSearchOutline
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -63,6 +63,7 @@ interface DBComponent {
     type: string;
     brand: string;
     price: number;
+    image?: string | null;
 }
 
 export default function AdminPresetsPage() {
@@ -70,6 +71,11 @@ export default function AdminPresetsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const [editingPreset, setEditingPreset] = useState<PresetBuild | null>(null);
+
+    // Component Selection Modal State
+    const { isOpen: isSelectOpen, onOpen: onSelectOpen, onOpenChange: onSelectOpenChange, onClose: onSelectClose } = useDisclosure();
+    const [activeSelectIndex, setActiveSelectIndex] = useState<number | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // ข้อมูลอุปกรณ์จาก Database
     const [dbComponents, setDbComponents] = useState<DBComponent[]>([]);
@@ -361,38 +367,34 @@ export default function AdminPresetsPage() {
                                                     <div key={comp.type} className="bg-white/5 border border-white/10 rounded-xl p-4">
                                                         <p className="text-blue-400 font-bold text-xs uppercase tracking-widest mb-3">{comp.type}</p>
                                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                            {/* เลือกจาก DB หรือพิมพ์เอง */}
-                                                            {options.length > 0 ? (
-                                                                <Select
-                                                                    size="md"
-                                                                    label="เลือกอุปกรณ์"
-                                                                    placeholder="เลือกจากรายการ"
-                                                                    variant="faded"
-                                                                    labelPlacement="outside"
-                                                                    classNames={{
-                                                                        value: "truncate text-ellipsis",
-                                                                        innerWrapper: "overflow-hidden"
-                                                                    }}
-                                                                    selectedKeys={comp.name ? new Set([
-                                                                        options.find(o => o.name === comp.name)?.id || ""
-                                                                    ].filter(Boolean)) : new Set([])}
-                                                                    onSelectionChange={(keys) => {
-                                                                        const selectedId = Array.from(keys)[0] as string;
-                                                                        if (selectedId) handleSelectDBComponent(i, selectedId);
+                                                            {/* Trigger Button */}
+                                                            <div className="flex flex-col gap-1.5">
+                                                                <label className="text-gray-400 text-xs font-medium">เลือกอุปกรณ์</label>
+                                                                <div 
+                                                                    className="bg-slate-900 border border-white/10 hover:border-blue-500/50 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-colors shadow-sm"
+                                                                    onClick={() => {
+                                                                        setActiveSelectIndex(i);
+                                                                        setSearchQuery("");
+                                                                        onSelectOpen();
                                                                     }}
                                                                 >
-                                                                    {options.map(o => (
-                                                                        <SelectItem key={o.id} textValue={o.name}>
-                                                                            <div className="flex justify-between items-center w-full">
-                                                                                <span className="truncate max-w-[150px] sm:max-w-[180px]">{o.name}</span>
-                                                                                <span className="text-gray-500 text-xs ml-2">฿{o.price.toLocaleString()}</span>
+                                                                    {comp.name ? (
+                                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                                            <div className="w-8 h-8 shrink-0 bg-white/5 rounded-md flex items-center justify-center p-1 border border-white/10">
+                                                                                {options.find(o => o.name === comp.name)?.image ? (
+                                                                                    <img src={options.find(o => o.name === comp.name)?.image!} alt="" className="w-full h-full object-contain drop-shadow-md" />
+                                                                                ) : (
+                                                                                    <IoCubeOutline className="text-gray-500 text-lg" />
+                                                                                )}
                                                                             </div>
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </Select>
-                                                            ) : (
-                                                                <Input size="md" label="ชื่อรุ่น" placeholder="พิมพ์ชื่อเอง" value={comp.name} onChange={(e) => handleComponentChange(i, "name", e.target.value)} />
-                                                            )}
+                                                                            <span className="truncate text-sm font-medium text-white">{comp.name}</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-gray-500 text-sm pl-2">ค้นหา หรือเลือกจากรายการ...</span>
+                                                                    )}
+                                                                    <IoSearchOutline className="text-gray-500 shrink-0 text-lg" />
+                                                                </div>
+                                                            </div>
                                                             <Input size="md" label="เหตุผลที่แนะนำ" placeholder="เล่นเกมลื่น ราคาคุ้ม" value={comp.reason} onChange={(e) => handleComponentChange(i, "reason", e.target.value)} />
                                                             <Input size="md" label="ราคา (บาท)" type="number" placeholder="0" value={String(comp.price || "")} onChange={(e) => handleComponentChange(i, "price", parseInt(e.target.value) || 0)} />
                                                         </div>
@@ -420,6 +422,92 @@ export default function AdminPresetsPage() {
                             </ModalFooter>
                         </>
                     )}
+                </ModalContent>
+            </Modal>
+
+            {/* Component Selection Modal */}
+            <Modal isOpen={isSelectOpen} onOpenChange={onSelectOpenChange} size="2xl" scrollBehavior="inside" classNames={{
+                base: "bg-slate-900 border border-white/10 text-white",
+                header: "border-b border-white/5 py-4",
+                body: "py-4 px-2 sm:px-6",
+            }}>
+                <ModalContent>
+                    {(onClose) => {
+                        const currentType = activeSelectIndex !== null ? formComponents[activeSelectIndex].type : "";
+                        const options = activeSelectIndex !== null ? getComponentsForType(currentType) : [];
+                        const filteredOptions = options.filter(o => o.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                        return (
+                            <>
+                                <ModalHeader className="flex flex-col gap-2">
+                                    <span className="text-xl font-bold flex items-center gap-2 text-blue-400 uppercase">
+                                        <IoSearchOutline /> ค้นหา {currentType}
+                                    </span>
+                                    <Input 
+                                        autoFocus
+                                        placeholder="พิมพ์เพื่อค้นหา..." 
+                                        value={searchQuery}
+                                        onValueChange={setSearchQuery}
+                                        startContent={<IoSearchOutline className="text-gray-500" />}
+                                        variant="bordered"
+                                        size="lg"
+                                        classNames={{ input: "text-white" }}
+                                    />
+                                </ModalHeader>
+                                <ModalBody>
+                                    <div className="flex flex-col gap-2 pb-6">
+                                        {filteredOptions.length > 0 ? (
+                                            filteredOptions.map((o) => (
+                                                <div 
+                                                    key={o.id}
+                                                    className="flex justify-between items-center bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 rounded-xl p-3 cursor-pointer transition-colors"
+                                                    onClick={() => {
+                                                        if (activeSelectIndex !== null) {
+                                                            handleSelectDBComponent(activeSelectIndex, o.id);
+                                                            onClose();
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-4 overflow-hidden">
+                                                        <div className="w-12 h-12 shrink-0 bg-black/40 rounded-lg flex items-center justify-center p-1 border border-white/5">
+                                                            {o.image ? (
+                                                                <img src={o.image} alt={o.name} className="w-full h-full object-contain drop-shadow-md" />
+                                                            ) : (
+                                                                <IoCubeOutline className="text-gray-500 text-2xl" />
+                                                            )}
+                                                        </div>
+                                                        <span className="whitespace-normal leading-snug flex-1 text-sm font-medium">{o.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-blue-400 text-sm font-bold shrink-0 bg-blue-500/10 px-3 py-1 rounded-lg">฿{o.price.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 bg-black/20 rounded-xl border border-dashed border-white/10 flex flex-col items-center gap-3">
+                                                <IoCubeOutline className="text-4xl text-gray-600" />
+                                                <p className="text-gray-400">ไม่พบอุปกรณ์ที่ค้นหา</p>
+                                                {searchQuery.trim() !== "" && (
+                                                    <Button 
+                                                        color="primary" 
+                                                        variant="flat"
+                                                        onPress={() => {
+                                                            if (activeSelectIndex !== null) {
+                                                                handleComponentChange(activeSelectIndex, "name", searchQuery.trim());
+                                                                onClose();
+                                                            }
+                                                        }}
+                                                    >
+                                                        ใช้ชื่อ "{searchQuery}" เป็นข้อมูลกำหนดเอง
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </ModalBody>
+                            </>
+                        );
+                    }}
                 </ModalContent>
             </Modal>
         </div>
