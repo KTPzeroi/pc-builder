@@ -4,7 +4,7 @@ import {
   Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button,
   Modal, ModalContent, ModalHeader, ModalBody,
   useDisclosure, Input, Divider,
-  Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User as HeroUser, Badge, ScrollShadow
+  Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User as HeroUser, Badge, ScrollShadow, Alert
 } from "@heroui/react";
 import Image from "next/image";
 import NextLink from "next/link";
@@ -23,6 +23,7 @@ export default function AppNavbar() {
   const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -35,6 +36,7 @@ export default function AppNavbar() {
     setMounted(true);
     if (!isOpen) {
       setErrorMessage("");
+      setSuccessMessage("");
       setIsVisible(false);
       setIsConfirmVisible(false);
     }
@@ -65,6 +67,7 @@ export default function AppNavbar() {
 
   useEffect(() => {
     setErrorMessage("");
+    setSuccessMessage("");
   }, [authMode]);
 
   // รับ Event จาก Component อื่นๆ (เช่นหน้า Build) เพื่อสั่งเปิด Modal
@@ -89,6 +92,7 @@ export default function AppNavbar() {
 
   const handleAuth = async () => {
     setErrorMessage("");
+    setSuccessMessage("");
 
     // Validate inputs
     if (authMode === "register") {
@@ -129,8 +133,30 @@ export default function AppNavbar() {
         });
         const data = await res.json();
         if (res.ok) {
-          alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
-          setAuthMode("login");
+          setSuccessMessage("สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบ...");
+          setErrorMessage("");
+          
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          const result = await signIn("credentials", {
+            identifier: formData.email,
+            password: formData.password,
+            redirect: false,
+            callbackUrl: pathname, 
+          });
+
+          if (result?.error) {
+            setErrorMessage("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+            setSuccessMessage("");
+          } else {
+            onOpenChange();
+            const updatedSession = await getSession();
+            if ((updatedSession?.user as any)?.role === "ADMIN") {
+              router.push("/admin");
+            } else {
+              router.refresh(); 
+            }
+          }
         } else {
           setErrorMessage(data.message || "เกิดข้อผิดพลาด");
         }
@@ -186,8 +212,10 @@ export default function AppNavbar() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
 
-      alert(data.message || "ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว");
       setAuthMode("login");
+      setTimeout(() => {
+        setSuccessMessage(data.message || "ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว");
+      }, 50);
     } catch(err: any) {
       setErrorMessage(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
     } finally {
@@ -583,10 +611,10 @@ export default function AppNavbar() {
               <ModalBody className="flex flex-col gap-4">
                 {/* 🟢 แก้ไข: ใช้การเช็คเงื่อนไขปกติ แทน Framer Motion เพื่อความลื่นไหล */}
                 {errorMessage && (
-                  <div className="bg-danger-500/10 border border-danger-500/50 p-3 rounded-xl flex items-center gap-3 text-danger-500 text-xs font-bold transition-opacity duration-200">
-                    <IoWarningOutline size={18} />
-                    {errorMessage}
-                  </div>
+                  <Alert color="danger" title={errorMessage} variant="flat" className="py-2 text-sm" />
+                )}
+                {successMessage && (
+                  <Alert color="success" title={successMessage} variant="flat" className="py-2 text-sm" />
                 )}
 
                 {authMode === "register" && (

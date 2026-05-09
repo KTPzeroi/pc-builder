@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
     Card, CardBody, CardHeader, Button, Input, Textarea, Select, SelectItem,
     Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-    useDisclosure, Spinner, Chip, Divider, Switch, Autocomplete, AutocompleteItem
+    useDisclosure, Spinner, Chip, Divider, Switch, Autocomplete, AutocompleteItem, Alert
 } from "@heroui/react";
 import {
     IoLayersOutline, IoAddCircleOutline, IoTrashOutline, IoCreateOutline,
@@ -76,6 +76,10 @@ export default function AdminPresetsPage() {
     const { isOpen: isSelectOpen, onOpen: onSelectOpen, onOpenChange: onSelectOpenChange, onClose: onSelectClose } = useDisclosure();
     const [activeSelectIndex, setActiveSelectIndex] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Delete confirm modal
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange, onClose: onDeleteClose } = useDisclosure();
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
     // ข้อมูลอุปกรณ์จาก Database
     const [dbComponents, setDbComponents] = useState<DBComponent[]>([]);
@@ -218,7 +222,15 @@ export default function AdminPresetsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("ยืนยันลบ Preset นี้?")) return;
+        setPendingDeleteId(id);
+        onDeleteOpen();
+    };
+
+    const confirmDelete = async () => {
+        if (!pendingDeleteId) return;
+        const id = pendingDeleteId;
+        onDeleteClose();
+        setPendingDeleteId(null);
         try {
             const res = await fetch(`/api/admin/presets/${id}`, { method: "DELETE" });
             if (res.ok) {
@@ -253,6 +265,32 @@ export default function AdminPresetsPage() {
     return (
         <div className="flex flex-col gap-8">
             <Toaster position="bottom-right" />
+
+            {/* Delete Preset Confirm Modal */}
+            <Modal
+                isOpen={isDeleteOpen}
+                onOpenChange={onDeleteOpenChange}
+                size="sm"
+                backdrop="blur"
+                classNames={{ base: "bg-slate-900 border border-white/10 text-white" }}
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="border-b border-white/5 text-base">ยืนยันการลบ</ModalHeader>
+                            <ModalBody className="py-5">
+                                <Alert color="danger" variant="flat" className="text-sm">
+                                    คุณแน่ใจหรือไม่ว่าต้องการลบ Preset นี้? การกระทำนี้ไม่สามารถย้อนกลับได้
+                                </Alert>
+                            </ModalBody>
+                            <ModalFooter className="border-t border-white/5">
+                                <Button variant="light" onPress={onClose}>ยกเลิก</Button>
+                                <Button color="danger" onPress={confirmDelete}>ยืนยันลบ</Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 md:gap-3">

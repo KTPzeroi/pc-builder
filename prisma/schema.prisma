@@ -219,3 +219,14 @@ model PresetBuild {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ----------------------------------------------------
+// ระบบรีเซ็ตรหัสผ่าน (Password Reset Token)
+// ----------------------------------------------------
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import {
   Card, CardBody, Button, Input, Chip, Tabs, Tab, Avatar,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  useDisclosure, Select, SelectItem, Textarea, Divider, Spinner
+  useDisclosure, Select, SelectItem, Textarea, Divider, Spinner, Alert
 } from "@heroui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -75,6 +75,7 @@ export default function ForumPage() {
   // 🟢 เพิ่ม State สำหรับรูปภาพ (ส่วนที่แก้ไขเพิ่ม)
   const [previews, setPreviews] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [formAlert, setFormAlert] = useState<{ type: "danger" | "warning"; msg: string } | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -140,10 +141,15 @@ export default function ForumPage() {
 
   // 🟢 2. Handle Create Post
   const handleCreatePost = async () => {
-    if (!session) return alert("กรุณาเข้าสู่ระบบก่อนสร้างกระทู้");
-    if (!formData.title || !formData.content || !formData.category) {
-      return alert("กรุณากรอกข้อมูลให้ครบ");
+    if (!session) {
+      setFormAlert({ type: "warning", msg: "กรุณาเข้าสู่ระบบก่อนสร้างกระทู้" });
+      return;
     }
+    if (!formData.title || !formData.content || !formData.category) {
+      setFormAlert({ type: "warning", msg: "กรุณากรอกข้อมูลให้ครบทุกช่อง" });
+      return;
+    }
+    setFormAlert(null);
 
     try {
       setIsSubmitting(true);
@@ -194,11 +200,11 @@ export default function ForumPage() {
         fetchPosts();
       } else {
         const errorData = await res.json();
-        alert(`Error: ${errorData.error || "เกิดข้อผิดพลาดในการสร้างโพสต์"}`);
+        setFormAlert({ type: "danger", msg: errorData.error || "เกิดข้อผิดพลาดในการสร้างโพสต์" });
       }
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setFormAlert({ type: "danger", msg: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์" });
     } finally {
       setIsSubmitting(false);
     }
@@ -343,7 +349,7 @@ export default function ForumPage() {
         {/* Floating Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <Button
-            onPress={session ? onOpen : () => alert("กรุณาเข้าสู่ระบบก่อนครับ")}
+            onPress={session ? onOpen : () => { setFormAlert({ type: "warning", msg: "กรุณาเข้าสู่ระบบก่อนโพสต์" }); onOpen(); }}
             color={session ? "primary" : "default"}
             size="lg"
             className="shadow-2xl font-bold rounded-full h-14 md:h-16 px-8 hover:scale-105 active:scale-95 transition-all"
@@ -474,16 +480,28 @@ export default function ForumPage() {
                   </div>
                 </div>
               </ModalBody>
-              <ModalFooter>
-                <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase">Discard</Button>
-                <Button
-                  color="primary"
-                  onPress={handleCreatePost}
-                  isLoading={isSubmitting}
-                  className="px-10 font-bold bg-blue-600 shadow-lg shadow-blue-500/20 uppercase"
-                >
-                  Publish Post
-                </Button>
+              <ModalFooter className="flex-col items-stretch gap-2">
+                {formAlert && (
+                  <Alert
+                    color={formAlert.type}
+                    variant="flat"
+                    className="text-sm py-2"
+                    onClose={() => setFormAlert(null)}
+                  >
+                    {formAlert.msg}
+                  </Alert>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button variant="light" color="danger" onPress={onClose} className="font-bold uppercase">Discard</Button>
+                  <Button
+                    color="primary"
+                    onPress={handleCreatePost}
+                    isLoading={isSubmitting}
+                    className="px-10 font-bold bg-blue-600 shadow-lg shadow-blue-500/20 uppercase"
+                  >
+                    Publish Post
+                  </Button>
+                </div>
               </ModalFooter>
             </>
           )}

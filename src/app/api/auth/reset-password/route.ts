@@ -10,11 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
-    // Mock behavior since PasswordResetToken was removed
-    console.warn("PasswordResetToken table is removed. Cannot verify token.");
-    return NextResponse.json({ message: "ฟีเจอร์รีเซ็ตรหัสผ่านถูกปิดใช้งานชั่วคราว" }, { status: 400 });
-
-    /*
+    // ค้นหา Token ในฐานข้อมูล
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token }
     });
@@ -25,25 +21,22 @@ export async function POST(req: Request) {
 
     // ตรวจสอบวันหมดอายุ (15 นาที)
     if (new Date() > new Date(resetToken.expires)) {
-       // ถ้าหมดอายุก็ลบทิ้งซะ
-       await prisma.passwordResetToken.delete({ where: { token } });
-       return NextResponse.json({ message: "ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว กรุณาขอลิงก์ใหม่" }, { status: 400 });
+      // ถ้าหมดอายุก็ลบทิ้ง
+      await prisma.passwordResetToken.delete({ where: { token } });
+      return NextResponse.json({ message: "ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว กรุณาขอลิงก์ใหม่" }, { status: 400 });
     }
 
     // Hash รหัสผ่านใหม่
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // อัปเดตรหัสผ่านใหม่ให้กับ User
+    // อัปเดตรหัสผ่านให้กับ User
     await prisma.user.update({
       where: { email: resetToken.email },
       data: { password: hashedPassword }
     });
 
-    // 💥 ลบ Token ทิ้งทันทีหลังจากถูกใช้งาน (ลิงก์จะใช้ซ้ำไม่ได้อีก)
-    await prisma.passwordResetToken.delete({
-      where: { token }
-    });
-    */
+    // ลบ Token ทิ้งทันทีหลังใช้งาน (ใช้ซ้ำไม่ได้)
+    await prisma.passwordResetToken.delete({ where: { token } });
 
     return NextResponse.json({ message: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" }, { status: 200 });
   } catch (error) {
