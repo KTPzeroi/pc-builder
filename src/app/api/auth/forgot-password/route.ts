@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     });
 
     // ใช้ NEXTAUTH_URL จาก env แทนการ hardcode localhost
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXTAUTH_URL || "https://snapbuild.vercel.app";
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
     const year = new Date().getFullYear();
 
