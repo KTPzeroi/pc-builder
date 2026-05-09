@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-const resend = new Resend(process.env.RESEND_API_KEY || "missing_key");
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export async function POST(req: Request) {
   try {
@@ -40,8 +46,8 @@ export async function POST(req: Request) {
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
     const year = new Date().getFullYear();
 
-    await resend.emails.send({
-      from: 'SnapBuild <onboarding@resend.dev>',
+    await transporter.sendMail({
+      from: `"SnapBuild" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: '🔑 SnapBuild — Reset Your Password',
       html: `
