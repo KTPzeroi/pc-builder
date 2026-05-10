@@ -44,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link href="/admin/settings">
                         <div className={`flex items-center gap-2 md:gap-3 px-4 py-2 md:py-3 rounded-lg flex-shrink-0 transition-colors cursor-pointer ${pathname === '/admin/settings' ? 'opacity-100 bg-blue-500/10 text-blue-400' : 'opacity-70 hover:opacity-100 hover:bg-white/5'}`}>
                             <IoSettingsOutline className="text-lg" />
-                            <span className="text-[11px] md:text-sm font-bold tracking-wider uppercase whitespace-nowrap">Logs & Config</span>
+                            <span className="text-[11px] md:text-sm font-bold tracking-wider uppercase whitespace-nowrap">Logs</span>
                         </div>
                     </Link>
                 </nav>

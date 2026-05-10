@@ -5,7 +5,7 @@ import {
   Card, CardBody, Avatar, Chip, Button, Divider, Textarea,
   Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  useDisclosure, RadioGroup, Radio, Spinner
+  useDisclosure, RadioGroup, Radio, Spinner, Alert
 } from "@heroui/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -57,6 +57,9 @@ export default function PostDetailPage() {
   const params = useParams();
   const { data: session } = useSession();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  // Delete comment confirmation modal
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange, onClose: onDeleteClose } = useDisclosure();
+  const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null);
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -200,7 +203,15 @@ export default function PostDetailPage() {
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบคอมเมนต์นี้?")) return;
+    setPendingDeleteCommentId(commentId);
+    onDeleteOpen();
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!pendingDeleteCommentId) return;
+    const commentId = pendingDeleteCommentId;
+    onDeleteClose();
+    setPendingDeleteCommentId(null);
 
     try {
       const res = await fetch(`/api/forum/comments/${commentId}`, { method: "DELETE" });
@@ -280,6 +291,32 @@ export default function PostDetailPage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-24 pb-12 px-4 max-w-5xl mx-auto">
       <Toaster position="bottom-right" />
+
+      {/* Delete Comment Confirm Modal */}
+      <Modal
+        isOpen={isDeleteOpen}
+        onOpenChange={onDeleteOpenChange}
+        size="sm"
+        backdrop="blur"
+        classNames={{ base: "bg-slate-900 border border-white/10 text-white" }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="border-b border-white/5 text-base">ยืนยันการลบ</ModalHeader>
+              <ModalBody className="py-5">
+                <Alert color="danger" variant="flat" className="text-sm">
+                  คุณแน่ใจหรือไม่ว่าต้องการลบคอมเมนต์นี้? การกระทำนี้ไม่สามารถย้อนกลับได้
+                </Alert>
+              </ModalBody>
+              <ModalFooter className="border-t border-white/5">
+                <Button variant="light" onPress={onClose}>ยกเลิก</Button>
+                <Button color="danger" onPress={confirmDeleteComment}>ยืนยันลบ</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
       <div className="mb-6">
         <Button
