@@ -661,30 +661,51 @@ export default function Page() {
                 height: 100svh;
             }
             .banner .banner-slider {
-                transform: perspective(1000px) scale(0.5); 
-                top: 20%;
+                transform: perspective(1000px) scale(0.65); 
+                top: 5%;
             }
             .banner .banner-content {
                 height: 100svh;
+                justify-content: center;
+                align-items: center;
+                padding: 0;
             }
             .banner .banner-content h1 {
-                font-size: clamp(3rem, 18vw, 8rem);
+                font-size: clamp(4.5rem, 24vw, 8rem);
+                line-height: 0.9em;
+                position: absolute;
+                top: 31svh; 
+                color: transparent; /* Fix Safari Z-index bug where solid fill renders over the model */
             }
             .banner .banner-content h1:after {
-                -webkit-text-stroke: 1px #d2d2d2; 
+                -webkit-text-stroke: 1.5px #d2d2d2; 
+                z-index: 2;
+            }
+            .banner .banner-content .author { 
+                position: absolute;
+                top: 48svh; 
+                margin: 0;
+                z-index: 0;
             }
             .banner .banner-content .model {
+                width: 140vw; /* Prevent container clipping */
+                left: 50%;
+                transform: translateX(-50%);
                 height: 55svh;
+                background-size: contain; 
+                background-position: center bottom;
+                bottom: 12svh; 
+                z-index: 1;
             }
             .cta-container {
-                bottom: 3%;
+                bottom: 4svh;
             }
             .cta-container a .px-10 {
                 padding-left: 2rem;
                 padding-right: 2rem;
                 font-size: 1rem;
             }
-            .banner .banner-content .author { margin-top: 10px; }
+            .banner .banner-content .author { margin-top: 15px; }
             
             /* --- Responsive Horizontal Scroll บนมือถือ --- */
             .build-sequence-section {
@@ -726,13 +747,20 @@ export default function Page() {
 
         @media (max-width: 480px) {
             .banner .banner-content h1 {
-                font-size: clamp(2.5rem, 20vw, 5rem);
+                font-size: clamp(6rem, 35vw, 14rem); /* User's preferred size */
+                top: 36svh; /* User's preferred position */
             }
             .banner .banner-content .model {
+                width: 150vw; /* Prevent clipping */
                 height: 50svh;
+                background-size: contain;
+                bottom: 15svh;
+            }
+            .banner .banner-content .author { 
+                top: 48svh;
             }
             .cta-container {
-                bottom: 5%;
+                bottom: 5svh;
             }
             .build-sequence-section {
                 padding: 60px 0 30px;
