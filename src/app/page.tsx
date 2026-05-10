@@ -253,7 +253,7 @@ export default function Page() {
               <IoChevronDownOutline className="scroll-hint-icon" />
             </div>
           </div>
-
+          <div className="model"></div>
         </div>
       </section>
 
