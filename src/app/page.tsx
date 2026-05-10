@@ -674,7 +674,8 @@ export default function Page() {
                 font-size: clamp(4.5rem, 24vw, 8rem);
                 line-height: 0.9em;
                 position: absolute;
-                top: 31svh; /* Push down to align with PC case top */
+                top: 31svh; 
+                color: transparent; /* Fix Safari Z-index bug where solid fill renders over the model */
             }
             .banner .banner-content h1:after {
                 -webkit-text-stroke: 1.5px #d2d2d2; 
@@ -682,15 +683,18 @@ export default function Page() {
             }
             .banner .banner-content .author { 
                 position: absolute;
-                top: 48svh; /* Move down relative to h1 */
+                top: 48svh; 
                 margin: 0;
                 z-index: 0;
             }
             .banner .banner-content .model {
+                width: 140vw; /* Prevent container clipping */
+                left: 50%;
+                transform: translateX(-50%);
                 height: 55svh;
-                background-size: 120% auto; /* Modest scale, no severe crop */
+                background-size: contain; 
                 background-position: center bottom;
-                bottom: 12svh; /* Lift from bottom to meet text */
+                bottom: 12svh; 
                 z-index: 1;
             }
             .cta-container {
@@ -743,12 +747,13 @@ export default function Page() {
 
         @media (max-width: 480px) {
             .banner .banner-content h1 {
-                font-size: clamp(6rem, 35vw, 14rem);
-                top: 36svh;
+                font-size: clamp(6rem, 35vw, 14rem); /* User's preferred size */
+                top: 36svh; /* User's preferred position */
             }
             .banner .banner-content .model {
+                width: 150vw; /* Prevent clipping */
                 height: 50svh;
-                background-size: 135% auto;
+                background-size: contain;
                 bottom: 15svh;
             }
             .banner .banner-content .author { 
