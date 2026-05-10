@@ -661,30 +661,47 @@ export default function Page() {
                 height: 100svh;
             }
             .banner .banner-slider {
-                transform: perspective(1000px) scale(0.5); 
-                top: 20%;
+                transform: perspective(1000px) scale(0.65); 
+                top: 5%;
             }
             .banner .banner-content {
                 height: 100svh;
+                justify-content: center;
+                align-items: center;
+                padding: 0;
             }
             .banner .banner-content h1 {
-                font-size: clamp(3rem, 18vw, 8rem);
+                font-size: clamp(4.5rem, 24vw, 8rem);
+                line-height: 0.9em;
+                position: absolute;
+                top: 31svh; /* Push down to align with PC case top */
             }
             .banner .banner-content h1:after {
-                -webkit-text-stroke: 1px #d2d2d2; 
+                -webkit-text-stroke: 1.5px #d2d2d2; 
+                z-index: 2;
+            }
+            .banner .banner-content .author { 
+                position: absolute;
+                top: 48svh; /* Move down relative to h1 */
+                margin: 0;
+                z-index: 0;
             }
             .banner .banner-content .model {
                 height: 55svh;
+                background-size: 120% auto; /* Modest scale, no severe crop */
+                background-position: center bottom;
+                bottom: 12svh; /* Lift from bottom to meet text */
+                z-index: 1;
             }
             .cta-container {
-                bottom: 3%;
+                bottom: 4svh;
             }
             .cta-container a .px-10 {
                 padding-left: 2rem;
                 padding-right: 2rem;
                 font-size: 1rem;
             }
-            .banner .banner-content .author { margin-top: 10px; }
+            .banner .banner-content .author { margin-top: 15px; }
             
             /* --- Responsive Horizontal Scroll บนมือถือ --- */
             .build-sequence-section {
@@ -726,13 +743,19 @@ export default function Page() {
 
         @media (max-width: 480px) {
             .banner .banner-content h1 {
-                font-size: clamp(2.5rem, 20vw, 5rem);
+                font-size: clamp(6rem, 35vw, 14rem);
+                top: 36svh;
             }
             .banner .banner-content .model {
                 height: 50svh;
+                background-size: 135% auto;
+                bottom: 15svh;
+            }
+            .banner .banner-content .author { 
+                top: 48svh;
             }
             .cta-container {
-                bottom: 5%;
+                bottom: 5svh;
             }
             .build-sequence-section {
                 padding: 60px 0 30px;

@@ -226,7 +226,7 @@ export default function ForumPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Sidebar Section */}
-          <aside className="lg:col-span-3 flex flex-col gap-6 order-2 lg:order-1 w-full">
+          <aside className="lg:col-span-3 flex flex-col gap-6 order-1 w-full">
             <Card className="bg-black/40 border border-white/5 p-5 shadow-xl sticky top-28 w-full">
               <div className="flex flex-col gap-8">
                 <div className="space-y-3">
@@ -246,12 +246,14 @@ export default function ForumPage() {
 
                 <div className="space-y-3">
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-1">หมวดหมู่</p>
+                  
+                  {/* Desktop Vertical Tabs */}
                   <Tabs
-                    aria-label="Categories"
+                    aria-label="Categories Desktop"
                     color="primary"
                     variant="underlined"
                     isVertical
-                    className="w-full"
+                    className="hidden lg:flex w-full"
                     selectedKey={selectedTab}
                     onSelectionChange={(key) => setSelectedTab(key as string)}
                     classNames={{
@@ -265,6 +267,28 @@ export default function ForumPage() {
                       <Tab key={cat.value} title={cat.label} />
                     ))}
                   </Tabs>
+
+                  {/* Mobile Horizontal Tabs */}
+                  <div className="lg:hidden w-full overflow-hidden">
+                    <Tabs
+                      aria-label="Categories Mobile"
+                      color="primary"
+                      variant="underlined"
+                      className="w-full"
+                      selectedKey={selectedTab}
+                      onSelectionChange={(key) => setSelectedTab(key as string)}
+                      classNames={{
+                        tabList: "gap-2 border-b-2 border-white/5 w-full overflow-x-auto pb-0 scrollbar-hide",
+                        tab: "justify-center h-10 font-bold px-4 text-xs whitespace-nowrap",
+                        cursor: "bg-blue-500"
+                      }}
+                    >
+                      <Tab key="all" title="All Posts" />
+                      {categories.map(cat => (
+                        <Tab key={cat.value} title={cat.label} />
+                      ))}
+                    </Tabs>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -278,7 +302,7 @@ export default function ForumPage() {
           </aside>
 
           {/* Main Content Section */}
-          <div className="lg:col-span-9 space-y-4 order-1 lg:order-2 flex flex-col w-full">
+          <div className="lg:col-span-9 space-y-4 order-2 flex flex-col w-full">
             <div className="flex flex-col gap-3 w-full">
 
               {isLoading ? (
