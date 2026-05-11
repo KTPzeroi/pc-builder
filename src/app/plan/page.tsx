@@ -47,8 +47,10 @@ const BUDGET_CHOICES = [
 
 const typeIconMap: Record<string, React.ReactNode> = {
     CPU: <BsCpu />, GPU: <PiGraphicsCardBold />, RAM: <BsMemory />,
-    Mainboard: <BsMotherboard />, Storage: <BsDeviceSsd />, PSU: <BiTachometer />,
-    Case: <LuPcCase />, Cooler: <PiFan />,
+    MAINBOARD: <BsMotherboard />, STORAGE: <BsDeviceSsd />, PSU: <BiTachometer />,
+    CASE: <LuPcCase />, COOLER: <PiFan />,
+    // เผื่อมีบาง preset ใช้ตัวพิมพ์เล็ก-ใหญ่ต่างกัน
+    Mainboard: <BsMotherboard />, Storage: <BsDeviceSsd />, Case: <LuPcCase />, Cooler: <PiFan />,
 };
 
 export default function PlanPage() {
@@ -106,30 +108,35 @@ export default function PlanPage() {
             const categoryMap: Record<string, string> = {
                 CPU: "Processor",
                 MB: "Motherboard",
+                MAINBOARD: "Motherboard",
                 GPU: "Graphics Card",
                 RAM: "Memory",
                 STORAGE: "Storage",
                 PSU: "Power Supply",
                 CASE: "Case",
-                COOLING: "Cooling"
+                COOLING: "Cooling",
+                COOLER: "Cooling"
             };
 
             const categoryToDbMap: Record<string, string> = {
                 CPU: "CPU",
                 MB: "MB",
+                MAINBOARD: "MB",
                 GPU: "GPU",
                 RAM: "RAM",
                 STORAGE: "STORAGE",
                 PSU: "PSU",
                 CASE: "CASE",
-                COOLING: "COOLING"
+                COOLING: "COOLING",
+                COOLER: "COOLING"
             };
 
             const presetComps = preset.components as PresetComponent[];
             presetComps.forEach((comp, index) => {
                 if (!comp.name || comp.name.trim() === "") return;
                 
-                const cat = categoryMap[comp.type];
+                const typeUpper = comp.type.toUpperCase();
+                const cat = categoryMap[typeUpper] || categoryMap[comp.type];
                 if (cat) {
                     // ค้นหาเปรียบเทียบชื่ออุปกรณ์จาก Database เพื่อให้ได้ ID และข้อมูลฉบับเต็ม
                     const fullComp = dbComps.find((c: any) => c.name === comp.name);
@@ -140,7 +147,7 @@ export default function PlanPage() {
                         newSelection[cat] = {
                             id: `custom-${index}`,
                             name: comp.name,
-                            type: categoryToDbMap[comp.type] || comp.type,
+                            type: categoryToDbMap[typeUpper] || categoryToDbMap[comp.type] || comp.type,
                             price: comp.price || 0,
                             gpuScore: 0,
                             cpuSingleScore: 0,
@@ -299,7 +306,7 @@ export default function PlanPage() {
                                                 {(preset.components as PresetComponent[]).map((comp, i) => (
                                                     <div key={i} className="flex items-start gap-4 bg-white/5 rounded-xl p-4 border border-white/5 hover:border-blue-500/20 transition-colors">
                                                         <div className="text-blue-400 text-2xl flex-shrink-0 mt-1">
-                                                            {typeIconMap[comp.type] || <BsCpu />}
+                                                            {typeIconMap[comp.type.toUpperCase()] || typeIconMap[comp.type] || <BsCpu />}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-baseline justify-between gap-2 flex-wrap">
