@@ -141,11 +141,13 @@ export default function BuildPage() {
   // Filter state for selection modal
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<string>("default");
 
-  // Reset filters AND search when category changes
+  // Reset filters AND search AND sort when category changes
   useEffect(() => {
     setActiveFilters({});
     setSearchQuery("");
+    setSortOrder("default");
   }, [selectedCategory]);
 
   // === Dynamic Category Filters (สร้างจากข้อมูลจริงใน DB) ===
@@ -758,8 +760,24 @@ export default function BuildPage() {
                         classNames={{ input: "text-white", inputWrapper: "bg-white/5 border-white/10" }}
                         startContent={<span className="text-gray-400 text-sm">🔍</span>}
                       />
-                      {/* Dynamic Filters */}
+                      {/* Dynamic Filters & Sort */}
                       <div className="flex flex-row md:flex-col flex-wrap gap-3 md:gap-4 w-full items-start">
+                        {/* Sort Dropdown */}
+                        <Select
+                          label="เรียงลำดับราคา"
+                          labelPlacement="outside"
+                          placeholder="ค่าเริ่มต้น"
+                          size="sm"
+                          className="w-[47%] md:w-full flex-grow"
+                          selectedKeys={new Set([sortOrder])}
+                          onSelectionChange={(keys) => setSortOrder(Array.from(keys)[0] as string)}
+                          classNames={{ label: "text-gray-400 font-bold", trigger: "bg-white/5 border-white/10 h-10 min-h-10", popoverContent: "bg-slate-800 text-white" }}
+                        >
+                          <SelectItem key="default">ค่าเริ่มต้น</SelectItem>
+                          <SelectItem key="price_asc">ราคา: ต่ำไปสูง</SelectItem>
+                          <SelectItem key="price_desc">ราคา: สูงไปต่ำ</SelectItem>
+                        </Select>
+
                         {categoryFilters[selectedCategory || ""]?.map((f) => (
                           <Select
                             key={f.key}
@@ -795,6 +813,8 @@ export default function BuildPage() {
                         categoryToType={categoryToTypeMap}
                         activeFilters={activeFilters}
                         searchQuery={searchQuery}
+                        sortOrder={sortOrder}
+                        selectedProducts={selectedProducts}
                       />
                     )}
                   </ScrollShadow>
@@ -867,13 +887,53 @@ export default function BuildPage() {
   );
 }
 
-function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters, searchQuery }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string>, searchQuery: string }) {
+function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters, searchQuery, sortOrder, selectedProducts }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string>, searchQuery: string, sortOrder: string, selectedProducts: Record<string, Component | null> }) {
   const targetType = categoryToType[category];
 
   const products = useMemo(() => {
     let filtered = allComponents.filter(c => c.type === targetType);
 
-    // Search filter
+    // --- 1. Smart Compatibility Filter ---
+    const mb = selectedProducts["Motherboard"];
+    const cpu = selectedProducts["Processor"];
+    const ram = selectedProducts["Memory"];
+    const pcCase = selectedProducts["Case"];
+
+    if (category === "Processor") {
+      // ถ้าเลือกเมนบอร์ดแล้ว ให้แสดงเฉพาะ CPU ที่ Socket ตรงกัน
+      if (mb && mb.socket) filtered = filtered.filter(c => c.socket === mb.socket);
+    } else if (category === "Motherboard") {
+      // ถ้าเลือก CPU แล้ว ให้แสดงเฉพาะบอร์ดที่ Socket ตรงกัน
+      if (cpu && cpu.socket) filtered = filtered.filter(c => c.socket === cpu.socket);
+      // ถ้าเลือก RAM แล้ว ให้แสดงเฉพาะบอร์ดที่รองรับ RAM ชนิดนั้น
+      if (ram && ram.ramType) filtered = filtered.filter(c => c.ramType?.includes(ram.ramType!) || ram.ramType?.includes(c.ramType!));
+      // ถ้าเลือก Case แล้ว ให้แสดงเฉพาะบอร์ดที่ใส่ Case นั้นได้
+      if (pcCase && (pcCase as any).supportedMobo) {
+        const supportedList = (pcCase as any).supportedMobo.toUpperCase().split(",").map((s: string) => s.trim());
+        filtered = filtered.filter(c => {
+           if (!c.formFactor) return true;
+           const mbForm = c.formFactor.trim().toUpperCase();
+           return supportedList.some((s: string) => s.includes(mbForm) || mbForm.includes(s));
+        });
+      }
+    } else if (category === "Memory") {
+      // ถ้าเลือกเมนบอร์ดแล้ว ให้แสดงเฉพาะ RAM ที่บอร์ดรองรับ
+      if (mb && mb.ramType) filtered = filtered.filter(c => c.ramType?.includes(mb.ramType!) || mb.ramType?.includes(c.ramType!));
+      // ถ้ายังไม่เลือกบอร์ด แต่เลือก CPU แล้ว ให้แสดง RAM ตาม CPU แทน
+      else if (cpu && cpu.ramType) filtered = filtered.filter(c => c.ramType?.includes(cpu.ramType!) || cpu.ramType?.includes(c.ramType!));
+    } else if (category === "Case") {
+      // ถ้าเลือกบอร์ดแล้ว ให้แสดงเฉพาะ Case ที่ใส่บอร์ดนั้นได้
+      if (mb && mb.formFactor) {
+        const mbForm = mb.formFactor.trim().toUpperCase();
+        filtered = filtered.filter(c => {
+           if (!(c as any).supportedMobo) return true;
+           const supportedList = (c as any).supportedMobo.toUpperCase().split(",").map((s: string) => s.trim());
+           return supportedList.some((s: string) => s.includes(mbForm) || mbForm.includes(s));
+        });
+      }
+    }
+
+    // --- 2. Search filter ---
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
@@ -881,7 +941,7 @@ function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails
       );
     }
 
-    // Apply all active filters dynamically
+    // --- 3. Active Filters ---
     Object.entries(activeFilters).forEach(([key, value]) => {
       if (!value || value === "All") return;
       filtered = filtered.filter(c => {
@@ -890,8 +950,15 @@ function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails
       });
     });
 
+    // --- 4. Sort By Price ---
+    if (sortOrder === "price_asc") {
+       filtered = [...filtered].sort((a, b) => a.price - b.price);
+    } else if (sortOrder === "price_desc") {
+       filtered = [...filtered].sort((a, b) => b.price - a.price);
+    }
+
     return filtered;
-  }, [allComponents, targetType, activeFilters, searchQuery]);
+  }, [allComponents, targetType, activeFilters, searchQuery, selectedProducts, category, sortOrder]);
 
   if (products.length === 0) {
     return (
