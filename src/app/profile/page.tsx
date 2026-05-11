@@ -9,7 +9,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IoEyeOutline, IoEyeOffOutline, IoHeart } from "react-icons/io5";
+import { IoEyeOutline, IoEyeOffOutline, IoHeart, IoClose } from "react-icons/io5";
 
 // --- 🟢 ส่วนประกอบย่อย (Internal Components) ---
 function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
@@ -18,9 +18,41 @@ function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedBuild, setSelectedBuild] = useState<any | null>(null);
 
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmChange } = useDisclosure();
+  const [buildToDelete, setBuildToDelete] = useState<string | null>(null);
+
   const handleViewBuild = (build: any) => {
     setSelectedBuild(build);
     onOpen();
+  };
+
+  const confirmDelete = (buildId: string) => {
+    setBuildToDelete(buildId);
+    onConfirmOpen();
+  };
+
+  const handleDeleteBuild = async () => {
+    if (!buildToDelete) return;
+    
+    try {
+      const res = await fetch(`/api/builds/${buildToDelete}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBuilds(prev => prev.filter(b => b.id !== buildToDelete));
+        onLoadedCount(builds.length - 1);
+        if (selectedBuild?.id === buildToDelete) {
+          onOpenChange(); // ปิด modal ถ้าเปิดอยู่
+        }
+        onConfirmChange(); // ปิด confirm modal
+      } else {
+        const data = await res.json();
+        alert(data.error || "เกิดข้อผิดพลาดในการลบสเปก");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    }
   };
 
   useEffect(() => {
@@ -60,7 +92,21 @@ function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
                   <span>3D: <strong className="text-primary">{Math.round(build.renderScore || 0)}%</strong></span>
                 </div>
               </div>
-              <div className="text-xs text-gray-500 font-bold uppercase text-right shrink-0">
+              <div className="flex flex-col items-end gap-2 text-xs text-gray-500 font-bold uppercase text-right shrink-0">
+                <Button 
+                  isIconOnly 
+                  color="danger" 
+                  variant="light" 
+                  size="sm" 
+                  className="z-10"
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    e.preventDefault(); 
+                    confirmDelete(build.id); 
+                  }}
+                >
+                  <IoClose size={20} />
+                </Button>
                 <p>{new Date(build.createdAt).toLocaleDateString("th-TH")}</p>
               </div>
             </CardBody>
@@ -94,9 +140,38 @@ function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
                   </div>
                 )}
               </ModalBody>
-              <ModalFooter className="border-t border-white/5">
+              <ModalFooter className="border-t border-white/5 flex justify-between">
+                <Button 
+                  color="danger" 
+                  variant="flat"
+                  onPress={() => confirmDelete(selectedBuild.id)} 
+                  className="font-bold uppercase tracking-widest text-[10px]"
+                >
+                  <IoClose size={16} className="mr-1" /> ลบสเปก
+                </Button>
                 <Button color="primary" onPress={onClose} className="font-bold px-8 uppercase tracking-widest text-[10px]">
                   ปิดหน้าต่าง
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isConfirmOpen} onOpenChange={onConfirmChange} backdrop="blur" placement="center" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-2xl", header: "border-b border-white/5", footer: "border-t border-white/5" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <h3 className="text-xl font-bold text-red-500 uppercase tracking-widest">ยืนยันการลบสเปก</h3>
+              </ModalHeader>
+              <ModalBody className="py-6 text-gray-300">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบสเปกนี้? <br/> <span className="text-sm text-gray-500">การกระทำนี้ไม่สามารถย้อนกลับได้</span></p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">ยกเลิก</Button>
+                <Button color="danger" onPress={handleDeleteBuild} className="font-bold px-8 shadow-xl shadow-red-500/20 uppercase text-[10px] tracking-widest">
+                  ยืนยันการลบ
                 </Button>
               </ModalFooter>
             </>
@@ -107,88 +182,241 @@ function MyBuilds({ onLoadedCount }: { onLoadedCount: (cnt: number) => void }) {
   );
 }
 
-function MyForum({ posts }: { posts: any[] }) {
+function MyForum({ posts: initialPosts }: { posts: any[] }) {
+  const [posts, setPosts] = useState(initialPosts);
+  useEffect(() => setPosts(initialPosts), [initialPosts]);
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmChange } = useDisclosure();
+  const [postToDelete, setPostToDelete] = useState<number | null>(null);
+
+  const confirmDelete = (postId: number) => {
+    setPostToDelete(postId);
+    onConfirmOpen();
+  };
+
+  const handleDelete = async () => {
+    if (!postToDelete) return;
+    try {
+      const res = await fetch(`/api/forum/posts/${postToDelete}`, { method: "DELETE" });
+      if (res.ok) {
+        setPosts(prev => prev.filter(p => p.id !== postToDelete));
+        onConfirmChange();
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบกระทู้");
+      }
+    } catch (e) { console.error(e); }
+  };
+
   if (!posts || posts.length === 0) {
     return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณสร้าง</div>;
   }
   return (
-    <div className="flex flex-col gap-4 text-left mt-4">
-      {posts.map((post) => (
-        <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
-          <CardBody>
-            <Link href={`/forum/${post.id}`}>
-              <h3 className="text-lg font-bold text-white hover:text-blue-400">{post.title}</h3>
-            </Link>
-            <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
-            <div className="flex gap-4 text-xs text-gray-500">
-              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-              <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-4 text-left mt-4">
+        {posts.map((post) => (
+          <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
+            <CardBody className="flex flex-row gap-4 justify-between items-start">
+              <div className="flex-1 overflow-hidden">
+                <Link href={`/forum/${post.id}`}>
+                  <h3 className="text-lg font-bold text-white hover:text-blue-400">{post.title}</h3>
+                </Link>
+                <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
+                <div className="flex gap-4 text-xs text-gray-500">
+                  <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
+                </div>
+              </div>
+              <Button isIconOnly color="danger" variant="light" size="sm" onClick={() => confirmDelete(post.id)}>
+                <IoClose size={20} />
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <Modal isOpen={isConfirmOpen} onOpenChange={onConfirmChange} backdrop="blur" placement="center" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-2xl", header: "border-b border-white/5", footer: "border-t border-white/5" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <h3 className="text-xl font-bold text-red-500 uppercase tracking-widest">ยืนยันการลบกระทู้</h3>
+              </ModalHeader>
+              <ModalBody className="py-6 text-gray-300">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบกระทู้นี้? <br/> <span className="text-sm text-gray-500">การกระทำนี้ไม่สามารถย้อนกลับได้</span></p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">ยกเลิก</Button>
+                <Button color="danger" onPress={handleDelete} className="font-bold px-8 shadow-xl shadow-red-500/20 uppercase text-[10px] tracking-widest">
+                  ยืนยันการลบ
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 
-function MyActivity({ comments }: { comments: any[] }) {
+function MyActivity({ comments: initialComments }: { comments: any[] }) {
+  const [comments, setComments] = useState(initialComments);
+  useEffect(() => setComments(initialComments), [initialComments]);
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmChange } = useDisclosure();
+  const [commentToDelete, setCommentToDelete] = useState<number | null>(null);
+
+  const confirmDelete = (commentId: number) => {
+    setCommentToDelete(commentId);
+    onConfirmOpen();
+  };
+
+  const handleDelete = async () => {
+    if (!commentToDelete) return;
+    try {
+      const res = await fetch(`/api/forum/comments/${commentToDelete}`, { method: "DELETE" });
+      if (res.ok) {
+        setComments(prev => prev.filter(c => c.id !== commentToDelete));
+        onConfirmChange();
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบความคิดเห็น");
+      }
+    } catch (e) { console.error(e); }
+  };
+
   if (!comments || comments.length === 0) {
     return <div className="text-gray-500 py-10">ยังไม่มีกิจกรรมล่าสุด</div>;
   }
   return (
-    <div className="flex flex-col gap-4 text-left mt-4">
-      {comments.map((comment) => (
-        <Card key={comment.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
-          <CardBody>
-            <p className="text-sm text-gray-400 mb-2">
-              คุณได้แสดงความคิดเห็นในกระทู้{" "}
-              {comment.post ? (
-                <Link href={`/forum/${comment.post.id}`} className="text-blue-400 font-bold hover:underline">
-                  {comment.post.title}
-                </Link>
-              ) : (
-                <span className="text-gray-500 italic">กระทู้ที่ถูกลบไปแล้ว</span>
-              )}
-            </p>
-            <div className="bg-white/5 p-3 rounded-lg border border-white/5">
-              <p className="text-white text-sm">"{comment.content}"</p>
-            </div>
-            <div className="mt-2 text-xs text-gray-500">
-              {new Date(comment.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-4 text-left mt-4">
+        {comments.map((comment) => (
+          <Card key={comment.id} className="bg-black/40 border border-white/10 hover:border-blue-500/50 transition-colors">
+            <CardBody className="flex flex-row gap-4 justify-between items-start">
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm text-gray-400 mb-2">
+                  คุณได้แสดงความคิดเห็นในกระทู้{" "}
+                  {comment.post ? (
+                    <Link href={`/forum/${comment.post.id}`} className="text-blue-400 font-bold hover:underline">
+                      {comment.post.title}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-500 italic">กระทู้ที่ถูกลบไปแล้ว</span>
+                  )}
+                </p>
+                <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                  <p className="text-white text-sm">"{comment.content}"</p>
+                </div>
+                <div className="mt-2 text-xs text-gray-500">
+                  {new Date(comment.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <Button isIconOnly color="danger" variant="light" size="sm" onClick={() => confirmDelete(comment.id)}>
+                <IoClose size={20} />
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <Modal isOpen={isConfirmOpen} onOpenChange={onConfirmChange} backdrop="blur" placement="center" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-2xl", header: "border-b border-white/5", footer: "border-t border-white/5" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <h3 className="text-xl font-bold text-red-500 uppercase tracking-widest">ยืนยันการลบความคิดเห็น</h3>
+              </ModalHeader>
+              <ModalBody className="py-6 text-gray-300">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบความคิดเห็นนี้? <br/> <span className="text-sm text-gray-500">การกระทำนี้ไม่สามารถย้อนกลับได้</span></p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">ยกเลิก</Button>
+                <Button color="danger" onPress={handleDelete} className="font-bold px-8 shadow-xl shadow-red-500/20 uppercase text-[10px] tracking-widest">
+                  ยืนยันการลบ
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 
-function MyFavorite({ posts }: { posts: any[] }) {
+function MyFavorite({ posts: initialPosts }: { posts: any[] }) {
+  const [posts, setPosts] = useState(initialPosts);
+  useEffect(() => setPosts(initialPosts), [initialPosts]);
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmChange } = useDisclosure();
+  const [postToRemove, setPostToRemove] = useState<number | null>(null);
+
+  const confirmRemove = (postId: number) => {
+    setPostToRemove(postId);
+    onConfirmOpen();
+  };
+
+  const handleRemove = async () => {
+    if (!postToRemove) return;
+    try {
+      const res = await fetch(`/api/forum/posts/${postToRemove}/like`, { method: "POST" });
+      if (res.ok) {
+        setPosts(prev => prev.filter(p => p.id !== postToRemove));
+        onConfirmChange();
+      } else {
+        alert("เกิดข้อผิดพลาดในการยกเลิกถูกใจ");
+      }
+    } catch (e) { console.error(e); }
+  };
+
   if (!posts || posts.length === 0) {
     return <div className="text-gray-500 py-10">ยังไม่มีกระทู้ที่คุณกดถูกใจ</div>;
   }
   return (
-    <div className="flex flex-col gap-4 text-left mt-4">
-      {posts.map((post) => (
-        <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-pink-500/50 transition-colors">
-          <CardBody>
-            <Link href={`/forum/${post.id}`}>
-              <h3 className="text-lg font-bold text-white hover:text-pink-400 flex items-center gap-2">
-                 <IoHeart className="text-pink-500" /> {post.title}
-              </h3>
-            </Link>
-            <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
-            <div className="flex gap-4 text-xs text-gray-500 items-center">
-              <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-              <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
-              {post.author && (
-                 <span>โดย <span className="font-semibold">{post.author.name || post.author.username}</span></span>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-4 text-left mt-4">
+        {posts.map((post) => (
+          <Card key={post.id} className="bg-black/40 border border-white/10 hover:border-pink-500/50 transition-colors">
+            <CardBody className="flex flex-row gap-4 justify-between items-start">
+              <div className="flex-1 overflow-hidden">
+                <Link href={`/forum/${post.id}`}>
+                  <h3 className="text-lg font-bold text-white hover:text-pink-400 flex items-center gap-2">
+                     <IoHeart className="text-pink-500" /> {post.title}
+                  </h3>
+                </Link>
+                <p className="text-sm text-gray-400 mb-2 truncate max-w-3xl">{post.content}</p>
+                <div className="flex gap-4 text-xs text-gray-500 items-center">
+                  <span>{new Date(post.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-medium">{post.category}</span>
+                  {post.author && (
+                     <span>โดย <span className="font-semibold">{post.author.name || post.author.username}</span></span>
+                  )}
+                </div>
+              </div>
+              <Button isIconOnly color="danger" variant="light" size="sm" onClick={() => confirmRemove(post.id)}>
+                <IoClose size={20} />
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <Modal isOpen={isConfirmOpen} onOpenChange={onConfirmChange} backdrop="blur" placement="center" classNames={{ base: "bg-slate-900 border border-white/10 text-white rounded-2xl", header: "border-b border-white/5", footer: "border-t border-white/5" }}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <h3 className="text-xl font-bold text-red-500 uppercase tracking-widest">ยกเลิกการถูกใจกระทู้</h3>
+              </ModalHeader>
+              <ModalBody className="py-6 text-gray-300">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการนำกระทู้นี้ออกจากรายการโปรด?</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose} className="font-bold uppercase text-[10px] tracking-widest">ยกเลิก</Button>
+                <Button color="danger" onPress={handleRemove} className="font-bold px-8 shadow-xl shadow-red-500/20 uppercase text-[10px] tracking-widest">
+                  นำออก
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 

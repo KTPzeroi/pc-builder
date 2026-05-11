@@ -228,36 +228,13 @@ export default function PublicProfilePage() {
                     <div className="flex flex-col gap-6">
                        <h2 className="text-2xl font-bold text-blue-400">{selectedBuild.name}</h2>
                        
-                       <div className="bg-black/40 rounded-xl p-4 border border-white/5">
-                          {/* ตัวอย่างรายชื่ออุปกรณ์ (เนื่องจากเราเก็บแค่ ID ในเบื้องต้น ตอนนี้อาจจะโชว์แค่โครงสร้างไปก่อน) */}
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">PROCESSOR</span>
-                             <span className="font-medium">{selectedBuild.cpuId ? `CPU ID: ${selectedBuild.cpuId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">GRAPHICS CARD</span>
-                             <span className="font-medium">{selectedBuild.gpuId ? `GPU ID: ${selectedBuild.gpuId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">MEMORY</span>
-                             <span className="font-medium">{selectedBuild.ramId ? `RAM ID: ${selectedBuild.ramId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">MOTHERBOARD</span>
-                             <span className="font-medium">{selectedBuild.motherboardId ? `MB ID: ${selectedBuild.motherboardId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">STORAGE</span>
-                             <span className="font-medium">{selectedBuild.storageId ? `Storage ID: ${selectedBuild.storageId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3 border-b border-white/5">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">POWER SUPPLY</span>
-                             <span className="font-medium">{selectedBuild.psuId ? `PSU ID: ${selectedBuild.psuId}` : "-"}</span>
-                          </div>
-                          <div className="grid grid-cols-[120px_1fr] gap-4 items-center py-3">
-                             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">CASE</span>
-                             <span className="font-medium">{selectedBuild.caseId ? `Case ID: ${selectedBuild.caseId}` : "-"}</span>
-                          </div>
+                       <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-3 text-sm">
+                         {Object.entries(selectedBuild.specs || {}).map(([key, val]) => (
+                           <div key={key} className="flex justify-between border-b border-white/5 pb-2">
+                             <span className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">{key}</span>
+                             <span className="text-white font-medium text-right max-w-[200px] truncate" title={String(val)}>{String(val)}</span>
+                           </div>
+                         ))}
                        </div>
                        
                        <div className="flex justify-between items-end">
