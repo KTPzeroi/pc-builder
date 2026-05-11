@@ -51,6 +51,9 @@ model User {
   notifications Notification[]
   likedPosts    Post[]         @relation("UserPostLikes")
   likedComments Comment[]      @relation("UserCommentLikes")
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
 }
 
 
@@ -74,6 +77,9 @@ model Post {
   pcBuild   PCBuild? @relation(fields: [pcBuildId], references: [id])
   
   likedBy   User[]   @relation("UserPostLikes")
+
+  @@index([authorId])
+  @@index([status])
 }
 
 model Comment {
@@ -87,6 +93,9 @@ model Comment {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   
   likedBy   User[]   @relation("UserCommentLikes")
+
+  @@index([postId])
+  @@index([authorId])
 }
 
 model Notification {
@@ -143,6 +152,11 @@ model Component {
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([type])
+  @@index([brand])
+  @@index([socket])
+  @@index([price])
 }
 
 model PCBuild {
@@ -174,6 +188,8 @@ model PCBuild {
   updatedAt     DateTime @updatedAt
   
   posts         Post[]
+
+  @@index([userId])
 }
 
 // ----------------------------------------------------

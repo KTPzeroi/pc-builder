@@ -7,7 +7,7 @@ import {
   Card, CardBody, CardHeader, Button, Progress,
   Select, SelectItem, Badge, Divider, ScrollShadow,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  useDisclosure, Input, addToast, Spinner
+  useDisclosure, Input, addToast, Spinner, Pagination
 } from "@heroui/react";
 import type { Component } from "@prisma/client";
 import { useSession } from "next-auth/react";
@@ -889,6 +889,12 @@ export default function BuildPage() {
 
 function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails, categoryToType, activeFilters, searchQuery, sortOrder, selectedProducts }: { category: string, allComponents: Component[], onSelectProduct: (cat: string, p: Component) => void, onViewDetails: (p: Component) => void, categoryToType: Record<string, string>, activeFilters: Record<string, string>, searchQuery: string, sortOrder: string, selectedProducts: Record<string, Component | null> }) {
   const targetType = categoryToType[category];
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 12;
+
+  useEffect(() => {
+    setPage(1);
+  }, [category, activeFilters, searchQuery, sortOrder]);
 
   const products = useMemo(() => {
     let filtered = allComponents.filter(c => c.type === targetType);
@@ -970,36 +976,62 @@ function SelectionGrid({ category, allComponents, onSelectProduct, onViewDetails
     );
   }
 
+  const pages = Math.ceil(products.length / itemsPerPage);
+  const displayedProducts = products.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-8">
-      {products.map((product) => (
-        <Card key={product.id} shadow="sm" className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1 overflow-hidden">
-          <CardBody className="p-0 flex flex-col h-full overflow-hidden">
-            <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => onSelectProduct(category, product)}>
-              {product.image ? (
-                <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain" />
-              ) : (
-                <span className="text-gray-400 text-xs">No Image</span>
-              )}
-            </div>
-            <div className="p-4 flex flex-col flex-1 text-left space-y-3">
-              <div>
-                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{product.brand}</p>
-                <h4 className="text-sm font-bold text-white leading-tight line-clamp-2" title={product.name}>{product.name}</h4>
+    <div className="flex flex-col gap-6 pb-8 h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {displayedProducts.map((product) => (
+          <Card key={product.id} shadow="sm" className="bg-black/40 border border-white/5 hover:border-blue-500/50 transition-all p-1 overflow-hidden">
+            <CardBody className="p-0 flex flex-col h-full overflow-hidden">
+              <div className="aspect-square bg-white m-2 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => onSelectProduct(category, product)}>
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="max-w-[80%] max-h-[80%] object-contain" />
+                ) : (
+                  <span className="text-gray-400 text-xs">No Image</span>
+                )}
               </div>
-              <div className="mt-auto">
-                <div className="flex flex-col gap-2">
-                  <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
-                  <div className="flex gap-2 w-full">
-                    <Button size="sm" variant="flat" color="default" className="text-xs font-bold text-gray-300 flex-1" onPress={() => onViewDetails(product)}>รายละเอียด</Button>
-                    <Button size="sm" color="primary" className="text-xs font-bold shadow-lg shadow-blue-500/20 flex-1" onPress={() => onSelectProduct(category, product)}>เลือก</Button>
+              <div className="p-4 flex flex-col flex-1 text-left space-y-3">
+                <div>
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{product.brand}</p>
+                  <h4 className="text-sm font-bold text-white leading-tight line-clamp-2" title={product.name}>{product.name}</h4>
+                </div>
+                <div className="mt-auto">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-base font-bold text-success">฿{product.price.toLocaleString()}</span>
+                    <div className="flex gap-2 w-full">
+                      <Button size="sm" variant="flat" color="default" className="text-xs font-bold text-gray-300 flex-1" onPress={() => onViewDetails(product)}>รายละเอียด</Button>
+                      <Button size="sm" color="primary" className="text-xs font-bold shadow-lg shadow-blue-500/20 flex-1" onPress={() => onSelectProduct(category, product)}>เลือก</Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      {pages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination
+            isCompact
+            showControls
+            showShadow
+            color="primary"
+            page={page}
+            total={pages}
+            onChange={(newPage) => setPage(newPage)}
+            classNames={{
+               wrapper: "gap-2",
+               item: "w-8 h-8 text-sm bg-white/5 text-white hover:bg-white/10 border-none",
+               cursor: "bg-blue-600 text-white font-bold",
+               prev: "bg-white/5 text-white hover:bg-white/10",
+               next: "bg-white/5 text-white hover:bg-white/10"
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
